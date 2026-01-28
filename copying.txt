@@ -1,0 +1,7 @@
+copyright waiver and voided warranty notice:
+this project is basically created by the github copilot.
+ai generated contents are neither subject to copyright
+nor covered by any warranty.
+for anything in this repo which might be copyrightable:
+copyright 2025-2026 cyan mint <cyanmint@outlook.com>
+this project is licensed under the cc0 1.0 universal.
