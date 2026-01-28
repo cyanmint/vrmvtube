@@ -19,7 +19,7 @@ signal settings_saved(settings: Dictionary)
 	},
 	"background": {
 		"type": "solid",  # solid, gradient, image
-		"color": Color(0.2, 0.2, 0.25, 1.0),
+		"color": Color(0, 1, 0, 1),  # Default: #00FF00 (green)
 		"gradient_top": Color(0.2, 0.2, 0.3, 1.0),
 		"gradient_bottom": Color(0.1, 0.1, 0.15, 1.0),
 		"image_path": ""
@@ -142,8 +142,13 @@ func _populate_cameras() -> void:
 	
 	camera_option.clear()
 	
-	# Check for available cameras
+	# Enable camera monitoring first
 	var camera_server := CameraServer
+	camera_server.set_monitoring_feeds(true)
+	
+	# Wait a frame for feeds to be detected
+	await get_tree().process_frame
+	
 	var feed_count := camera_server.get_feed_count()
 	
 	if feed_count > 0:

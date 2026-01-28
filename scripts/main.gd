@@ -19,9 +19,14 @@ var current_vrm_instance: Node = null
 @onready var webcam_tracker: Node = $WebcamTracker
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
-@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/WebcamTextureRect
-@onready var webcam_status_label: Label = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/StatusLabel
+@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
+@onready var webcam_status_label: Label = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/StatusLabel
+@onready var webcam_preview_panel: PanelContainer = $UI/Control/RightPanel/WebcamPreviewPanel
+@onready var webcam_collapse_button: Button = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var webcam_content: VBoxContainer = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var buttons_panel: PanelContainer = $UI/Control/RightPanel/ButtonsPanel
 @onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ModelControlsPanel
+@onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/BottomPanel
 @onready var position_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
 @onready var position_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
 @onready var scale_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleSlider
@@ -62,6 +67,10 @@ func _ready() -> void:
 		position_y_slider.value_changed.connect(_on_position_y_changed)
 	if scale_slider:
 		scale_slider.value_changed.connect(_on_scale_changed)
+	
+	# Connect collapse buttons
+	if webcam_collapse_button:
+		webcam_collapse_button.pressed.connect(_on_webcam_collapse_pressed)
 	
 	# Load default VRM model - use call_deferred to ensure scene is ready
 	if FileAccess.file_exists(DEFAULT_VRM_PATH):
@@ -241,3 +250,10 @@ func _apply_background_settings(bg_settings: Dictionary) -> void:
 				# Would need to load image and set as sky
 				# For now, keep current background
 				pass
+
+func _on_webcam_collapse_pressed() -> void:
+	"""Toggle webcam preview panel collapse"""
+	if webcam_content:
+		webcam_content.visible = not webcam_content.visible
+		if webcam_collapse_button:
+			webcam_collapse_button.text = "▲" if not webcam_content.visible else "▼"

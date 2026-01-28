@@ -104,7 +104,7 @@ text = "Solid Color:"
 
 [node name="ColorPicker" type="ColorPickerButton" parent="MarginContainer/VBoxContainer/TabContainer/Background/VBoxContainer"]
 layout_mode = 2
-color = Color(0.2, 0.2, 0.25, 1)
+color = Color(0, 1, 0, 1)
 
 [node name="HSeparator3" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Background/VBoxContainer"]
 layout_mode = 2
