@@ -231,15 +231,28 @@ jobs:
       
       - name: Install Android Build Template
         run: |
-          # Extract Android build template from export templates
+          # List what's available in export templates
+          echo "Contents of export templates directory:"
+          ls -la ~/.local/share/godot/export_templates/4.6.stable/
+          
+          # Try to find and extract Android build template
           mkdir -p android/build
-          if [ -f ~/.local/share/godot/export_templates/4.6.stable/android_source.zip ]; then
-            unzip -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build/
-            echo "✓ Android source template extracted"
+          TEMPLATE_DIR=~/.local/share/godot/export_templates/4.6.stable
+          
+          # Check for android_source.zip (Godot 4.x standard)
+          if [ -f "$TEMPLATE_DIR/android_source.zip" ]; then
+            echo "Found android_source.zip"
+            unzip -q "$TEMPLATE_DIR/android_source.zip" -d android/build/
+            echo "✓ Android source template extracted from android_source.zip"
+          # Check for alternative locations/names
+          elif [ -f "$TEMPLATE_DIR/android_debug.apk" ] && [ -f "$TEMPLATE_DIR/android_release.apk" ]; then
+            echo "✓ Found pre-built Android templates (android_debug.apk and android_release.apk)"
+            echo "Note: Using pre-built templates, gradle build may use these"
           else
-            echo "✗ android_source.zip not found in export templates"
-            ls -la ~/.local/share/godot/export_templates/4.6.stable/
-            exit 1
+            echo "⚠ No Android build template found"
+            echo "Godot may download it automatically during export"
+            echo "Contents:"
+            ls -la "$TEMPLATE_DIR/" || true
           fi
       
       - name: Setup Android SDK
@@ -287,7 +300,19 @@ jobs:
         run: |
           mkdir -p builds/android
           echo "Starting Android export..."
-          godot --headless --verbose --export-debug "Android" builds/android/${EXPORT_NAME}.apk
+          echo "Using export preset: Android"
+          echo "Target path: builds/android/${EXPORT_NAME}.apk"
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          
+          # Run export with detailed output
+          godot --headless --verbose --export-debug "Android" builds/android/${EXPORT_NAME}.apk 2>&1 | tee android_export.log
+          
+          # Show the last 50 lines of output for debugging
+          echo ""
+          echo "=== Last 50 lines of export output ==="
+          tail -n 50 android_export.log || true
+          
+          echo ""
           echo "Export command completed"
       
       - name: Verify APK
@@ -310,3 +335,10 @@ jobs:
         with:
           name: android
           path: builds/android/${EXPORT_NAME}.apk
+      
+      - name: Upload Export Log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-export-log
+          path: android_export.log
