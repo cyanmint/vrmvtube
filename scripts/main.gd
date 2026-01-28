@@ -125,10 +125,20 @@ func _load_vrm_model(path: String) -> void:
 		current_vrm_instance.queue_free()
 		current_vrm_instance = null
 	
-	# Load VRM model
-	var loaded_scene = load(path)
+	# Load VRM model - handle both res:// and external paths
+	var loaded_scene: Node = null
+	
+	if path.begins_with("res://"):
+		# Internal resource - use standard load
+		var packed_scene = load(path)
+		if packed_scene != null:
+			loaded_scene = packed_scene.instantiate()
+	else:
+		# External file - use runtime GLTF/VRM loading
+		loaded_scene = _load_vrm_runtime(path)
+	
 	if loaded_scene != null:
-		current_vrm_instance = loaded_scene.instantiate()
+		current_vrm_instance = loaded_scene
 		model_container.add_child(current_vrm_instance)
 		
 		# Position the model in the container - centered and scaled appropriately
@@ -250,6 +260,40 @@ func _update_vrm_materials(node: Node) -> void:
 	# Recursively process children
 	for child in node.get_children():
 		_update_vrm_materials(child)
+
+func _load_vrm_runtime(path: String) -> Node:
+	"""Load VRM file at runtime using GLTFDocument (for external files)"""
+	print("Runtime VRM loading from: ", path)
+	
+	# Create GLTF document and state
+	var gltf := GLTFDocument.new()
+	var state := GLTFState.new()
+	
+	# Register VRM extension for proper VRM support
+	const vrm_extension_script = preload("res://addons/vrm/vrm_extension.gd")
+	var vrm_extension: GLTFDocumentExtension = vrm_extension_script.new()
+	gltf.register_gltf_document_extension(vrm_extension, true)
+	
+	# Configure state for VRM loading
+	state.handle_binary_image = GLTFState.HANDLE_BINARY_EMBED_AS_UNCOMPRESSED
+	
+	# Load the VRM file
+	var error := gltf.append_from_file(path, state, 0)
+	if error != OK:
+		push_error("Failed to parse VRM file: " + str(error))
+		gltf.unregister_gltf_document_extension(vrm_extension)
+		return null
+	
+	# Generate the scene
+	var generated_scene := gltf.generate_scene(state)
+	gltf.unregister_gltf_document_extension(vrm_extension)
+	
+	if generated_scene == null:
+		push_error("Failed to generate scene from VRM file")
+		return null
+	
+	print("VRM runtime loading successful")
+	return generated_scene
 
 func _on_settings_button_pressed() -> void:
 	"""Open settings menu"""
