@@ -23,12 +23,13 @@ jobs:
           lfs: true
           submodules: recursive
       
-      - name: Setup
+      - name: Setup Export Templates
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
-          # Copy templates if they exist in /root (container default location)
+          # The container has templates at /root/.local/share/godot/export_templates/4.3-stable
+          # but Godot expects them at 4.3.stable (dot instead of hyphen)
           if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}" ]; then
-            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/4.3.stable
           fi
       
       - name: Import resources
@@ -58,12 +59,11 @@ jobs:
           lfs: true
           submodules: recursive
       
-      - name: Setup
+      - name: Setup Export Templates
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
-          # Copy templates if they exist in /root (container default location)
           if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}" ]; then
-            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/4.3.stable
           fi
       
       - name: Import resources
@@ -93,12 +93,11 @@ jobs:
           lfs: true
           submodules: recursive
       
-      - name: Setup
+      - name: Setup Export Templates
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
-          # Copy templates if they exist in /root (container default location)
           if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}" ]; then
-            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/4.3.stable
           fi
       
       - name: Import resources
@@ -128,12 +127,11 @@ jobs:
           lfs: true
           submodules: recursive
       
-      - name: Setup
+      - name: Setup Export Templates
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
-          # Copy templates if they exist in /root (container default location)
           if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}" ]; then
-            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/4.3.stable
           fi
       
       - name: Import resources
@@ -163,12 +161,11 @@ jobs:
           lfs: true
           submodules: recursive
       
-      - name: Setup
+      - name: Setup Export Templates
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
-          # Copy templates if they exist in /root (container default location)
           if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}" ]; then
-            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/4.3.stable
           fi
       
       - name: Setup Android SDK
@@ -179,13 +176,39 @@ jobs:
           # Install Android SDK
           mkdir -p /root/android-sdk/cmdline-tools
           cd /root/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip commandlinetools-linux-9477386_latest.zip
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q commandlinetools-linux-9477386_latest.zip
           mv cmdline-tools latest
           
           # Accept licenses and install build tools
           yes | /root/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          /root/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-33" "cmdline-tools;latest" "cmake;3.22.1" "ndk;23.2.8568313"
+          /root/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.2" "platforms;android-33" "cmdline-tools;latest" "cmake;3.22.1" "ndk;23.2.8568313"
+          
+          # Set environment variables for Godot
+          export ANDROID_SDK_ROOT=/root/android-sdk
+          export ANDROID_HOME=/root/android-sdk
+      
+      - name: Configure Godot Editor Settings for Android
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/editor_settings-4.tres << EOL
+[gd_resource type="EditorSettings" format=3]
+
+[resource]
+export/android/android_sdk_path = "/root/android-sdk"
+export/android/debug_keystore = "/root/.android/debug.keystore"
+export/android/debug_keystore_user = "androiddebugkey"
+export/android/debug_keystore_pass = "android"
+export/android/force_system_user = false
+export/android/shutdown_adb_on_exit = true
+export/android/one_click_deploy_clear_previous_install = false
+EOL
+          
+          # Create debug keystore
+          mkdir -p ~/.android
+          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android \
+            -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
       
       - name: Import resources
         run: |
@@ -194,13 +217,10 @@ jobs:
       - name: Android Build
         run: |
           mkdir -v -p builds/android
-          # Note: Android builds require proper keystore setup
-          # For CI, we skip signing or use debug keystore
-          godot --headless --verbose --export-debug "Android" ./builds/android/VRMVTube.apk || true
+          godot --headless --verbose --export-debug "Android" ./builds/android/VRMVTube.apk
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: android
           path: builds/android
-        if: success() || failure()
