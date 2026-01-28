@@ -138,12 +138,16 @@ func _load_vrm_model(path: String) -> void:
 			current_vrm_instance.scale = Vector3(1, 1, 1)
 		
 		# IMPORTANT: Ensure materials and textures are preserved
-		# The VRM importer should handle this, but we need to make sure
-		# the scene is fully processed
+		# Wait for the scene tree to fully process the node
 		await get_tree().process_frame
+		await get_tree().process_frame  # Extra frame wait for material loading
 		
 		# Force material update on all meshes
+		print("Updating VRM materials...")
 		_update_vrm_materials(current_vrm_instance)
+		
+		# Wait one more frame after material update
+		await get_tree().process_frame
 		
 		# Connect model to face rigging
 		if face_rigging:
@@ -190,16 +194,58 @@ func _on_scale_changed(value: float) -> void:
 		scale_value.text = "%.2f" % value
 
 func _update_vrm_materials(node: Node) -> void:
-	"""Recursively update materials on VRM model to ensure textures load"""
+	"""Recursively update materials on VRM model to ensure textures and shaders load properly"""
 	if node is MeshInstance3D:
 		var mesh_instance := node as MeshInstance3D
 		if mesh_instance.mesh:
-			# Force material update
+			print("Updating materials for mesh: ", node.name)
+			# Force material update on all surfaces
 			for i in range(mesh_instance.mesh.get_surface_count()):
 				var material := mesh_instance.mesh.surface_get_material(i)
 				if material:
-					# Trigger material update
-					mesh_instance.set_surface_override_material(i, material)
+					# Strategy 1: Duplicate the material to force a refresh
+					# This ensures shader and textures are properly loaded
+					var duplicated_material := material.duplicate(true)  # Deep duplicate
+					
+					# Strategy 2: Force visibility and transparency settings
+					if duplicated_material is StandardMaterial3D:
+						# For standard materials, ensure flags are set correctly
+						var std_mat := duplicated_material as StandardMaterial3D
+						std_mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+						std_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+						std_mat.vertex_color_use_as_albedo = false
+						# Ensure albedo is visible
+						if std_mat.albedo_color.a < 1.0:
+							std_mat.albedo_color.a = 1.0
+					elif duplicated_material is ShaderMaterial:
+						# For shader materials (like MToon), force parameter refresh
+						var shader_mat := duplicated_material as ShaderMaterial
+						if shader_mat.shader:
+							print("  - Shader material found: ", shader_mat.shader.resource_path if shader_mat.shader.resource_path else "inline shader")
+							
+							# For MToon shader, ensure alpha/transparency is set correctly
+							# Check for common transparency parameters
+							var param_names := ["_alpha", "alpha", "_Alpha", "transparency", "_Cutoff"]
+							for param in param_names:
+								if shader_mat.get_shader_parameter(param) != null:
+									var current_val = shader_mat.get_shader_parameter(param)
+									# If alpha/transparency exists, ensure it's visible
+									if current_val is float and current_val < 0.9:
+										shader_mat.set_shader_parameter(param, 1.0)
+										print("  - Set ", param, " to 1.0 (was ", current_val, ")")
+							
+							# Force shader refresh
+							var current_shader := shader_mat.shader
+							shader_mat.shader = null
+							shader_mat.shader = current_shader
+					
+					# Strategy 3: Apply the duplicated material as override
+					mesh_instance.set_surface_override_material(i, duplicated_material)
+					
+					# Strategy 4: Also set it on the mesh directly as fallback
+					mesh_instance.mesh.surface_set_material(i, duplicated_material)
+					
+					print("  - Surface ", i, " material updated: ", material.get_class())
 	
 	# Recursively process children
 	for child in node.get_children():
