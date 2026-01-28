@@ -35,6 +35,9 @@ func _initialize_camera() -> void:
 	"""Initialize webcam access using Godot's CameraServer"""
 	var camera_server := CameraServer
 	
+	# Enable camera feed monitoring
+	camera_server.set_monitoring_feeds(true)
+	
 	# Check if cameras are available
 	var feed_count := camera_server.get_feed_count()
 	print("WebcamTracker: Found ", feed_count, " camera feed(s)")

@@ -102,9 +102,21 @@ func _apply_blend_shapes() -> void:
 		var value: float = current_blend_shapes[key]
 		
 		# Try to find and set the blend shape
-		var blend_shape_idx: int = mesh.find_blend_shape_by_name(vrm_name)
+		var blend_shape_idx: int = _find_blend_shape_index(mesh, vrm_name)
 		if blend_shape_idx >= 0:
 			mesh_instance.set_blend_shape_value(blend_shape_idx, value)
+
+func _find_blend_shape_index(mesh: Mesh, shape_name: String) -> int:
+	"""Find blend shape index by name"""
+	if not mesh:
+		return -1
+	
+	var blend_shape_count: int = mesh.get_blend_shape_count()
+	for i in range(blend_shape_count):
+		if mesh.get_blend_shape_name(i) == shape_name:
+			return i
+	
+	return -1
 
 func _apply_head_rotation() -> void:
 	"""Apply head rotation to appropriate bones"""
