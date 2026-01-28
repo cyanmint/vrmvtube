@@ -41,6 +41,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="SidebarCollapseTab" type="Button" parent="UI/Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -30.0
+offset_top = 10.0
+offset_right = -5.0
+offset_bottom = 60.0
+grow_horizontal = 0
+text = "◀"
+
 [node name="RightPanel" type="VBoxContainer" parent="UI/Control"]
 layout_mode = 1
 anchors_preset = 1
@@ -52,6 +65,30 @@ offset_right = -10.0
 offset_bottom = 10.0
 grow_horizontal = 0
 theme_override_constants/separation = 10
+
+[node name="SidebarHeader" type="PanelContainer" parent="UI/Control/RightPanel"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/SidebarHeader"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/Control/RightPanel/SidebarHeader/MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "HUD Panels"
+horizontal_alignment = 1
+
+[node name="SidebarCollapseButton" type="Button" parent="UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "▶"
+flat = true
 
 [node name="TitlePanel" type="PanelContainer" parent="UI/Control/RightPanel"]
 layout_mode = 2

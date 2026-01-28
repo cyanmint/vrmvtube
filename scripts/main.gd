@@ -13,6 +13,7 @@ extends Node3D
 const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
 
 var current_vrm_instance: Node = null
+var sidebar_collapsed := false
 
 @onready var info_label: Label = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/InfoLabel
 @onready var platform_info: Label = $UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer/PlatformInfo
@@ -33,6 +34,9 @@ var current_vrm_instance: Node = null
 @onready var scale_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleValue
 @onready var settings_menu: Window = $SettingsMenu
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var right_panel: VBoxContainer = $UI/Control/RightPanel
+@onready var sidebar_collapse_button: Button = $UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer/SidebarCollapseButton
+@onready var sidebar_collapse_tab: Button = $UI/Control/SidebarCollapseTab
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -71,6 +75,10 @@ func _ready() -> void:
 	# Connect collapse buttons
 	if webcam_collapse_button:
 		webcam_collapse_button.pressed.connect(_on_webcam_collapse_pressed)
+	if sidebar_collapse_button:
+		sidebar_collapse_button.pressed.connect(_on_sidebar_collapse_pressed)
+	if sidebar_collapse_tab:
+		sidebar_collapse_tab.pressed.connect(_on_sidebar_expand_pressed)
 	
 	# Load default VRM model - use call_deferred to ensure scene is ready
 	if FileAccess.file_exists(DEFAULT_VRM_PATH):
@@ -347,3 +355,21 @@ func _on_webcam_collapse_pressed() -> void:
 		webcam_content.visible = not webcam_content.visible
 		if webcam_collapse_button:
 			webcam_collapse_button.text = "▲" if not webcam_content.visible else "▼"
+
+func _on_sidebar_collapse_pressed() -> void:
+	"""Collapse the entire sidebar"""
+	sidebar_collapsed = true
+	if right_panel:
+		right_panel.visible = false
+	if sidebar_collapse_tab:
+		sidebar_collapse_tab.visible = true
+	print("Sidebar collapsed")
+
+func _on_sidebar_expand_pressed() -> void:
+	"""Expand the sidebar"""
+	sidebar_collapsed = false
+	if right_panel:
+		right_panel.visible = true
+	if sidebar_collapse_tab:
+		sidebar_collapse_tab.visible = false
+	print("Sidebar expanded")
