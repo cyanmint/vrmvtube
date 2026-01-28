@@ -148,7 +148,7 @@ func _on_reset_pose_button_pressed() -> void:
 func _on_position_y_changed(value: float) -> void:
 	"""Update model Y position"""
 	if current_vrm_instance and current_vrm_instance is Node3D:
-		var new_pos := current_vrm_instance.position
+		var new_pos: Vector3 = current_vrm_instance.position
 		new_pos.y = value
 		current_vrm_instance.position = new_pos
 	if position_y_value:
