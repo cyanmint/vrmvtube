@@ -6,6 +6,35 @@ All reported issues have been successfully resolved! ✅
 
 ---
 
+## Issues Fixed
+
+### Latest: CameraServer API Error (Line 62)
+
+**The error:**
+```
+第 62 行：Too many arguments for "add_feed()" call. Expected at most 1 but received 3.
+第 62 行：Invalid argument for "add_feed()" function: argument 1 should be "CameraFeed" but is "String".
+```
+
+**What was wrong:**
+Using Godot 3.x API in Godot 4.x:
+```gdscript
+camera_server.add_feed("Webcam", CameraServer.FEED_RGBA_IMAGE, 0)  // Wrong API!
+```
+
+**What I fixed:**
+Removed the incorrect call. In Godot 4.x:
+- Camera feeds are auto-detected on mobile/web
+- We just check `get_feed_count()` to see if they exist
+- No need to manually add feeds
+
+**Result:**
+- ✅ No more compilation errors
+- ✅ Code works on Godot 4.x
+- ✅ Proper API usage
+
+---
+
 ## Issues from Screenshot
 
 Based on your screenshot showing the app stuck with "Initializing..." status, the following problems have been fixed:
