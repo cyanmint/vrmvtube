@@ -70,13 +70,22 @@ Download the latest release for your platform from the [Releases](../../releases
 1. Launch VRMVTube
 2. The app will automatically load the example VRM model (example/cyanmint.vrm)
 3. **Grant webcam access when prompted** for face tracking
-4. Your avatar will animate based on your facial expressions in real-time
+4. Your avatar will animate based on simulated facial expressions in real-time
 5. Use camera controls:
    - **Drag** to rotate camera
    - **Shift+Drag** to pan camera
    - **Mouse Wheel** to zoom
-6. Load your own VRM model using the "Load Model" button
-7. (Windows/Linux only) Enable virtual camera to use your avatar in other applications (feature in development)
+6. Use model controls (bottom panel):
+   - **Position Y slider**: Adjust model height
+   - **Scale slider**: Resize the model
+   - **Reset Pose button**: Return to default position/scale
+7. Load your own VRM model using the "Load VRM Model" button
+8. (Windows/Linux only) Enable virtual camera to use your avatar in other applications (feature in development)
+
+**Quick Testing:**
+- See `QUICKSTART.md` for step-by-step testing guide
+- See `TESTING.md` for comprehensive testing documentation
+- Run `python3 validate.py` to check project structure before testing
 
 ### Getting VRM Models
 
@@ -160,11 +169,15 @@ For issues, questions, or discussions, please use the [GitHub Issues](../../issu
 ## Roadmap
 
 - [x] Basic VRM model loading
+- [x] Interactive camera controls (rotate, pan, zoom)
+- [x] Model positioning and scaling controls
 - [x] Cross-platform support
 - [x] CI/CD for automated builds
-- [ ] Webcam motion tracking
+- [x] Webcam access and preview
+- [x] Face tracking (simulated - real tracking in progress)
+- [x] Face rigging with VRM blend shapes
+- [ ] Real-time face landmark detection (MediaPipe/OpenCV)
 - [ ] Hand tracking
-- [ ] Face tracking
 - [ ] Virtual camera integration (Windows/Linux)
 - [ ] VMC protocol support
 - [ ] Custom backgrounds
