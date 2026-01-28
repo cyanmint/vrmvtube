@@ -14,18 +14,18 @@ const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
 
 var current_vrm_instance: Node = null
 
-@onready var info_label: Label = $UI/Control/VBoxContainer/InfoLabel
-@onready var platform_info: Label = $UI/Control/BottomPanel/PlatformInfo
+@onready var info_label: Label = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/InfoLabel
+@onready var platform_info: Label = $UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
-@onready var webcam_texture_rect: TextureRect = $UI/Control/WebcamPreviewPanel/MarginContainer/VBoxContainer/WebcamTextureRect
-@onready var webcam_status_label: Label = $UI/Control/WebcamPreviewPanel/MarginContainer/VBoxContainer/StatusLabel
-@onready var model_controls_panel: PanelContainer = $UI/Control/ModelControlsPanel
-@onready var position_y_slider: HSlider = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
-@onready var position_y_value: Label = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
-@onready var scale_slider: HSlider = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleSlider
-@onready var scale_value: Label = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleValue
+@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/WebcamTextureRect
+@onready var webcam_status_label: Label = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/StatusLabel
+@onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ModelControlsPanel
+@onready var position_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
+@onready var position_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
+@onready var scale_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleSlider
+@onready var scale_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleValue
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -146,7 +146,9 @@ func _on_reset_pose_button_pressed() -> void:
 func _on_position_y_changed(value: float) -> void:
 	"""Update model Y position"""
 	if current_vrm_instance and current_vrm_instance is Node3D:
-		current_vrm_instance.position.y = value
+		var new_pos := current_vrm_instance.position
+		new_pos.y = value
+		current_vrm_instance.position = new_pos
 	if position_y_value:
 		position_y_value.text = "%.2f" % value
 

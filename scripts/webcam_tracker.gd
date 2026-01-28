@@ -114,8 +114,11 @@ func _update_simulated_tracking() -> void:
 	mouth_open = (sin(time * 2.0) + 1.0) * 0.2
 	
 	# Simulate slight head rotation
-	head_rotation.y = sin(time * 0.5) * 0.1
-	head_rotation.x = cos(time * 0.7) * 0.05
+	head_rotation = Vector3(
+		cos(time * 0.7) * 0.05,
+		sin(time * 0.5) * 0.1,
+		0.0
+	)
 	
 	var tracking_data := {
 		"head_rotation": head_rotation,
