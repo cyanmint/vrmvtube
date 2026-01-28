@@ -119,13 +119,16 @@ func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
 	var file_dialog = $FileDialog
 	
-	# Android scoped storage - use app data directory
+	# Android scoped storage - use external app data directory
 	if OS.get_name() == "Android":
-		var app_data_path = OS.get_user_data_dir()
-		if not app_data_path.is_empty():
-			file_dialog.current_dir = app_data_path
-			file_dialog.current_path = app_data_path
-			print("Android: File picker set to app data dir: ", app_data_path)
+		# Use external storage app directory: /storage/emulated/0/Android/data/com.vrmvtube.app/files/
+		var app_data_path = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
+		if app_data_path.is_empty() or app_data_path.begins_with("/data/data/"):
+			# Fallback: construct the external storage path manually
+			app_data_path = "/storage/emulated/0/Android/data/com.vrmvtube.app/files"
+		file_dialog.current_dir = app_data_path
+		file_dialog.current_path = app_data_path
+		print("Android: File picker set to external storage: ", app_data_path)
 	
 	file_dialog.popup_centered()
 
