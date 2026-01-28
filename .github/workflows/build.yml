@@ -1,0 +1,191 @@
+name: Build VRMVTube
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.3-stable
+
+jobs:
+  export-windows:
+    name: Windows Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+      
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/${GODOT_VERSION}
+      
+      - name: Import resources
+        run: |
+          godot --headless --verbose --editor --quit
+      
+      - name: Windows Build
+        run: |
+          mkdir -v -p builds/windows
+          godot --headless --verbose --export-release "Windows" ./builds/windows/VRMVTube.exe
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: builds/windows
+
+  export-linux:
+    name: Linux Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+      
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/${GODOT_VERSION}
+      
+      - name: Import resources
+        run: |
+          godot --headless --verbose --editor --quit
+      
+      - name: Linux Build
+        run: |
+          mkdir -v -p builds/linux
+          godot --headless --verbose --export-release "Linux" ./builds/linux/VRMVTube.x86_64
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: builds/linux
+
+  export-macos:
+    name: macOS Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+      
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/${GODOT_VERSION}
+      
+      - name: Import resources
+        run: |
+          godot --headless --verbose --editor --quit
+      
+      - name: macOS Build
+        run: |
+          mkdir -v -p builds/macos
+          godot --headless --verbose --export-release "macOS" ./builds/macos/VRMVTube.zip
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: builds/macos
+
+  export-web:
+    name: Web Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+      
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/${GODOT_VERSION}
+      
+      - name: Import resources
+        run: |
+          godot --headless --verbose --editor --quit
+      
+      - name: Web Build
+        run: |
+          mkdir -v -p builds/web
+          godot --headless --verbose --export-release "Web" ./builds/web/index.html
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: builds/web
+
+  export-android:
+    name: Android Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+      
+      - name: Setup
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION} ~/.local/share/godot/export_templates/${GODOT_VERSION}
+      
+      - name: Setup Android SDK
+        run: |
+          apt-get update
+          apt-get install -y openjdk-17-jdk wget unzip
+          
+          # Install Android SDK
+          mkdir -p /root/android-sdk/cmdline-tools
+          cd /root/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip commandlinetools-linux-9477386_latest.zip
+          mv cmdline-tools latest
+          
+          # Accept licenses and install build tools
+          yes | /root/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          /root/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-33" "cmdline-tools;latest" "cmake;3.22.1" "ndk;23.2.8568313"
+      
+      - name: Import resources
+        run: |
+          godot --headless --verbose --editor --quit
+      
+      - name: Android Build
+        run: |
+          mkdir -v -p builds/android
+          # Note: Android builds require proper keystore setup
+          # For CI, we skip signing or use debug keystore
+          godot --headless --verbose --export-debug "Android" ./builds/android/VRMVTube.apk || true
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: builds/android
+        if: success() || failure()
