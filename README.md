@@ -44,13 +44,11 @@ VRMVTube is a VTubing application similar to [VRigUnity](https://github.com/Kari
    cd vrmvtube
    ```
 
-2. Download the default VRM model (optional but recommended):
+2. (Optional) Add a default VRM model:
    ```bash
-   # Download the default cyanmint VRM model
-   # Note: This URL may require special access or VPN
-   wget -O models/cyanmint.vrm https://t.gro-w.org/Gau6XuzVJW/cyanmint.vrm1.0.vrm
-   
-   # Alternatively, use your own VRM model
+   # Place your VRM model in the models directory
+   # Name it 'default.vrm' for automatic loading on startup
+   cp /path/to/your/model.vrm models/default.vrm
    ```
 
 3. Open the project in Godot 4.3+
@@ -68,18 +66,18 @@ Download the latest release for your platform from the [Releases](../../releases
 ## Usage
 
 1. Launch VRMVTube
-2. If you downloaded the default model, it will load automatically
-3. Or load your own VRM model using the "Load Model" button
+2. If you placed a `default.vrm` in the models directory, it will load automatically
+3. Otherwise, load your own VRM model using the "Load Model" button
 4. Allow webcam access when prompted (feature in development)
 5. Your avatar will animate based on your movements (feature in development)
 6. (Windows/Linux only) Enable virtual camera to use your avatar in other applications (feature in development)
 
-### Default VRM Model
+### Getting VRM Models
 
-The default VRM model is available at:
-https://t.gro-w.org/Gau6XuzVJW/cyanmint.vrm1.0.vrm
-
-Save it as `models/cyanmint.vrm` for automatic loading on startup.
+You can get VRM models from:
+- **VRoid Hub**: https://hub.vroid.com/ (many free models)
+- **VRoid Studio**: https://vroid.com/studio (create your own)
+- Or purchase from creators on various platforms
 
 ## Building from Source
 

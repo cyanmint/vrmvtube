@@ -9,7 +9,7 @@ extends Node3D
 ## - VRM loading powered by godot-vrm (MIT License, V-Sekai)
 ## - Inspired by VRigUnity by Kariaro
 
-const DEFAULT_VRM_PATH := "res://models/cyanmint.vrm"
+const DEFAULT_VRM_PATH := "res://models/default.vrm"
 
 var current_vrm_instance: Node = null
 
@@ -28,8 +28,8 @@ func _ready() -> void:
 		print("Loading default VRM model...")
 		_load_vrm_model(DEFAULT_VRM_PATH)
 	else:
-		print("Default VRM model not found at: ", DEFAULT_VRM_PATH)
-		print("Download from: https://t.gro-w.org/Gau6XuzVJW/cyanmint.vrm1.0.vrm")
+		print("No default VRM model found at: ", DEFAULT_VRM_PATH)
+		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
