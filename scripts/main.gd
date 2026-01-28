@@ -121,14 +121,22 @@ func _on_load_model_button_pressed() -> void:
 	
 	# Android scoped storage - use external app data directory
 	if OS.get_name() == "Android":
-		# Use external storage app directory: /storage/emulated/0/Android/data/com.vrmvtube.app/files/
-		var app_data_path = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)
+		# Get external storage using Android API
+		var app_data_path = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
+		
+		# Check if we got a valid external storage path
 		if app_data_path.is_empty() or app_data_path.begins_with("/data/data/"):
-			# Fallback: construct the external storage path manually
-			app_data_path = "/storage/emulated/0/Android/data/com.vrmvtube.app/files"
+			# Try getting the external storage directory and construct app path
+			var external_storage = OS.get_environment("EXTERNAL_STORAGE")
+			if not external_storage.is_empty():
+				app_data_path = external_storage + "/Android/data/com.vrmvtube.app/files"
+			else:
+				# Last resort: use user data dir (may not be user-accessible)
+				app_data_path = OS.get_user_data_dir()
+		
 		file_dialog.current_dir = app_data_path
 		file_dialog.current_path = app_data_path
-		print("Android: File picker set to external storage: ", app_data_path)
+		print("Android: File picker set to: ", app_data_path)
 	
 	file_dialog.popup_centered()
 
