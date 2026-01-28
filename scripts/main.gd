@@ -67,17 +67,19 @@ func _on_webcam_available(available: bool) -> void:
 	"""Handle webcam availability status"""
 	if available:
 		print("Main: Webcam is available and tracking is active")
-		info_label.text = "Webcam tracking active. " + info_label.text.split(". ")[-1] if ". " in info_label.text else info_label.text
-		webcam_status_label.text = "Tracking Active"
+		info_label.text = "Webcam tracking active.\n" + info_label.text.split("\n")[-1] if "\n" in info_label.text else info_label.text
+		webcam_status_label.text = "Webcam Active"
 		
 		# Set webcam texture to preview
 		var camera_texture = webcam_tracker.get_camera_texture()
 		if camera_texture:
 			webcam_texture_rect.texture = camera_texture
 	else:
-		push_warning("Main: Webcam is not available. Face tracking disabled.")
-		info_label.text = "No webcam found. " + info_label.text
-		webcam_status_label.text = "No Webcam"
+		push_warning("Main: Webcam is not available. Using simulated face tracking.")
+		info_label.text = "Simulated tracking active.\n" + info_label.text.split("\n")[-1] if "\n" in info_label.text else info_label.text
+		webcam_status_label.text = "Simulated Tracking"
+		# Show a placeholder image or keep the texture rect empty
+		webcam_texture_rect.texture = null
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""

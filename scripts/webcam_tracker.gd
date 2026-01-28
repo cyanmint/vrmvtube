@@ -33,18 +33,38 @@ func _ready() -> void:
 
 func _initialize_camera() -> void:
 	"""Initialize webcam access using Godot's CameraServer"""
+	print("WebcamTracker: Attempting camera initialization...")
+	
+	# Note: Godot's CameraServer has limited support on desktop platforms
+	# It works better on mobile (Android/iOS) and web platforms
+	# For desktop, we'll emit a warning and continue with simulated tracking
+	
+	var platform := OS.get_name()
+	if platform in ["Windows", "Linux", "macOS", "X11"]:
+		push_warning("WebcamTracker: Desktop webcam access limited in Godot 4.x")
+		push_warning("WebcamTracker: Using simulated tracking data")
+		push_warning("WebcamTracker: For real webcam tracking, use MediaPipe or OpenCV plugin")
+		
+		# Continue with simulated tracking
+		webcam_available.emit(false)
+		tracking_active = true
+		print("WebcamTracker: Simulated face tracking started")
+		return
+	
+	# For mobile/web platforms, try to use CameraServer
 	var camera_server := CameraServer
+	camera_server.add_feed("Webcam", CameraServer.FEED_RGBA_IMAGE, 0)
 	
-	# Enable camera feed monitoring
-	camera_server.set_monitoring_feeds(true)
+	# Wait a frame for initialization
+	await get_tree().process_frame
 	
-	# Check if cameras are available
 	var feed_count := camera_server.get_feed_count()
 	print("WebcamTracker: Found ", feed_count, " camera feed(s)")
 	
 	if feed_count == 0:
-		push_warning("WebcamTracker: No camera feeds available")
+		push_warning("WebcamTracker: No camera feeds available, using simulated tracking")
 		webcam_available.emit(false)
+		tracking_active = true
 		return
 	
 	# Get the first available camera feed
@@ -53,21 +73,16 @@ func _initialize_camera() -> void:
 		print("WebcamTracker: Using camera: ", camera_feed.get_name())
 		camera_texture = CameraTexture.new()
 		camera_texture.camera_feed_id = camera_feed.get_id()
-		
-		# Activate the camera
-		if camera_feed.is_active():
-			print("WebcamTracker: Camera already active")
-		else:
-			camera_feed.set_active(true)
-			print("WebcamTracker: Camera activated")
+		camera_texture.camera_is_active = true
 		
 		webcam_available.emit(true)
 		
 		if enable_tracking:
 			_start_tracking()
 	else:
-		push_error("WebcamTracker: Failed to get camera feed")
+		push_warning("WebcamTracker: Failed to get camera feed, using simulated tracking")
 		webcam_available.emit(false)
+		tracking_active = true
 
 func _start_tracking() -> void:
 	"""Start face tracking"""

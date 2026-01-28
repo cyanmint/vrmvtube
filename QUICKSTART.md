@@ -123,10 +123,23 @@ FaceRigging: Mesh has X blend shapes
 ### Issue: No webcam preview
 
 **Solution:**
-- Ensure webcam is connected
-- Grant permissions when prompted
-- Check if webcam works in other apps
-- Check console for "WebcamTracker" errors
+- **Expected on Desktop:** Godot 4.x has limited webcam support on Windows/macOS/Linux
+- The app will show "Simulated Tracking" status - this is normal
+- Face tracking still works (using simulated data)
+- Real webcam support requires MediaPipe/OpenCV integration (future feature)
+- See TROUBLESHOOTING.md for full details
+
+### Issue: VRM textures missing/broken
+
+**Solution:**
+- Go to **Project → Project Settings → Plugins**
+- Ensure **both** plugins are enabled:
+  - ✅ VRM
+  - ✅ MToon Shader (critical for textures!)
+- Close Project Settings
+- Right-click the VRM file → Reimport
+- Restart the scene (F6)
+- See TROUBLESHOOTING.md for more solutions
 
 ### Issue: No face animation
 

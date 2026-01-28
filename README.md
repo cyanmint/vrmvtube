@@ -85,7 +85,12 @@ Download the latest release for your platform from the [Releases](../../releases
 **Quick Testing:**
 - See `QUICKSTART.md` for step-by-step testing guide
 - See `TESTING.md` for comprehensive testing documentation
+- See `TROUBLESHOOTING.md` for common issues and solutions
 - Run `python3 validate.py` to check project structure before testing
+
+**Known Issues:**
+- **Desktop Webcam:** Godot 4.x has limited webcam support on Windows/macOS/Linux. The app uses simulated tracking instead. See TROUBLESHOOTING.md for details.
+- **VRM Textures:** Ensure both VRM and MToon Shader plugins are enabled in Project Settings → Plugins
 
 ### Getting VRM Models
 
