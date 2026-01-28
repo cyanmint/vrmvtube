@@ -233,7 +233,14 @@ jobs:
         run: |
           # Extract Android build template from export templates
           mkdir -p android/build
-          unzip -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build/ || echo "Android source template extracted"
+          if [ -f ~/.local/share/godot/export_templates/4.6.stable/android_source.zip ]; then
+            unzip -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build/
+            echo "✓ Android source template extracted"
+          else
+            echo "✗ android_source.zip not found in export templates"
+            ls -la ~/.local/share/godot/export_templates/4.6.stable/
+            exit 1
+          fi
       
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -247,7 +254,12 @@ jobs:
       - name: Create Debug Keystore
         run: |
           mkdir -p ~/.android
-          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || echo "Keystore already exists"
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            echo "✓ Debug keystore created"
+          else
+            echo "✓ Debug keystore already exists"
+          fi
       
       - name: Configure Godot Editor Settings
         run: |
@@ -266,16 +278,35 @@ jobs:
           EOF
       
       - name: Import Resources
-        run: godot --headless --verbose --editor --quit || echo "Import completed"
+        run: |
+          echo "Importing project resources..."
+          godot --headless --verbose --editor --quit
+          echo "✓ Import completed"
       
       - name: Build Android
         run: |
           mkdir -p builds/android
-          godot --headless --verbose --export-debug "Android" builds/android/${EXPORT_NAME}.apk || echo "Android export attempted"
+          echo "Starting Android export..."
+          godot --headless --verbose --export-debug "Android" builds/android/${EXPORT_NAME}.apk
+          echo "Export command completed"
+      
+      - name: Verify APK
+        run: |
+          echo "Checking builds/android directory..."
+          ls -lah builds/android/ || echo "Directory not found"
+          if [ -f "builds/android/${EXPORT_NAME}.apk" ]; then
+            echo "✓ APK file created successfully"
+            echo "  Size: $(du -h builds/android/${EXPORT_NAME}.apk | cut -f1)"
+          else
+            echo "✗ APK file was not created"
+            echo "Contents of builds directory:"
+            find builds -type f || echo "No files found"
+            exit 1
+          fi
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: android
-          path: builds/android
-        if: always()
+          path: builds/android/${EXPORT_NAME}.apk
