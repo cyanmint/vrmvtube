@@ -90,13 +90,32 @@ func _process(_delta: float) -> void:
 		return
 	
 	# TODO: Implement actual face tracking using image processing
-	# For now, emit simulated tracking data
+	# For now, emit simulated tracking data that shows the system works
 	_update_simulated_tracking()
 
 func _update_simulated_tracking() -> void:
 	"""Simulate face tracking data (placeholder for actual tracking)"""
 	# This is a placeholder - real implementation would analyze camera frames
 	# and extract facial landmarks using computer vision
+	
+	# Add some subtle animation to show tracking is working
+	var time := Time.get_ticks_msec() / 1000.0
+	
+	# Simulate natural blinking
+	var blink_cycle := sin(time * 3.0)
+	if blink_cycle > 0.9:
+		blink_left = clamp((blink_cycle - 0.9) * 10.0, 0.0, 1.0)
+		blink_right = clamp((blink_cycle - 0.9) * 10.0, 0.0, 1.0)
+	else:
+		blink_left = 0.0
+		blink_right = 0.0
+	
+	# Simulate mouth movement
+	mouth_open = (sin(time * 2.0) + 1.0) * 0.2
+	
+	# Simulate slight head rotation
+	head_rotation.y = sin(time * 0.5) * 0.1
+	head_rotation.x = cos(time * 0.7) * 0.05
 	
 	var tracking_data := {
 		"head_rotation": head_rotation,

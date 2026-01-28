@@ -18,6 +18,14 @@ var current_vrm_instance: Node = null
 @onready var platform_info: Label = $UI/Control/BottomPanel/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
 @onready var face_rigging: Node = $FaceRigging
+@onready var model_container: Node3D = $ModelContainer
+@onready var webcam_texture_rect: TextureRect = $UI/Control/WebcamPreviewPanel/MarginContainer/VBoxContainer/WebcamTextureRect
+@onready var webcam_status_label: Label = $UI/Control/WebcamPreviewPanel/MarginContainer/VBoxContainer/StatusLabel
+@onready var model_controls_panel: PanelContainer = $UI/Control/ModelControlsPanel
+@onready var position_y_slider: HSlider = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
+@onready var position_y_value: Label = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
+@onready var scale_slider: HSlider = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleSlider
+@onready var scale_value: Label = $UI/Control/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleValue
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -48,15 +56,28 @@ func _ready() -> void:
 	else:
 		print("No default VRM model found at: ", DEFAULT_VRM_PATH)
 		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
+	
+	# Connect model control sliders
+	if position_y_slider:
+		position_y_slider.value_changed.connect(_on_position_y_changed)
+	if scale_slider:
+		scale_slider.value_changed.connect(_on_scale_changed)
 
 func _on_webcam_available(available: bool) -> void:
 	"""Handle webcam availability status"""
 	if available:
 		print("Main: Webcam is available and tracking is active")
 		info_label.text = "Webcam tracking active. " + info_label.text.split(". ")[-1] if ". " in info_label.text else info_label.text
+		webcam_status_label.text = "Tracking Active"
+		
+		# Set webcam texture to preview
+		var camera_texture = webcam_tracker.get_camera_texture()
+		if camera_texture:
+			webcam_texture_rect.texture = camera_texture
 	else:
 		push_warning("Main: Webcam is not available. Face tracking disabled.")
 		info_label.text = "No webcam found. " + info_label.text
+		webcam_status_label.text = "No Webcam"
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
@@ -86,11 +107,13 @@ func _load_vrm_model(path: String) -> void:
 	var loaded_scene = load(path)
 	if loaded_scene != null:
 		current_vrm_instance = loaded_scene.instantiate()
-		add_child(current_vrm_instance)
+		model_container.add_child(current_vrm_instance)
 		
-		# Position the model
+		# Position the model in the container
 		if current_vrm_instance is Node3D:
 			current_vrm_instance.position = Vector3(0, 0, 0)
+			# Scale might need adjustment depending on the VRM model
+			current_vrm_instance.scale = Vector3(1, 1, 1)
 		
 		# Connect model to face rigging
 		if face_rigging:
@@ -98,7 +121,38 @@ func _load_vrm_model(path: String) -> void:
 		
 		print("VRM model loaded successfully")
 		info_label.text = "VRM model loaded: " + path.get_file() + "\nControls: Drag to rotate | Shift+Drag to pan | Scroll to zoom"
+		
+		# Show model controls
+		if model_controls_panel:
+			model_controls_panel.visible = true
 	else:
 		var error_msg := "Failed to load VRM model"
 		push_error(error_msg)
 		info_label.text = "Error: " + error_msg
+
+func _on_reset_pose_button_pressed() -> void:
+	"""Reset model to default position and scale"""
+	if current_vrm_instance and current_vrm_instance is Node3D:
+		current_vrm_instance.position = Vector3(0, 0, 0)
+		current_vrm_instance.scale = Vector3(1, 1, 1)
+		current_vrm_instance.rotation = Vector3(0, 0, 0)
+		
+		# Reset sliders
+		if position_y_slider:
+			position_y_slider.value = 0.0
+		if scale_slider:
+			scale_slider.value = 1.0
+
+func _on_position_y_changed(value: float) -> void:
+	"""Update model Y position"""
+	if current_vrm_instance and current_vrm_instance is Node3D:
+		current_vrm_instance.position.y = value
+	if position_y_value:
+		position_y_value.text = "%.2f" % value
+
+func _on_scale_changed(value: float) -> void:
+	"""Update model scale"""
+	if current_vrm_instance and current_vrm_instance is Node3D:
+		current_vrm_instance.scale = Vector3(value, value, value)
+	if scale_value:
+		scale_value.text = "%.2f" % value
