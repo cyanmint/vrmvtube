@@ -43,25 +43,34 @@ func _ready() -> void:
 		print("Virtual camera is NOT supported on this platform")
 		vcam_support = " (Virtual Camera: Not Supported)"
 	
-	platform_info.text = "Platform: " + platform_name + vcam_support
+	if platform_info:
+		platform_info.text = "Platform: " + platform_name + vcam_support
+	else:
+		push_error("Platform info label not found!")
 	
-	# Connect webcam tracker signals
+	# Connect webcam tracker signals BEFORE it initializes
 	if webcam_tracker:
 		webcam_tracker.webcam_available.connect(_on_webcam_available)
-	
-	# Try to load default VRM model if it exists
-	if FileAccess.file_exists(DEFAULT_VRM_PATH):
-		print("Loading default VRM model...")
-		_load_vrm_model(DEFAULT_VRM_PATH)
+		print("Main: Connected to webcam signals")
 	else:
-		print("No default VRM model found at: ", DEFAULT_VRM_PATH)
-		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
+		push_error("WebcamTracker node not found!")
 	
 	# Connect model control sliders
 	if position_y_slider:
 		position_y_slider.value_changed.connect(_on_position_y_changed)
 	if scale_slider:
 		scale_slider.value_changed.connect(_on_scale_changed)
+	
+	# Load default VRM model - use call_deferred to ensure scene is ready
+	if FileAccess.file_exists(DEFAULT_VRM_PATH):
+		print("Loading default VRM model...")
+		call_deferred("_load_vrm_model", DEFAULT_VRM_PATH)
+	else:
+		print("No default VRM model found at: ", DEFAULT_VRM_PATH)
+		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
+		# Set info label to show instructions
+		if info_label:
+			info_label.text = "No model loaded.\nUse 'Load VRM Model' button\nDrag to rotate | Shift+Drag to pan | Scroll to zoom"
 
 func _on_webcam_available(available: bool) -> void:
 	"""Handle webcam availability status"""

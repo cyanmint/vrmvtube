@@ -29,7 +29,8 @@ var smile: float = 0.0
 
 func _ready() -> void:
 	print("WebcamTracker: Initializing for platform: ", OS.get_name())
-	_initialize_camera()
+	# Use call_deferred to ensure signals can be connected first
+	call_deferred("_initialize_camera")
 
 func _initialize_camera() -> void:
 	"""Initialize webcam access using Godot's CameraServer"""
@@ -46,12 +47,17 @@ func _initialize_camera() -> void:
 		push_warning("WebcamTracker: For real webcam tracking, use MediaPipe or OpenCV plugin")
 		
 		# Continue with simulated tracking
-		webcam_available.emit(false)
 		tracking_active = true
 		print("WebcamTracker: Simulated face tracking started")
+		# Emit signal to notify main
+		webcam_available.emit(false)
 		return
 	
 	# For mobile/web platforms, try to use CameraServer
+	_initialize_camera_async()
+
+func _initialize_camera_async() -> void:
+	"""Async initialization for mobile/web platforms"""
 	var camera_server := CameraServer
 	camera_server.add_feed("Webcam", CameraServer.FEED_RGBA_IMAGE, 0)
 	
