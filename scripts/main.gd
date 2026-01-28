@@ -26,6 +26,8 @@ var current_vrm_instance: Node = null
 @onready var position_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
 @onready var scale_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleSlider
 @onready var scale_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleValue
+@onready var settings_menu: Window = $SettingsMenu
+@onready var world_environment: WorldEnvironment = $WorldEnvironment
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -126,6 +128,14 @@ func _load_vrm_model(path: String) -> void:
 			# Scale might need adjustment depending on the VRM model
 			current_vrm_instance.scale = Vector3(1, 1, 1)
 		
+		# IMPORTANT: Ensure materials and textures are preserved
+		# The VRM importer should handle this, but we need to make sure
+		# the scene is fully processed
+		await get_tree().process_frame
+		
+		# Force material update on all meshes
+		_update_vrm_materials(current_vrm_instance)
+		
 		# Connect model to face rigging
 		if face_rigging:
 			face_rigging.set_vrm_model(current_vrm_instance)
@@ -169,3 +179,65 @@ func _on_scale_changed(value: float) -> void:
 		current_vrm_instance.scale = Vector3(value, value, value)
 	if scale_value:
 		scale_value.text = "%.2f" % value
+
+func _update_vrm_materials(node: Node) -> void:
+	"""Recursively update materials on VRM model to ensure textures load"""
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh:
+			# Force material update
+			for i in range(mesh_instance.mesh.get_surface_count()):
+				var material := mesh_instance.mesh.surface_get_material(i)
+				if material:
+					# Trigger material update
+					mesh_instance.set_surface_override_material(i, material)
+	
+	# Recursively process children
+	for child in node.get_children():
+		_update_vrm_materials(child)
+
+func _on_settings_button_pressed() -> void:
+	"""Open settings menu"""
+	if settings_menu:
+		settings_menu.show_settings()
+
+func _on_settings_applied(settings: Dictionary) -> void:
+	"""Apply settings from settings menu"""
+	print("Settings applied: ", settings)
+	
+	# Apply model settings
+	if settings.has("model") and settings.model.has("path"):
+		var model_path: String = settings.model.path
+		if model_path != "" and model_path != DEFAULT_VRM_PATH:
+			if current_vrm_instance == null or model_path != current_vrm_instance.get("vrm_path"):
+				_load_vrm_model(model_path)
+	
+	# Apply background settings
+	if settings.has("background"):
+		_apply_background_settings(settings.background)
+	
+	# Camera settings are handled by webcam_tracker
+
+func _apply_background_settings(bg_settings: Dictionary) -> void:
+	"""Apply background color/type settings"""
+	if not world_environment or not world_environment.environment:
+		return
+	
+	var env := world_environment.environment
+	
+	match bg_settings.get("type", "solid"):
+		"solid":
+			env.background_mode = Environment.BG_COLOR
+			if bg_settings.has("color"):
+				env.background_color = bg_settings.color
+		"gradient":
+			# Godot doesn't have built-in gradient background
+			# Use solid color for now (could implement custom sky shader)
+			env.background_mode = Environment.BG_COLOR
+			if bg_settings.has("gradient_top"):
+				env.background_color = bg_settings.gradient_top
+		"image":
+			if bg_settings.has("image_path") and bg_settings.image_path != "":
+				# Would need to load image and set as sky
+				# For now, keep current background
+				pass
