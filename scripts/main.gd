@@ -117,7 +117,17 @@ func _on_webcam_available(available: bool) -> void:
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
-	$FileDialog.popup_centered()
+	var file_dialog = $FileDialog
+	
+	# Android scoped storage - use app data directory
+	if OS.get_name() == "Android":
+		var app_data_path = OS.get_user_data_dir()
+		if not app_data_path.is_empty():
+			file_dialog.current_dir = app_data_path
+			file_dialog.current_path = app_data_path
+			print("Android: File picker set to app data dir: ", app_data_path)
+	
+	file_dialog.popup_centered()
 
 func _on_file_selected(path: String) -> void:
 	"""Load the selected VRM model"""
