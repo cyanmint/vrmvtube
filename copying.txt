@@ -1,7 +1,23 @@
 copyright waiver and voided warranty notice:
-this project is basically created by the github copilot.
+this project is basically created by github copilot.
 ai generated contents are neither subject to copyright
 nor covered by any warranty.
+
 for anything in this repo which might be copyrightable:
 copyright 2025-2026 cyan mint <cyanmint@outlook.com>
 this project is licensed under the cc0 1.0 universal.
+
+code and content created by github copilot:
+- project structure and godot configuration (project.godot, export_presets.cfg)
+- main scene and ui (scenes/main.tscn)
+- gdscript files (scripts/main.gd, scripts/camera_controller.gd)
+- github actions workflows (.github/workflows/build.yml)
+- documentation (README.md, CONTRIBUTING.md, .github/copilot-instructions.md)
+- models directory structure and documentation
+
+dependencies (retain their original licenses):
+- godot-vrm (MIT License) - Copyright (c) 2020-2021 V-Sekai Contributors
+- MToon Shader (MIT License) - Copyright (c) 2018 Masataka SUMI
+- Godot Engine (MIT License) - Copyright (c) 2007-2021 Juan Linietsky, Ariel Manzur
+
+full text of cc0 1.0 universal: https://creativecommons.org/publicdomain/zero/1.0/legalcode

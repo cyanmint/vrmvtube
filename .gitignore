@@ -1,0 +1,52 @@
+# Godot 4+ specific ignores
+.godot/
+.import/
+
+# Godot-specific ignores
+*.translation
+*.import
+*.bak
+
+# Mono-specific ignores
+.mono/
+data_*/
+mono_crash.*.json
+
+# Build artifacts
+builds/
+*.exe
+*.apk
+*.zip
+*.x86_64
+*.dmg
+*.app
+
+# Android build template (will be installed by CI)
+android/build/
+
+# System/tool-specific ignores
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# Temporary files
+/tmp/
+*.tmp
