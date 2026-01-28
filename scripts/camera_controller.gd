@@ -53,15 +53,15 @@ func _input(event: InputEvent) -> void:
 	# Mouse motion
 	elif event is InputEventMouseMotion:
 		if _is_rotating:
-			var delta := event.position - _last_mouse_position
+			var delta: Vector2 = event.position - _last_mouse_position
 			_camera_rotation.x -= delta.x * rotation_speed * 0.01
 			_camera_rotation.y = clamp(_camera_rotation.y - delta.y * rotation_speed * 0.01, -PI/2 + 0.1, PI/2 - 0.1)
 			_last_mouse_position = event.position
 			_update_camera_transform()
 		elif _is_panning:
-			var delta := event.position - _last_mouse_position
-			var right := global_transform.basis.x
-			var up := global_transform.basis.y
+			var delta: Vector2 = event.position - _last_mouse_position
+			var right: Vector3 = global_transform.basis.x
+			var up: Vector3 = global_transform.basis.y
 			_pan_offset -= right * delta.x * pan_speed
 			_pan_offset += up * delta.y * pan_speed
 			_last_mouse_position = event.position

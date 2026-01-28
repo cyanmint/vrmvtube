@@ -95,14 +95,14 @@ func _apply_blend_shapes() -> void:
 	
 	# Apply each blend shape
 	for key in current_blend_shapes.keys():
-		var vrm_name := BLEND_SHAPES.get(key, "")
+		var vrm_name: String = BLEND_SHAPES.get(key, "")
 		if vrm_name.is_empty():
 			continue
 		
-		var value := current_blend_shapes[key]
+		var value: float = current_blend_shapes[key]
 		
 		# Try to find and set the blend shape
-		var blend_shape_idx := mesh.find_blend_shape_by_name(vrm_name)
+		var blend_shape_idx: int = mesh.find_blend_shape_by_name(vrm_name)
 		if blend_shape_idx >= 0:
 			mesh_instance.set_blend_shape_value(blend_shape_idx, value)
 
