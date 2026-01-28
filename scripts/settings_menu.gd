@@ -318,11 +318,11 @@ func _save_settings() -> void:
 	
 	# Save background settings (convert Color to array for serialization)
 	config.set_value("background", "type", current_settings.background.type)
-	var color := current_settings.background.color
+	var color: Color = current_settings.background.color
 	config.set_value("background", "color", [color.r, color.g, color.b, color.a])
-	var gt := current_settings.background.gradient_top
+	var gt: Color = current_settings.background.gradient_top
 	config.set_value("background", "gradient_top", [gt.r, gt.g, gt.b, gt.a])
-	var gb := current_settings.background.gradient_bottom
+	var gb: Color = current_settings.background.gradient_bottom
 	config.set_value("background", "gradient_bottom", [gb.r, gb.g, gb.b, gb.a])
 	config.set_value("background", "image_path", current_settings.background.image_path)
 	
