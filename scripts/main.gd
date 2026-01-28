@@ -37,6 +37,10 @@ var sidebar_collapsed := false
 @onready var right_panel: VBoxContainer = $UI/Control/RightPanel
 @onready var sidebar_collapse_button: Button = $UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer/SidebarCollapseButton
 @onready var sidebar_collapse_tab: Button = $UI/Control/SidebarCollapseTab
+@onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/MetadataPanel
+@onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
+@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -79,6 +83,8 @@ func _ready() -> void:
 		sidebar_collapse_button.pressed.connect(_on_sidebar_collapse_pressed)
 	if sidebar_collapse_tab:
 		sidebar_collapse_tab.pressed.connect(_on_sidebar_expand_pressed)
+	if metadata_collapse_button:
+		metadata_collapse_button.pressed.connect(_on_metadata_collapse_pressed)
 	
 	# Load default VRM model - use call_deferred to ensure scene is ready
 	if FileAccess.file_exists(DEFAULT_VRM_PATH):
@@ -177,12 +183,17 @@ func _load_vrm_model(path: String) -> void:
 		if face_rigging:
 			face_rigging.set_vrm_model(current_vrm_instance)
 		
+		# Extract and display metadata
+		_update_metadata_display(current_vrm_instance)
+		
 		print("VRM model loaded successfully")
 		info_label.text = "VRM model loaded: " + path.get_file() + "\nControls: Drag to rotate | Shift+Drag to pan | Scroll to zoom"
 		
-		# Show model controls
+		# Show model controls and metadata
 		if model_controls_panel:
 			model_controls_panel.visible = true
+		if metadata_panel:
+			metadata_panel.visible = true
 	else:
 		var error_msg := "Failed to load VRM model"
 		push_error(error_msg)
@@ -379,3 +390,93 @@ func _on_sidebar_expand_pressed() -> void:
 	if sidebar_collapse_tab:
 		sidebar_collapse_tab.visible = false
 	print("Sidebar expanded")
+
+func _on_metadata_collapse_pressed() -> void:
+	"""Toggle metadata panel collapse"""
+	if metadata_content:
+		metadata_content.visible = not metadata_content.visible
+		if metadata_collapse_button:
+			metadata_collapse_button.text = "▲" if not metadata_content.visible else "▼"
+
+func _update_metadata_display(vrm_node: Node) -> void:
+	"""Extract and display VRM metadata"""
+	if not metadata_label:
+		return
+	
+	# Find VRM metadata node
+	var vrm_meta = null
+	for child in vrm_node.get_children():
+		if child.has_meta("vrm_meta"):
+			vrm_meta = child.get_meta("vrm_meta")
+			break
+		# Also check if the child itself has vrm_meta property
+		if "vrm_meta" in child:
+			vrm_meta = child.vrm_meta
+			break
+	
+	# Try to find in the root node as well
+	if vrm_meta == null and vrm_node.has_meta("vrm_meta"):
+		vrm_meta = vrm_node.get_meta("vrm_meta")
+	if vrm_meta == null and "vrm_meta" in vrm_node:
+		vrm_meta = vrm_node.vrm_meta
+	
+	# Build metadata display
+	var metadata_text := ""
+	
+	if vrm_meta:
+		metadata_text += "[b]VRM Metadata[/b]\n\n"
+		
+		# Basic info
+		if vrm_meta.get("title"):
+			metadata_text += "[b]Title:[/b] " + str(vrm_meta.title) + "\n"
+		if vrm_meta.get("version"):
+			metadata_text += "[b]Version:[/b] " + str(vrm_meta.version) + "\n"
+		if vrm_meta.get("authors") and vrm_meta.authors.size() > 0:
+			metadata_text += "[b]Author:[/b] " + ", ".join(vrm_meta.authors) + "\n"
+		elif vrm_meta.get("author"):
+			metadata_text += "[b]Author:[/b] " + str(vrm_meta.author) + "\n"
+		
+		# Contact and reference
+		if vrm_meta.get("contact_information"):
+			metadata_text += "[b]Contact:[/b] " + str(vrm_meta.contact_information) + "\n"
+		if vrm_meta.get("references") and vrm_meta.references.size() > 0:
+			metadata_text += "[b]References:[/b] " + ", ".join(vrm_meta.references) + "\n"
+		
+		metadata_text += "\n[b]Permissions:[/b]\n"
+		
+		# Usage permissions
+		if vrm_meta.get("allowed_user_name") and vrm_meta.allowed_user_name != " ":
+			metadata_text += "• User: " + str(vrm_meta.allowed_user_name) + "\n"
+		if vrm_meta.get("commercial_usage_type") and vrm_meta.commercial_usage_type != " ":
+			metadata_text += "• Commercial: " + str(vrm_meta.commercial_usage_type) + "\n"
+		if vrm_meta.get("violent_usage") and vrm_meta.violent_usage != " ":
+			metadata_text += "• Violent Content: " + str(vrm_meta.violent_usage) + "\n"
+		if vrm_meta.get("sexual_usage") and vrm_meta.sexual_usage != " ":
+			metadata_text += "• Sexual Content: " + str(vrm_meta.sexual_usage) + "\n"
+		if vrm_meta.get("credit_notation") and vrm_meta.credit_notation != " ":
+			metadata_text += "• Credit: " + str(vrm_meta.credit_notation) + "\n"
+		if vrm_meta.get("modification") and vrm_meta.modification != " ":
+			metadata_text += "• Modification: " + str(vrm_meta.modification) + "\n"
+		if vrm_meta.get("allow_redistribution") and vrm_meta.allow_redistribution != " ":
+			metadata_text += "• Redistribution: " + str(vrm_meta.allow_redistribution) + "\n"
+		
+		# License info
+		metadata_text += "\n[b]License:[/b]\n"
+		if vrm_meta.get("license_name"):
+			metadata_text += "• " + str(vrm_meta.license_name) + "\n"
+		if vrm_meta.get("license_url"):
+			metadata_text += "• URL: " + str(vrm_meta.license_url) + "\n"
+		if vrm_meta.get("other_license_url"):
+			metadata_text += "• Other: " + str(vrm_meta.other_license_url) + "\n"
+		
+		# Technical info
+		metadata_text += "\n[b]Technical Info:[/b]\n"
+		if vrm_meta.get("spec_version"):
+			metadata_text += "• VRM Spec: " + str(vrm_meta.spec_version) + "\n"
+		if vrm_meta.get("exporter_version"):
+			metadata_text += "• Exporter: " + str(vrm_meta.exporter_version) + "\n"
+	else:
+		metadata_text = "[b]Model Metadata[/b]\n\nNo VRM metadata found in this model.\n\nThis may be because:\n• Model is not a standard VRM file\n• Metadata was not included by the creator\n• Model was exported without metadata"
+	
+	metadata_label.text = metadata_text
+	print("Metadata display updated")
