@@ -2,6 +2,24 @@
 
 This guide helps resolve common issues with VRMVTube.
 
+## Recent Fixes (January 28, 2026)
+
+**✅ All initialization timing issues have been fixed!**
+
+If you were experiencing these problems, they should now be resolved:
+- ✅ Webcam stuck on "Initializing..." → Now shows "Simulated Tracking"
+- ✅ Model not loading on startup → Now loads automatically
+- ✅ "Load VRM Model" button not working → Now functional
+- ✅ Platform showing "Unknown" → Now shows correct OS
+
+**See `BUGFIXES.md` for detailed information about what was fixed.**
+
+If you're still experiencing these issues after updating to commit `d1c24cc` or later:
+1. Close and restart Godot
+2. Clear cache: Delete `.godot/` folder and reopen project
+3. Verify plugins are enabled (VRM + MToon Shader)
+4. Check console for error messages
+
 ## Webcam Issues
 
 ### Issue: "Found 0 camera feed(s)" on Windows/Desktop
