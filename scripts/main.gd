@@ -131,11 +131,11 @@ func _load_vrm_model(path: String) -> void:
 		current_vrm_instance = loaded_scene.instantiate()
 		model_container.add_child(current_vrm_instance)
 		
-		# Position the model in the container
+		# Position the model in the container - centered and scaled appropriately
 		if current_vrm_instance is Node3D:
-			current_vrm_instance.position = Vector3(0, 0, 0)
-			# Scale might need adjustment depending on the VRM model
-			current_vrm_instance.scale = Vector3(1, 1, 1)
+			current_vrm_instance.position = Vector3(0, -0.5, 0)  # Lower position for better centering
+			# Scale larger for better visibility (1.5x default)
+			current_vrm_instance.scale = Vector3(1.5, 1.5, 1.5)
 		
 		# IMPORTANT: Ensure materials and textures are preserved
 		# Wait for the scene tree to fully process the node
@@ -167,15 +167,15 @@ func _load_vrm_model(path: String) -> void:
 func _on_reset_pose_button_pressed() -> void:
 	"""Reset model to default position and scale"""
 	if current_vrm_instance and current_vrm_instance is Node3D:
-		current_vrm_instance.position = Vector3(0, 0, 0)
-		current_vrm_instance.scale = Vector3(1, 1, 1)
+		current_vrm_instance.position = Vector3(0, -0.5, 0)
+		current_vrm_instance.scale = Vector3(1.5, 1.5, 1.5)
 		current_vrm_instance.rotation = Vector3(0, 0, 0)
 		
-		# Reset sliders
+		# Reset sliders to match default values
 		if position_y_slider:
-			position_y_slider.value = 0.0
+			position_y_slider.value = -0.5
 		if scale_slider:
-			scale_slider.value = 1.0
+			scale_slider.value = 1.5
 
 func _on_position_y_changed(value: float) -> void:
 	"""Update model Y position"""

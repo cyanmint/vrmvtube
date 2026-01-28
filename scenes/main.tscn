@@ -183,11 +183,11 @@ size_flags_vertical = 4
 min_value = -2.0
 max_value = 2.0
 step = 0.01
-value = 0.0
+value = -0.5
 
 [node name="PositionYValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
 layout_mode = 2
-text = "0.00"
+text = "-0.50"
 
 [node name="ScaleLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -208,11 +208,11 @@ size_flags_vertical = 4
 min_value = 0.5
 max_value = 2.0
 step = 0.01
-value = 1.0
+value = 1.5
 
 [node name="ScaleValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer"]
 layout_mode = 2
-text = "1.00"
+text = "1.50"
 
 [node name="BottomPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
 layout_mode = 2
