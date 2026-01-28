@@ -13,15 +13,26 @@ const DEFAULT_VRM_PATH := "res://models/default.vrm"
 
 var current_vrm_instance: Node = null
 
+@onready var info_label: Label = $UI/Control/VBoxContainer/InfoLabel
+@onready var platform_info: Label = $UI/Control/BottomPanel/PlatformInfo
+
 func _ready() -> void:
 	print("VRMVTube started")
 	print("Platform: ", OS.get_name())
 	
+	# Update platform info in UI
+	var platform_name := OS.get_name()
+	var vcam_support := ""
+	
 	# Check virtual camera support
-	if OS.get_name() in ["Windows", "Linux", "X11"]:
+	if platform_name in ["Windows", "Linux", "X11"]:
 		print("Virtual camera is supported on this platform")
+		vcam_support = " (Virtual Camera: Supported)"
 	else:
 		print("Virtual camera is NOT supported on this platform")
+		vcam_support = " (Virtual Camera: Not Supported)"
+	
+	platform_info.text = "Platform: " + platform_name + vcam_support
 	
 	# Try to load default VRM model if it exists
 	if FileAccess.file_exists(DEFAULT_VRM_PATH):
@@ -42,9 +53,12 @@ func _on_file_selected(path: String) -> void:
 func _load_vrm_model(path: String) -> void:
 	"""Internal function to load a VRM model from path"""
 	print("Loading VRM model from: ", path)
+	info_label.text = "Loading VRM model..."
 	
 	if not FileAccess.file_exists(path):
-		push_error("VRM file not found: " + path)
+		var error_msg := "VRM file not found: " + path
+		push_error(error_msg)
+		info_label.text = "Error: " + error_msg
 		return
 	
 	# Remove previous model if exists
@@ -65,5 +79,8 @@ func _load_vrm_model(path: String) -> void:
 			current_vrm_instance.position = Vector3(0, 0, 0)
 		
 		print("VRM model loaded successfully")
+		info_label.text = "VRM model loaded: " + path.get_file()
 	else:
-		push_error("Failed to load VRM model")
+		var error_msg := "Failed to load VRM model"
+		push_error(error_msg)
+		info_label.text = "Error: " + error_msg
