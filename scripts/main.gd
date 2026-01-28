@@ -128,10 +128,16 @@ func _load_vrm_model(path: String) -> void:
 		info_label.text = "Error: " + error_msg
 		return
 	
-	# Remove previous model if exists
+	# Remove previous model if exists - IMMEDIATE removal
 	if current_vrm_instance != null:
+		print("Removing previous VRM model...")
+		# Remove from scene tree immediately
+		model_container.remove_child(current_vrm_instance)
+		# Free the node
 		current_vrm_instance.queue_free()
 		current_vrm_instance = null
+		# Wait for cleanup to complete
+		await get_tree().process_frame
 	
 	# Load VRM model - handle both res:// and external paths
 	var loaded_scene: Node = null
