@@ -5,6 +5,7 @@ extends Node3D
 ## This script handles loading VRM models and basic scene setup.
 ## Based on V-Sekai's implementation and inspired by VRigUnity.
 ##
+## Created by: GitHub Copilot
 ## Credits:
 ## - VRM loading powered by godot-vrm (MIT License, V-Sekai)
 ## - Inspired by VRigUnity by Kariaro

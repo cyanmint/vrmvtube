@@ -7,6 +7,7 @@ extends Camera3D
 ## - Shift + Mouse drag to pan
 ## - Mouse wheel to zoom
 ##
+## Created by: GitHub Copilot
 ## Credits:
 ## - Inspired by VRigUnity camera controls
 

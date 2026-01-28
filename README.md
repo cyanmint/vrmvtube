@@ -131,13 +131,13 @@ This project is licensed under the **CC0 1.0 Universal** license.
 
 Copyright 2025-2026 cyan mint <cyanmint@outlook.com>
 
-See [copying.txt](copying.txt) for the full license text.
+Code and content created by GitHub Copilot. See [copying.txt](copying.txt) for details.
 
 **Note:** While this project itself is CC0, the dependencies listed above retain their original licenses (primarily MIT). When distributing this software, ensure compliance with all dependency licenses.
 
 ## AI Generation Notice
 
-This project was created with assistance from GitHub Copilot. AI-generated content is neither subject to copyright nor covered by any warranty. See [copying.txt](copying.txt) for details.
+This project was created by GitHub Copilot. AI-generated content is neither subject to copyright nor covered by any warranty. See [copying.txt](copying.txt) for details.
 
 ## Contributing
 

@@ -2,9 +2,9 @@ name: Build VRMVTube
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ default, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ default ]
   workflow_dispatch:
 
 env:
