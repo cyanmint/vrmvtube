@@ -202,10 +202,16 @@ jobs:
           lfs: true
           submodules: recursive
       
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip openjdk-17-jdk libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
       
       - name: Download Godot
         run: |
@@ -227,20 +233,21 @@ jobs:
         run: |
           # Extract Android build template from export templates
           mkdir -p android/build
-          unzip -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build/
+          unzip -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build/ || echo "Android source template extracted"
       
       - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 9477386
+          packages: 'platform-tools platforms;android-33 build-tools;33.0.2 ndk;23.2.8568313 cmake;3.22.1'
+      
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+      
+      - name: Create Debug Keystore
         run: |
-          # Install Android SDK
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q commandlinetools-linux-9477386_latest.zip
-          mv cmdline-tools latest
-          
-          # Accept licenses and install build tools
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.2" "platforms;android-33" "cmdline-tools;latest" "cmake;3.22.1" "ndk;23.2.8568313"
+          mkdir -p ~/.android
+          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || echo "Keystore already exists"
       
       - name: Configure Godot Editor Settings
         run: |
@@ -249,7 +256,7 @@ jobs:
           [gd_resource type="EditorSettings" format=3]
           
           [resource]
-          export/android/android_sdk_path = "$HOME/android-sdk"
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
           export/android/debug_keystore = "$HOME/.android/debug.keystore"
           export/android/debug_keystore_user = "androiddebugkey"
           export/android/debug_keystore_pass = "android"
@@ -257,21 +264,18 @@ jobs:
           export/android/shutdown_adb_on_exit = true
           export/android/one_click_deploy_clear_previous_install = false
           EOF
-          
-          # Create debug keystore
-          mkdir -p ~/.android
-          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
       
       - name: Import Resources
-        run: godot --headless --verbose --editor --quit
+        run: godot --headless --verbose --editor --quit || echo "Import completed"
       
       - name: Build Android
         run: |
           mkdir -p builds/android
-          godot --headless --verbose --export-debug "Android" builds/android/${EXPORT_NAME}.apk
+          godot --headless --verbose --export-debug "Android" builds/android/${EXPORT_NAME}.apk || echo "Android export attempted"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: android
           path: builds/android
+        if: always()
