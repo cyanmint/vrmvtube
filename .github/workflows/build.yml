@@ -223,6 +223,12 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
         working-directory: /tmp
       
+      - name: Install Android Build Template
+        run: |
+          # Extract Android build template from export templates
+          mkdir -p android/build
+          unzip -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build/
+      
       - name: Setup Android SDK
         run: |
           # Install Android SDK

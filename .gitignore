@@ -21,6 +21,9 @@ builds/
 *.dmg
 *.app
 
+# Android build template (will be installed by CI)
+android/build/
+
 # System/tool-specific ignores
 .DS_Store
 .DS_Store?
