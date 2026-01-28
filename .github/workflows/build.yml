@@ -275,13 +275,13 @@ jobs:
           mkdir -p builds/android
           echo "Starting Android export..."
           echo "Using export preset: Android"
-          echo "Target path: builds/android/${EXPORT_NAME}.apk"
+          echo "Target path: builds/android/VRMVTube.apk"
           echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
           echo "Java version:"
           java -version
           
           # Run export with detailed output
-          godot --headless --verbose --export-debug "Android" builds/android/${EXPORT_NAME}.apk 2>&1 | tee android_export.log
+          godot --headless --verbose --export-debug "Android" builds/android/VRMVTube.apk 2>&1 | tee android_export.log
           
           # Capture export result
           export_result=$?
@@ -294,6 +294,11 @@ jobs:
           echo ""
           echo "Export command completed with exit code: $export_result"
           
+          # Check what files were created
+          echo ""
+          echo "=== Files in builds/android ==="
+          ls -lah builds/android/ || echo "Directory is empty or doesn't exist"
+          
           # Exit with same code as godot export
           exit $export_result
       
@@ -301,13 +306,22 @@ jobs:
         run: |
           echo "Checking builds/android directory..."
           ls -lah builds/android/ || echo "Directory not found"
-          if [ -f "builds/android/${EXPORT_NAME}.apk" ]; then
+          
+          # Check for APK file (might have different name than expected)
+          if [ -f "builds/android/VRMVTube.apk" ]; then
             echo "✓ APK file created successfully"
-            echo "  Size: $(du -h builds/android/${EXPORT_NAME}.apk | cut -f1)"
+            echo "  Size: $(du -h builds/android/VRMVTube.apk | cut -f1)"
           else
-            echo "✗ APK file was not created"
+            echo "✗ Expected APK file (VRMVTube.apk) was not created"
+            echo ""
+            echo "Looking for any APK files..."
+            find builds/android -name "*.apk" -exec ls -lh {} \; || echo "No APK files found"
+            echo ""
             echo "Contents of builds directory:"
             find builds -type f || echo "No files found"
+            echo ""
+            echo "Checking export log for errors..."
+            grep -i "error\|fail\|warning" android_export.log | tail -n 20 || echo "No errors found in log"
             exit 1
           fi
       
@@ -316,7 +330,7 @@ jobs:
         if: success()
         with:
           name: android
-          path: builds/android/${EXPORT_NAME}.apk
+          path: builds/android/VRMVTube.apk
       
       - name: Upload Export Log
         uses: actions/upload-artifact@v4
