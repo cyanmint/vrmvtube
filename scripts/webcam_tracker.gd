@@ -59,9 +59,12 @@ func _initialize_camera() -> void:
 func _initialize_camera_async() -> void:
 	"""Async initialization for mobile/web platforms"""
 	var camera_server := CameraServer
-	camera_server.add_feed("Webcam", CameraServer.FEED_RGBA_IMAGE, 0)
 	
-	# Wait a frame for initialization
+	# In Godot 4.x, we need to check for existing feeds or create one
+	# CameraServer.add_feed() expects a CameraFeed object
+	# For mobile/web, feeds are usually auto-detected
+	
+	# Wait a frame for camera system to initialize
 	await get_tree().process_frame
 	
 	var feed_count := camera_server.get_feed_count()
