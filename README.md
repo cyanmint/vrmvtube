@@ -12,7 +12,9 @@ VRMVTube is a VTubing application similar to [VRigUnity](https://github.com/Kari
 **Key Features:**
 - VRM model support (VRM 0.x and 1.0)
 - Cross-platform support: Windows, macOS, Linux, Android, and Web
-- Webcam-based motion tracking
+- **Webcam-based face tracking (all platforms)**
+- **Real-time face rigging with VRM blend shapes**
+- Interactive camera controls (drag, pan, zoom)
 - Virtual camera output (Windows and Linux only)
 - Real-time avatar rendering with MToon shader
 
@@ -66,11 +68,15 @@ Download the latest release for your platform from the [Releases](../../releases
 ## Usage
 
 1. Launch VRMVTube
-2. If you placed a `default.vrm` in the models directory, it will load automatically
-3. Otherwise, load your own VRM model using the "Load Model" button
-4. Allow webcam access when prompted (feature in development)
-5. Your avatar will animate based on your movements (feature in development)
-6. (Windows/Linux only) Enable virtual camera to use your avatar in other applications (feature in development)
+2. The app will automatically load the example VRM model (example/cyanmint.vrm)
+3. **Grant webcam access when prompted** for face tracking
+4. Your avatar will animate based on your facial expressions in real-time
+5. Use camera controls:
+   - **Drag** to rotate camera
+   - **Shift+Drag** to pan camera
+   - **Mouse Wheel** to zoom
+6. Load your own VRM model using the "Load Model" button
+7. (Windows/Linux only) Enable virtual camera to use your avatar in other applications (feature in development)
 
 ### Getting VRM Models
 

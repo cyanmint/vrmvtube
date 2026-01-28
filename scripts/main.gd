@@ -16,6 +16,8 @@ var current_vrm_instance: Node = null
 
 @onready var info_label: Label = $UI/Control/VBoxContainer/InfoLabel
 @onready var platform_info: Label = $UI/Control/BottomPanel/PlatformInfo
+@onready var webcam_tracker: Node = $WebcamTracker
+@onready var face_rigging: Node = $FaceRigging
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -35,6 +37,10 @@ func _ready() -> void:
 	
 	platform_info.text = "Platform: " + platform_name + vcam_support
 	
+	# Connect webcam tracker signals
+	if webcam_tracker:
+		webcam_tracker.webcam_available.connect(_on_webcam_available)
+	
 	# Try to load default VRM model if it exists
 	if FileAccess.file_exists(DEFAULT_VRM_PATH):
 		print("Loading default VRM model...")
@@ -42,6 +48,15 @@ func _ready() -> void:
 	else:
 		print("No default VRM model found at: ", DEFAULT_VRM_PATH)
 		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
+
+func _on_webcam_available(available: bool) -> void:
+	"""Handle webcam availability status"""
+	if available:
+		print("Main: Webcam is available and tracking is active")
+		info_label.text = "Webcam tracking active. " + info_label.text.split(". ")[-1] if ". " in info_label.text else info_label.text
+	else:
+		push_warning("Main: Webcam is not available. Face tracking disabled.")
+		info_label.text = "No webcam found. " + info_label.text
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
@@ -68,8 +83,6 @@ func _load_vrm_model(path: String) -> void:
 		current_vrm_instance = null
 	
 	# Load VRM model
-	# Note: The actual VRM loading will use godot-vrm's VRMTopLevel
-	# This is a placeholder implementation
 	var loaded_scene = load(path)
 	if loaded_scene != null:
 		current_vrm_instance = loaded_scene.instantiate()
@@ -79,8 +92,12 @@ func _load_vrm_model(path: String) -> void:
 		if current_vrm_instance is Node3D:
 			current_vrm_instance.position = Vector3(0, 0, 0)
 		
+		# Connect model to face rigging
+		if face_rigging:
+			face_rigging.set_vrm_model(current_vrm_instance)
+		
 		print("VRM model loaded successfully")
-		info_label.text = "VRM model loaded: " + path.get_file()
+		info_label.text = "VRM model loaded: " + path.get_file() + "\nControls: Drag to rotate | Shift+Drag to pan | Scroll to zoom"
 	else:
 		var error_msg := "Failed to load VRM model"
 		push_error(error_msg)

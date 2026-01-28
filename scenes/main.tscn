@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://d2w8nkphxc7qy"]
+[gd_scene load_steps=5 format=3 uid="uid://d2w8nkphxc7qy"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_1"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="2_1"]
+[ext_resource type="Script" path="res://scripts/webcam_tracker.gd" id="3_1"]
+[ext_resource type="Script" path="res://scripts/face_rigging.gd" id="4_1"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_1")
@@ -54,7 +56,7 @@ text = "Load VRM Model"
 
 [node name="InfoLabel" type="Label" parent="UI/Control/VBoxContainer"]
 layout_mode = 2
-text = "No model loaded. Click 'Load VRM Model' to get started.
+text = "Loading... Webcam tracking will start automatically.
 Controls: Drag to rotate | Shift+Drag to pan | Scroll to zoom"
 horizontal_alignment = 1
 
@@ -87,5 +89,12 @@ file_mode = 0
 access = 2
 filters = PackedStringArray("*.vrm ; VRM Model Files")
 
+[node name="WebcamTracker" type="Node" parent="."]
+script = ExtResource("3_1")
+
+[node name="FaceRigging" type="Node" parent="."]
+script = ExtResource("4_1")
+
 [connection signal="pressed" from="UI/Control/VBoxContainer/ButtonContainer/LoadModelButton" to="." method="_on_load_model_button_pressed"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_file_selected"]
+[connection signal="face_tracking_updated" from="WebcamTracker" to="FaceRigging" method="apply_tracking_data"]
