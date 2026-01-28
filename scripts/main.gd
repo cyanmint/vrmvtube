@@ -10,7 +10,7 @@ extends Node3D
 ## - VRM loading powered by godot-vrm (MIT License, V-Sekai)
 ## - Inspired by VRigUnity by Kariaro
 
-const DEFAULT_VRM_PATH := "res://models/default.vrm"
+const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
 
 var current_vrm_instance: Node = null
 
