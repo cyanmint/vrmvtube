@@ -53,4 +53,5 @@ Thumbs.db
 
 # GDMP binaries (CI downloads these, we only vendor source)
 addons/GDMP/libs/
-addons/GDMP/models/
+addons/GDMP/models/*
+!addons/GDMP/models/.gitkeep
