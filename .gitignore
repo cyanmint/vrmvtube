@@ -2,6 +2,10 @@
 .import/
 .godot/
 
+# Godot binaries
+Godot_*
+godot
+
 # Imported translations (automatically generated from CSV files)
 *.translation
 

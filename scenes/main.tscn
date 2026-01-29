@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://c7ikvxvyqwykp"]
+[gd_scene load_steps=3 format=3 uid="uid://c7ikvxvyqwykp"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/control_panel.gd" id="2_control"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -90,6 +91,183 @@ layout_mode = 2
 size_flags_horizontal = 0
 expand_mode = 1
 stretch_mode = 5
+
+[node name="ControlPanel" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+script = ExtResource("2_control")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/ControlPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/ControlPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ModeButton" type="Button" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Mode: Move"
+
+[node name="CameraPanel" type="VBoxContainer" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CameraLabel" type="Label" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+layout_mode = 2
+text = "Camera Controls"
+horizontal_alignment = 1
+
+[node name="CameraSelector" type="OptionButton" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+layout_mode = 2
+
+[node name="CameraPosition" type="HBoxContainer" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "Position:"
+
+[node name="PosX" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -100.0
+max_value = 100.0
+step = 0.1
+prefix = "X:"
+
+[node name="PosY" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -100.0
+max_value = 100.0
+step = 0.1
+value = 1.0
+prefix = "Y:"
+
+[node name="PosZ" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -100.0
+max_value = 100.0
+step = 0.1
+value = 3.0
+prefix = "Z:"
+
+[node name="CameraRotation" type="HBoxContainer" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "Rotation:"
+
+[node name="RotX" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+prefix = "X:"
+suffix = "°"
+
+[node name="RotY" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+prefix = "Y:"
+suffix = "°"
+
+[node name="RotZ" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+prefix = "Z:"
+suffix = "°"
+
+[node name="ModelPanel" type="VBoxContainer" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ModelLabel" type="Label" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel"]
+layout_mode = 2
+text = "Model Transform"
+horizontal_alignment = 1
+
+[node name="ModelPosition" type="HBoxContainer" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "Position:"
+
+[node name="PosX" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -100.0
+max_value = 100.0
+step = 0.1
+prefix = "X:"
+
+[node name="PosY" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -100.0
+max_value = 100.0
+step = 0.1
+prefix = "Y:"
+
+[node name="PosZ" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -100.0
+max_value = 100.0
+step = 0.1
+prefix = "Z:"
+
+[node name="ModelRotation" type="HBoxContainer" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "Rotation:"
+
+[node name="RotX" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+prefix = "X:"
+suffix = "°"
+
+[node name="RotY" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+prefix = "Y:"
+suffix = "°"
+
+[node name="RotZ" type="SpinBox" parent="VBoxContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+prefix = "Z:"
+suffix = "°"
 
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/LoadVRMButton" to="." method="_on_load_vrm_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/StartTrackingButton" to="." method="_on_start_tracking_button_pressed"]
