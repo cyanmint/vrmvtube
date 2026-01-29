@@ -100,9 +100,12 @@ func _ready() -> void:
 	if metadata_collapse_button:
 		metadata_collapse_button.pressed.connect(_on_metadata_collapse_pressed)
 	
-	# Connect camera mode signal
+	# Connect camera mode signal and set model container reference
 	if camera_controller:
 		camera_controller.mode_changed.connect(_on_camera_mode_changed)
+		camera_controller.model_container = model_container
+		camera_controller.model_transform_changed.connect(_on_model_transform_changed)
+		print("Camera controller set up with model container")
 	if camera_mode_button:
 		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
 	
@@ -164,13 +167,54 @@ func _get_last_model_path() -> String:
 	
 	return DEFAULT_VRM_PATH
 
+func _load_model_transform() -> void:
+	"""Load and apply saved model transform"""
+	var config := ConfigFile.new()
+	var err := config.load("user://vrmvtube_settings.cfg")
+	
+	if err == OK and config.has_section("model") and camera_controller:
+		var pos = Vector3(
+			config.get_value("model", "position_x", 0.0),
+			config.get_value("model", "position_y", -0.5),
+			config.get_value("model", "position_z", 0.0)
+		)
+		var rot = Vector3(
+			config.get_value("model", "rotation_x", 0.0),
+			config.get_value("model", "rotation_y", 0.0),
+			config.get_value("model", "rotation_z", 0.0)
+		)
+		var scale_val = config.get_value("model", "scale", 1.5)
+		
+		camera_controller.set_model_transform(pos, rot, scale_val)
+		print("Loaded model transform: pos=", pos, " rot=", rot, " scale=", scale_val)
+	elif camera_controller:
+		# Use defaults if no saved transform
+		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.5)
+		print("Using default model transform")
+
 func _save_last_model(path: String) -> void:
-	"""Save the last loaded model path"""
+	"""Save the last loaded model path and transform"""
 	var config := ConfigFile.new()
 	config.load("user://vrmvtube_settings.cfg")  # Load existing settings
 	config.set_value("model", "path", path)
+	
+	# Save current model transform if camera controller has it
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		config.set_value("model", "position_x", transform_data.position.x)
+		config.set_value("model", "position_y", transform_data.position.y)
+		config.set_value("model", "position_z", transform_data.position.z)
+		config.set_value("model", "rotation_x", transform_data.rotation.x)
+		config.set_value("model", "rotation_y", transform_data.rotation.y)
+		config.set_value("model", "rotation_z", transform_data.rotation.z)
+		config.set_value("model", "scale", transform_data.scale)
+	
 	config.save("user://vrmvtube_settings.cfg")
-	print("Saved last model path: ", path)
+	print("Saved last model path and transform")
+
+func _on_model_transform_changed(position: Vector3, rotation: Vector3, scale_factor: float) -> void:
+	"""Auto-save model transform when it changes"""
+	_save_last_model(_get_last_model_path())
 
 func _on_camera_mode_changed(is_pan_mode: bool) -> void:
 	"""Update UI when camera mode changes"""
@@ -271,22 +315,27 @@ func _load_vrm_model(path: String) -> void:
 		current_vrm_instance = loaded_scene
 		model_container.add_child(current_vrm_instance)
 		
-		# Position the model in the container - centered and scaled appropriately
+		# DON'T set position/scale here - let camera controller handle it
+		# This prevents overriding saved transforms
 		if current_vrm_instance is Node3D:
-			current_vrm_instance.position = Vector3(0, -0.5, 0)  # Lower position for better centering
-			# Scale larger for better visibility (1.5x default)
-			current_vrm_instance.scale = Vector3(1.5, 1.5, 1.5)
+			# Reset to origin - camera controller will apply saved transform
+			current_vrm_instance.position = Vector3.ZERO
+			current_vrm_instance.rotation = Vector3.ZERO
+			current_vrm_instance.scale = Vector3.ONE
+		
+		# Load and apply saved model transform
+		_load_model_transform()
 		
 		# IMPORTANT: Ensure materials and textures are preserved
 		# Wait for the scene tree to fully process the node
 		await get_tree().process_frame
 		await get_tree().process_frame  # Extra frame wait for material loading
 		
-		# Force material update on all meshes
-		print("Updating VRM materials...")
+		# Check materials but DON'T duplicate - just verify
+		print("Checking VRM materials...")
 		_update_vrm_materials(current_vrm_instance)
 		
-		# Wait one more frame after material update
+		# Wait one more frame after material check
 		await get_tree().process_frame
 		
 		# Connect model to face rigging
@@ -313,11 +362,9 @@ func _load_vrm_model(path: String) -> void:
 		info_label.text = "Error: " + error_msg
 
 func _on_reset_pose_button_pressed() -> void:
-	"""Reset model to default position and scale"""
-	if current_vrm_instance and current_vrm_instance is Node3D:
-		current_vrm_instance.position = Vector3(0, -0.5, 0)
-		current_vrm_instance.scale = Vector3(1.5, 1.5, 1.5)
-		current_vrm_instance.rotation = Vector3(0, 0, 0)
+	"""Reset model to default position, rotation, and scale"""
+	if camera_controller:
+		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.5)
 		
 		# Reset sliders to match default values
 		if position_y_slider:
@@ -326,74 +373,47 @@ func _on_reset_pose_button_pressed() -> void:
 			scale_slider.value = 1.5
 
 func _on_position_y_changed(value: float) -> void:
-	"""Update model Y position"""
-	if current_vrm_instance and current_vrm_instance is Node3D:
-		var new_pos: Vector3 = current_vrm_instance.position
-		new_pos.y = value
-		current_vrm_instance.position = new_pos
+	"""Update model Y position via camera controller"""
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.position.y = value
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, transform_data.scale)
 	if position_y_value:
 		position_y_value.text = "%.2f" % value
 
 func _on_scale_changed(value: float) -> void:
-	"""Update model scale"""
-	if current_vrm_instance and current_vrm_instance is Node3D:
-		current_vrm_instance.scale = Vector3(value, value, value)
+	"""Update model scale via camera controller"""
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, value)
 	if scale_value:
 		scale_value.text = "%.2f" % value
 
 func _update_vrm_materials(node: Node) -> void:
-	"""Recursively update materials on VRM model to ensure textures and shaders load properly"""
+	"""Recursively update materials on VRM model - DO NOT duplicate to prevent white flash"""
 	if node is MeshInstance3D:
 		var mesh_instance := node as MeshInstance3D
 		if mesh_instance.mesh:
-			print("Updating materials for mesh: ", node.name)
-			# Force material update on all surfaces
+			print("Checking materials for mesh: ", node.name)
+			# DON'T duplicate materials - this causes the white flash!
+			# Just ensure the materials are properly visible
 			for i in range(mesh_instance.mesh.get_surface_count()):
 				var material := mesh_instance.mesh.surface_get_material(i)
 				if material:
-					# Strategy 1: Duplicate the material to force a refresh
-					# This ensures shader and textures are properly loaded
-					var duplicated_material := material.duplicate(true)  # Deep duplicate
-					
-					# Strategy 2: Force visibility and transparency settings
-					if duplicated_material is StandardMaterial3D:
-						# For standard materials, ensure flags are set correctly
-						var std_mat := duplicated_material as StandardMaterial3D
-						std_mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
-						std_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-						std_mat.vertex_color_use_as_albedo = false
-						# Ensure albedo is visible
-						if std_mat.albedo_color.a < 1.0:
+					# Only modify transparency/visibility if needed, without duplicating
+					if material is StandardMaterial3D:
+						var std_mat := material as StandardMaterial3D
+						# Only fix if actually transparent
+						if std_mat.albedo_color.a < 0.99:
 							std_mat.albedo_color.a = 1.0
-					elif duplicated_material is ShaderMaterial:
-						# For shader materials (like MToon), force parameter refresh
-						var shader_mat := duplicated_material as ShaderMaterial
-						if shader_mat.shader:
-							print("  - Shader material found: ", shader_mat.shader.resource_path if shader_mat.shader.resource_path else "inline shader")
-							
-							# For MToon shader, ensure alpha/transparency is set correctly
-							# Check for common transparency parameters
-							var param_names := ["_alpha", "alpha", "_Alpha", "transparency", "_Cutoff"]
-							for param in param_names:
-								if shader_mat.get_shader_parameter(param) != null:
-									var current_val = shader_mat.get_shader_parameter(param)
-									# If alpha/transparency exists, ensure it's visible
-									if current_val is float and current_val < 0.9:
-										shader_mat.set_shader_parameter(param, 1.0)
-										print("  - Set ", param, " to 1.0 (was ", current_val, ")")
-							
-							# Force shader refresh
-							var current_shader := shader_mat.shader
-							shader_mat.shader = null
-							shader_mat.shader = current_shader
+							print("  - Fixed transparency on surface ", i)
+					elif material is ShaderMaterial:
+						# For MToon shader, only check critical transparency params
+						var shader_mat := material as ShaderMaterial
+						# Don't reset shader or duplicate - just leave it as loaded
+						print("  - Shader material on surface ", i, " - keeping as-is")
 					
-					# Strategy 3: Apply the duplicated material as override
-					mesh_instance.set_surface_override_material(i, duplicated_material)
-					
-					# Strategy 4: Also set it on the mesh directly as fallback
-					mesh_instance.mesh.surface_set_material(i, duplicated_material)
-					
-					print("  - Surface ", i, " material updated: ", material.get_class())
+					print("  - Surface ", i, " material: ", material.get_class())
 	
 	# Recursively process children
 	for child in node.get_children():
