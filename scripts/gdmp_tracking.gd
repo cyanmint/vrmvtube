@@ -14,6 +14,8 @@ extends Node
 
 signal tracking_data_received(data: Dictionary)
 signal gdmp_available_changed(available: bool)
+signal camera_started()
+signal camera_failed(reason: String)
 
 @export var enabled: bool = true
 @export var use_camera: bool = true
@@ -30,6 +32,10 @@ var camera_helper = null
 var gpu_resources = null
 var latest_face_result = null
 
+# Frame counter for debugging
+var frame_count = 0
+var last_frame_log_time = 0.0
+
 # Enhanced simulation fallback
 var time_elapsed: float = 0.0
 var last_blink_time: float = 0.0
@@ -40,7 +46,8 @@ func _ready() -> void:
 	_check_gdmp_availability()
 	
 	if gdmp_available:
-		_initialize_gdmp()
+		# Must await since _initialize_gdmp contains await calls
+		await _initialize_gdmp()
 	else:
 		push_error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 		push_error("❌ CRITICAL: GDMP Plugin Not Found!")
@@ -184,7 +191,20 @@ func _initialize_gdmp() -> void:
 	print("GDMPTracking: ✅ Face landmarker initialized successfully")
 	
 	if use_camera:
-		await _initialize_camera()  # Wait for camera to be ready
+		print("GDMPTracking: Initializing camera with timeout protection...")
+		
+		# Initialize camera with timeout protection (max 15 seconds total)
+		var camera_init_task = _initialize_camera()
+		var timeout_timer = get_tree().create_timer(15.0)
+		
+		# Race between camera initialization and timeout
+		var result = await race_with_timeout(camera_init_task, timeout_timer)
+		
+		if result == "timeout":
+			push_error("GDMPTracking: ⚠️ Camera initialization timed out after 15 seconds")
+			push_error("GDMPTracking: Continuing with face tracking but camera may not work")
+		else:
+			print("GDMPTracking: Camera initialization completed")
 	
 	tracking_active = true
 	print("GDMPTracking: ✅ Native tracking active")
@@ -207,30 +227,82 @@ func _initialize_camera() -> void:
 		
 		# Check camera permission (mobile platforms)
 		if platform in ["Android", "iOS"]:
-			if not camera_helper.permission_granted():
-				print("GDMPTracking: Requesting camera permission...")
-				camera_helper.request_permission()
-				# Wait a bit for permission dialog
-				await get_tree().create_timer(1.0).timeout
+			print("GDMPTracking: Checking camera permission status...")
+			
+			# Check if we already have permission
+			var has_permission = camera_helper.permission_granted()
+			print("GDMPTracking: Initial permission status: ", has_permission)
+			
+			if not has_permission:
+				print("GDMPTracking: ⚠️ Camera permission not granted, requesting now...")
 				
-				if not camera_helper.permission_granted():
-					push_error("GDMPTracking: Camera permission denied!")
+				# Connect to permission result signal if available
+				if camera_helper.has_signal("permission_result"):
+					camera_helper.permission_result.connect(_on_permission_result)
+				
+				# Request permission
+				camera_helper.request_permission()
+				print("GDMPTracking: Permission request sent to system")
+				
+				# Wait for permission with timeout (max 10 seconds for user to respond)
+				var permission_granted = false
+				var timeout = 10.0
+				var elapsed = 0.0
+				var check_interval = 0.2  # Check every 200ms
+				
+				print("GDMPTracking: Waiting for user to grant camera permission...")
+				
+				while elapsed < timeout:
+					await get_tree().create_timer(check_interval).timeout
+					elapsed += check_interval
+					
+					# Check if permission was granted
+					if camera_helper.permission_granted():
+						permission_granted = true
+						print("GDMPTracking: ✅ Camera permission GRANTED by user!")
+						break
+					
+					# Show progress every second
+					if int(elapsed) != int(elapsed - check_interval):
+						print("GDMPTracking: Still waiting for permission... (", int(timeout - elapsed), "s remaining)")
+				
+				if not permission_granted:
+					push_error("GDMPTracking: ❌ Camera permission DENIED or timed out!")
+					push_error("GDMPTracking: User must grant camera permission for face tracking to work")
+					push_error("GDMPTracking: Please enable camera permission in Android settings")
+					push_error("GDMPTracking: Falling back to simulated tracking")
+					camera_failed.emit("Permission denied or timed out")
 					return
+			else:
+				print("GDMPTracking: ✅ Camera permission already granted")
 		
 		# Set GPU resources if available (required on Android)
 		if gpu_resources:
+			print("GDMPTracking: Attaching GPU resources to camera...")
 			camera_helper.set_gpu_resources(gpu_resources)
-			print("GDMPTracking: GPU resources attached to camera")
+			print("GDMPTracking: ✅ GPU resources attached to camera")
+		else:
+			push_warning("GDMPTracking: No GPU resources available for camera")
 		
 		# Mirror camera (front-facing camera)
 		camera_helper.set_mirrored(true)
+		print("GDMPTracking: Camera mirroring enabled (front-facing mode)")
 		
 		# Start camera: index 0 = front camera, 640x480 resolution
 		var camera_index_facing = 0  # FACING_FRONT
 		var camera_resolution = Vector2(640, 480)
+		
+		print("GDMPTracking: Starting camera (index: ", camera_index_facing, ", resolution: ", camera_resolution, ")...")
+		
+		# Start the camera
 		camera_helper.start(camera_index_facing, camera_resolution)
 		
-		print("GDMPTracking: ✅ GDMP camera started (front-facing, 640x480)")
+		# Give camera a moment to initialize
+		await get_tree().create_timer(0.5).timeout
+		
+		print("GDMPTracking: ✅ GDMP camera started successfully!")
+		print("GDMPTracking: Camera is now capturing frames for face tracking")
+		camera_started.emit()
 		return
 	
 	# Desktop platforms - CameraServer has limited support
@@ -243,10 +315,48 @@ func _initialize_camera() -> void:
 		push_warning("GDMPTracking: For webcam support on desktop, consider using external tools or GDMP native camera access.")
 		return
 
+func _on_permission_result(granted: bool) -> void:
+	"""Callback when camera permission is granted or denied"""
+	if granted:
+		print("GDMPTracking: Permission result callback: GRANTED")
+	else:
+		push_error("GDMPTracking: Permission result callback: DENIED")
+
 func _start_simulated_tracking() -> void:
 	"""Start enhanced simulated tracking as fallback"""
 	tracking_active = true
 	print("GDMPTracking: Using enhanced simulated tracking")
+
+func race_with_timeout(task, timeout_timer):
+	"""Race a coroutine against a timeout timer
+	
+	Returns "timeout" if timeout occurs first, "completed" if task finishes first
+	"""
+	# Create a signal to track completion
+	var completed = false
+	var timed_out = false
+	
+	# Start both tasks
+	var task_signal = func():
+		await task
+		completed = true
+	
+	var timeout_signal = func():
+		await timeout_timer.timeout
+		timed_out = true
+	
+	# Run both in parallel
+	task_signal.call()
+	timeout_signal.call()
+	
+	# Wait for either to complete
+	while not completed and not timed_out:
+		await get_tree().process_frame
+	
+	if timed_out:
+		return "timeout"
+	else:
+		return "completed"
 
 func _process(delta: float) -> void:
 	if not tracking_active or not enabled:
@@ -394,6 +504,13 @@ func _on_face_landmarker_result(result, image, timestamp_ms: int) -> void:
 	"""Callback when face landmarker detects a face"""
 	if result:
 		latest_face_result = result
+		
+		# Log face detection success periodically
+		if frame_count % 60 == 0:  # Every 60 frames (about every 2 seconds)
+			var face_landmarks = result.get_face_landmarks()
+			var face_blendshapes = result.get_face_blendshapes()
+			print("GDMPTracking: 😊 Face detected! Landmarks: ", face_landmarks.size() if face_landmarks else 0, 
+				  ", Blendshapes: ", face_blendshapes.size() if face_blendshapes else 0)
 
 func _on_camera_frame(image) -> void:
 	"""Callback when camera produces a new frame
@@ -402,10 +519,23 @@ func _on_camera_frame(image) -> void:
 	Each camera frame is sent to face landmarker for processing.
 	"""
 	if face_landmarker and image:
+		# Count frames for debugging
+		frame_count += 1
+		
+		# Log every 30 frames (roughly once per second at 30fps)
+		var current_time = Time.get_ticks_msec() / 1000.0
+		if current_time - last_frame_log_time >= 2.0:
+			print("GDMPTracking: 📹 Camera active - received ", frame_count, " frames (", int(frame_count / (current_time - last_frame_log_time + 0.001) * 2), " fps)")
+			last_frame_log_time = current_time
+		
 		# Send frame to face landmarker for async processing
 		# Results will come back via _on_face_landmarker_result callback
 		var timestamp_ms = Time.get_ticks_msec()
 		face_landmarker.detect_async(image, timestamp_ms, Rect2(), 0)
+	elif not face_landmarker:
+		push_warning("GDMPTracking: Received camera frame but face_landmarker is null!")
+	elif not image:
+		push_warning("GDMPTracking: Received null image from camera!")
 
 func _estimate_head_rotation(landmarks: Array) -> Vector3:
 	"""Estimate head rotation from face landmarks
