@@ -227,7 +227,6 @@ horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="ModelControlsPanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
-visible = false
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel"]
@@ -404,7 +403,6 @@ text = "0°"
 alignment = 1
 
 [node name="MetadataPanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
-visible = false
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel"]
