@@ -91,134 +91,185 @@ layout_mode = 2
 text = "▶"
 flat = true
 
-[node name="TitlePanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/Control/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="PanelsContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="TitlePanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/TitlePanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 5
-
-[node name="Title" type="Label" parent="UI/Control/RightPanel/TitlePanel/MarginContainer"]
-layout_mode = 2
-text = "VRMVTube"
-horizontal_alignment = 1
-
-[node name="WebcamPreviewPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 5
 theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer"]
 layout_mode = 2
 
-[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer"]
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "VRMVTube"
+horizontal_alignment = 1
+
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "▼"
+flat = true
+
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="WebcamPreviewPanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Webcam Preview"
 horizontal_alignment = 1
 
-[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer"]
 layout_mode = 2
 text = "▼"
 flat = true
 
-[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer"]
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="WebcamTextureRect" type="TextureRect" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer"]
+[node name="WebcamTextureRect" type="TextureRect" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer"]
 custom_minimum_size = Vector2(280, 210)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="StatusLabel" type="Label" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer"]
+[node name="StatusLabel" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Initializing..."
 horizontal_alignment = 1
 
-[node name="ButtonsPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+[node name="ButtonsPanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ButtonsPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Controls"
+horizontal_alignment = 1
+
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "▼"
+flat = true
+
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 5
 
-[node name="LoadModelButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+[node name="LoadModelButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Load VRM Model"
 
-[node name="ResetPoseButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+[node name="ResetPoseButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Reset Pose"
 
-[node name="SettingsButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+[node name="SettingsButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Settings"
 
-[node name="CameraModeButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+[node name="CameraModeButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Mode: ROTATE (R)"
 
-[node name="InfoLabel" type="Label" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+[node name="InfoLabel" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Loading...
 Drag=rotate | R=mode | Move: WSAD=XY QE/scroll=Z | Rotate: WSAD=XY QE/scroll=Z"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="ModelControlsPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+[node name="ModelControlsPanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
 visible = false
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ModelControlsPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer"]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 text = "Model Controls"
 horizontal_alignment = 1
 
-[node name="HSeparator" type="HSeparator" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "▼"
+flat = true
+
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="PositionLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="PositionLabel" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Position"
 
-[node name="PositionXContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="PositionXContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer"]
 layout_mode = 2
 text = "X:"
 size_flags_horizontal = 3
 
-[node name="PositionXSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
+[node name="PositionXSlider" type="HSlider" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -227,21 +278,21 @@ max_value = 2.0
 step = 0.01
 value = 0.0
 
-[node name="PositionXValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
+[node name="PositionXValue" type="LineEdit" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(60, 0)
 text = "0.00"
 alignment = 1
 
-[node name="PositionYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="PositionYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer"]
 layout_mode = 2
 text = "Y:"
 size_flags_horizontal = 3
 
-[node name="PositionYSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
+[node name="PositionYSlider" type="HSlider" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -250,21 +301,21 @@ max_value = 2.0
 step = 0.01
 value = -0.5
 
-[node name="PositionYValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
+[node name="PositionYValue" type="LineEdit" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(60, 0)
 text = "-0.50"
 alignment = 1
 
-[node name="PositionZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="PositionZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer"]
 layout_mode = 2
 text = "Z:"
 size_flags_horizontal = 3
 
-[node name="PositionZSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
+[node name="PositionZSlider" type="HSlider" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -273,25 +324,25 @@ max_value = 2.0
 step = 0.01
 value = 0.0
 
-[node name="PositionZValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
+[node name="PositionZValue" type="LineEdit" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(60, 0)
 text = "0.00"
 alignment = 1
 
-[node name="RotationLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="RotationLabel" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Rotation (degrees)"
 
-[node name="RotationXContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="RotationXContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer"]
 layout_mode = 2
 text = "X:"
 size_flags_horizontal = 3
 
-[node name="RotationXSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
+[node name="RotationXSlider" type="HSlider" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -300,21 +351,21 @@ max_value = 180.0
 step = 1.0
 value = 0.0
 
-[node name="RotationXValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
+[node name="RotationXValue" type="LineEdit" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(60, 0)
 text = "0°"
 alignment = 1
 
-[node name="RotationYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="RotationYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer"]
 layout_mode = 2
 text = "Y:"
 size_flags_horizontal = 3
 
-[node name="RotationYSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
+[node name="RotationYSlider" type="HSlider" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -323,21 +374,21 @@ max_value = 180.0
 step = 1.0
 value = 0.0
 
-[node name="RotationYValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
+[node name="RotationYValue" type="LineEdit" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(60, 0)
 text = "0°"
 alignment = 1
 
-[node name="RotationZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="RotationZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer"]
 layout_mode = 2
 text = "Z:"
 size_flags_horizontal = 3
 
-[node name="RotationZSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
+[node name="RotationZSlider" type="HSlider" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -346,52 +397,52 @@ max_value = 180.0
 step = 1.0
 value = 0.0
 
-[node name="RotationZValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
+[node name="RotationZValue" type="LineEdit" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(60, 0)
 text = "0°"
 alignment = 1
 
-[node name="MetadataPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+[node name="MetadataPanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
 visible = false
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/MetadataPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
+theme_override_constants/margin_left = 5
 theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 10
+theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer"]
 layout_mode = 2
 
-[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer"]
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+[node name="Title" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Model Metadata"
 horizontal_alignment = 1
 
-[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer"]
 layout_mode = 2
 text = "▼"
 flat = true
 
-[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer"]
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="HSeparator" type="HSeparator" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer"]
+[node name="HSeparator" type="HSeparator" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer"]
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="MetadataLabel" type="RichTextLabel" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer"]
+[node name="MetadataLabel" type="RichTextLabel" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -400,26 +451,43 @@ text = "No model loaded"
 fit_content = true
 scroll_active = false
 
-[node name="BottomPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+[node name="BottomPanel" type="PanelContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/BottomPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
+theme_override_constants/margin_left = 5
 theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 10
+theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/BottomPanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer"]
 layout_mode = 2
 
-[node name="Credits" type="Label" parent="UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer"]
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Info"
+horizontal_alignment = 1
+
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "▼"
+flat = true
+
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Credits" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Powered by godot-vrm (V-Sekai)"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="PlatformInfo" type="Label" parent="UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer"]
+[node name="PlatformInfo" type="Label" parent="UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer"]
 layout_mode = 2
 text = "Platform: Unknown"
 horizontal_alignment = 1
@@ -440,11 +508,11 @@ script = ExtResource("4_1")
 
 [node name="SettingsMenu" parent="." instance=ExtResource("5_1")]
 
-[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/LoadModelButton" to="." method="_on_load_model_button_pressed"]
-[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/ResetPoseButton" to="." method="_on_reset_pose_button_pressed"]
-[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/SettingsButton" to="." method="_on_settings_button_pressed"]
-[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/CameraModeButton" to="." method="_on_camera_mode_button_pressed"]
-[connection signal="pressed" from="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton" to="." method="_on_webcam_collapse_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/LoadModelButton" to="." method="_on_load_model_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/ResetPoseButton" to="." method="_on_reset_pose_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/CameraModeButton" to="." method="_on_camera_mode_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton" to="." method="_on_webcam_collapse_pressed"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_file_selected"]
 [connection signal="face_tracking_updated" from="WebcamTracker" to="FaceRigging" method="apply_tracking_data"]
 [connection signal="settings_applied" from="SettingsMenu" to="." method="_on_settings_applied"]

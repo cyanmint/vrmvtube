@@ -16,42 +16,51 @@ var current_vrm_instance: Node = null
 var sidebar_collapsed := false
 var _updating_sliders_from_transform := false  # Prevent infinite loops
 
-@onready var info_label: Label = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/InfoLabel
-@onready var platform_info: Label = $UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer/PlatformInfo
+@onready var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
+@onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
-@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
-@onready var webcam_status_label: Label = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/StatusLabel
-@onready var webcam_preview_panel: PanelContainer = $UI/Control/RightPanel/WebcamPreviewPanel
-@onready var webcam_collapse_button: Button = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var webcam_content: VBoxContainer = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer
-@onready var buttons_panel: PanelContainer = $UI/Control/RightPanel/ButtonsPanel
-@onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ModelControlsPanel
-@onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/BottomPanel
-@onready var position_x_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer/PositionXSlider
-@onready var position_x_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer/PositionXValue
-@onready var position_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
-@onready var position_y_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
-@onready var position_z_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer/PositionZSlider
-@onready var position_z_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer/PositionZValue
-@onready var rotation_x_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer/RotationXSlider
-@onready var rotation_x_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer/RotationXValue
-@onready var rotation_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer/RotationYSlider
-@onready var rotation_y_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer/RotationYValue
-@onready var rotation_z_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer/RotationZSlider
-@onready var rotation_z_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer/RotationZValue
+@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
+@onready var webcam_status_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/StatusLabel
+@onready var webcam_preview_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel
+@onready var webcam_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var webcam_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var buttons_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel
+@onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel
+@onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel
+@onready var position_x_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXSlider
+@onready var position_x_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXValue
+@onready var position_y_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYSlider
+@onready var position_y_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYValue
+@onready var position_z_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZSlider
+@onready var position_z_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZValue
+@onready var rotation_x_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXSlider
+@onready var rotation_x_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXValue
+@onready var rotation_y_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYSlider
+@onready var rotation_y_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYValue
+@onready var rotation_z_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZSlider
+@onready var rotation_z_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZValue
 @onready var settings_menu: Window = $SettingsMenu
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var right_panel: VBoxContainer = $UI/Control/RightPanel
 @onready var sidebar_collapse_button: Button = $UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer/SidebarCollapseButton
 @onready var sidebar_collapse_tab: Button = $UI/Control/SidebarCollapseTab
-@onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/MetadataPanel
-@onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
-@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel
+@onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
+@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var title_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel
+@onready var title_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var title_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var buttons_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var buttons_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var model_controls_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var model_controls_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var bottom_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var bottom_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer
 @onready var camera_controller: Camera3D = $Camera3D
-@onready var camera_mode_button: Button = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/CameraModeButton
+@onready var camera_mode_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/CameraModeButton
 
 func _input(event: InputEvent) -> void:
 	# Keyboard hotkeys
@@ -723,6 +732,34 @@ func _on_metadata_collapse_pressed() -> void:
 		if metadata_collapse_button:
 			metadata_collapse_button.text = "▲" if not metadata_content.visible else "▼"
 
+func _on_title_collapse_pressed() -> void:
+	"""Toggle title panel collapse"""
+	if title_content:
+		title_content.visible = not title_content.visible
+		if title_collapse_button:
+			title_collapse_button.text = "▲" if not title_content.visible else "▼"
+
+func _on_buttons_collapse_pressed() -> void:
+	"""Toggle buttons panel collapse"""
+	if buttons_content:
+		buttons_content.visible = not buttons_content.visible
+		if buttons_collapse_button:
+			buttons_collapse_button.text = "▲" if not buttons_content.visible else "▼"
+
+func _on_model_controls_collapse_pressed() -> void:
+	"""Toggle model controls panel collapse"""
+	if model_controls_content:
+		model_controls_content.visible = not model_controls_content.visible
+		if model_controls_collapse_button:
+			model_controls_collapse_button.text = "▲" if not model_controls_content.visible else "▼"
+
+func _on_bottom_collapse_pressed() -> void:
+	"""Toggle bottom panel collapse"""
+	if bottom_content:
+		bottom_content.visible = not bottom_content.visible
+		if bottom_collapse_button:
+			bottom_collapse_button.text = "▲" if not bottom_content.visible else "▼"
+
 func _update_metadata_display(vrm_node: Node) -> void:
 	"""Extract and display VRM metadata"""
 	if not metadata_label:
@@ -749,15 +786,31 @@ func _update_metadata_display(vrm_node: Node) -> void:
 	var metadata_text := ""
 	
 	if vrm_meta:
+		# Debug logging to see actual metadata structure
+		print("VRM metadata found. Type: ", vrm_meta.get_class())
+		print("VRM spec_version: ", vrm_meta.get("spec_version", "unknown"))
+		
 		metadata_text += "[b]VRM Metadata[/b]\n\n"
 		
-		# Basic info
-		if vrm_meta.get("title"):
-			metadata_text += "[b]Title:[/b] " + str(vrm_meta.title) + "\n"
+		# Basic info - handle both VRM 0.x and 1.0
+		# VRM 1.0 uses "name" in the JSON, but vrm_meta.gd maps it to "title"
+		var title_value = vrm_meta.get("title", "")
+		if title_value == "" or title_value == null:
+			# Fallback: try alternate fields
+			title_value = vrm_meta.get("name", "")
+		if title_value != "" and title_value != null:
+			metadata_text += "[b]Title:[/b] " + str(title_value) + "\n"
+			
 		if vrm_meta.get("version"):
 			metadata_text += "[b]Version:[/b] " + str(vrm_meta.version) + "\n"
-		if vrm_meta.get("authors") and vrm_meta.authors.size() > 0:
-			metadata_text += "[b]Author:[/b] " + ", ".join(vrm_meta.authors) + "\n"
+			
+		# Authors - VRM 1.0 uses PackedStringArray
+		if vrm_meta.get("authors"):
+			var authors = vrm_meta.authors
+			if authors is PackedStringArray and authors.size() > 0:
+				metadata_text += "[b]Author(s):[/b] " + ", ".join(authors) + "\n"
+			elif authors is String and authors != "":
+				metadata_text += "[b]Author:[/b] " + str(authors) + "\n"
 		elif vrm_meta.get("author"):
 			metadata_text += "[b]Author:[/b] " + str(vrm_meta.author) + "\n"
 		
