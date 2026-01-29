@@ -107,20 +107,24 @@ func _ready() -> void:
 	if camera_mode_button:
 		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
 	
-	# Load default VRM model - use call_deferred to ensure scene is ready
-	print("Checking for default VRM model at: ", DEFAULT_VRM_PATH)
+	# Load saved settings and apply
+	_load_and_apply_settings()
+	
+	# Load last used model or default VRM model
+	var model_to_load := _get_last_model_path()
+	print("Checking for VRM model at: ", model_to_load)
 	
 	# Android-specific: Check if file exists and log platform info
 	if platform_name == "Android":
 		print("Android platform detected - VRM file check")
-		print("  - File exists: ", FileAccess.file_exists(DEFAULT_VRM_PATH))
+		print("  - File exists: ", FileAccess.file_exists(model_to_load))
 		print("  - User data dir: ", OS.get_user_data_dir())
 	
-	if FileAccess.file_exists(DEFAULT_VRM_PATH):
-		print("Default VRM model found! Loading...")
-		call_deferred("_load_vrm_model", DEFAULT_VRM_PATH)
+	if FileAccess.file_exists(model_to_load):
+		print("VRM model found! Loading...")
+		call_deferred("_load_vrm_model", model_to_load)
 	else:
-		print("WARNING: No default VRM model found at: ", DEFAULT_VRM_PATH)
+		print("WARNING: No VRM model found at: ", model_to_load)
 		if platform_name == "Android":
 			print("Android: The VRM file may not have been included in the APK export.")
 			print("Android: Check export_presets.cfg include_filter setting.")
@@ -128,6 +132,46 @@ func _ready() -> void:
 		# Set info label to show instructions
 		if info_label:
 			info_label.text = "No model loaded.\nUse 'Load VRM Model' button or press L\nDrag to rotate/pan | Q/E to zoom | R to switch mode"
+
+func _load_and_apply_settings() -> void:
+	"""Load settings from file and apply graphics settings"""
+	var config := ConfigFile.new()
+	var err := config.load("user://vrmvtube_settings.cfg")
+	
+	if err == OK:
+		# Apply graphics settings
+		if config.has_section("graphics"):
+			var resolution_scale = config.get_value("graphics", "resolution_scale", 1.0)
+			get_viewport().scaling_3d_scale = resolution_scale
+			
+			var msaa = config.get_value("graphics", "msaa", 0)
+			get_viewport().msaa_3d = msaa
+			
+			var vsync_enabled = config.get_value("graphics", "vsync", true)
+			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_enabled else DisplayServer.VSYNC_DISABLED)
+			
+			print("Applied graphics settings: resolution_scale=", resolution_scale, " msaa=", msaa, " vsync=", vsync_enabled)
+
+func _get_last_model_path() -> String:
+	"""Get the last loaded model path from settings, or default"""
+	var config := ConfigFile.new()
+	var err := config.load("user://vrmvtube_settings.cfg")
+	
+	if err == OK and config.has_section("model"):
+		var last_path = config.get_value("model", "path", DEFAULT_VRM_PATH)
+		# Check if the last path exists, otherwise fall back to default
+		if FileAccess.file_exists(last_path):
+			return last_path
+	
+	return DEFAULT_VRM_PATH
+
+func _save_last_model(path: String) -> void:
+	"""Save the last loaded model path"""
+	var config := ConfigFile.new()
+	config.load("user://vrmvtube_settings.cfg")  # Load existing settings
+	config.set_value("model", "path", path)
+	config.save("user://vrmvtube_settings.cfg")
+	print("Saved last model path: ", path)
 
 func _on_camera_mode_changed(is_pan_mode: bool) -> void:
 	"""Update UI when camera mode changes"""
@@ -255,6 +299,9 @@ func _load_vrm_model(path: String) -> void:
 		
 		print("VRM model loaded successfully")
 		info_label.text = "VRM model loaded: " + path.get_file() + "\nDrag to rotate/pan | Q/E zoom | R mode | WASD move | C config | L load"
+		
+		# Save last loaded model
+		_save_last_model(path)
 		
 		# Show model controls and metadata
 		if model_controls_panel:
@@ -407,7 +454,26 @@ func _on_settings_applied(settings: Dictionary) -> void:
 	if settings.has("background"):
 		_apply_background_settings(settings.background)
 	
+	# Apply graphics settings
+	if settings.has("graphics"):
+		_apply_graphics_settings(settings.graphics)
+	
 	# Camera settings are handled by webcam_tracker
+
+func _apply_graphics_settings(graphics_settings: Dictionary) -> void:
+	"""Apply graphics quality settings"""
+	if graphics_settings.has("resolution_scale"):
+		get_viewport().scaling_3d_scale = graphics_settings.resolution_scale
+		print("Applied resolution scale: ", graphics_settings.resolution_scale)
+	
+	if graphics_settings.has("msaa"):
+		get_viewport().msaa_3d = graphics_settings.msaa
+		print("Applied MSAA: ", graphics_settings.msaa)
+	
+	if graphics_settings.has("vsync"):
+		var mode = DisplayServer.VSYNC_ENABLED if graphics_settings.vsync else DisplayServer.VSYNC_DISABLED
+		DisplayServer.window_set_vsync_mode(mode)
+		print("Applied VSync: ", graphics_settings.vsync)
 
 func _apply_background_settings(bg_settings: Dictionary) -> void:
 	"""Apply background color/type settings"""
