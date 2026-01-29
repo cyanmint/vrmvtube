@@ -375,3 +375,58 @@ func _on_camera_mode_button_pressed() -> void:
 	"""Toggle camera control mode"""
 	if camera_controller:
 		camera_controller.toggle_mode()
+
+func _on_settings_applied(settings: Dictionary) -> void:
+	"""Settings were applied in settings menu"""
+	# Settings are saved automatically by settings_menu
+	# Just reload them
+	_load_settings()
+
+# Panel collapse/expand handlers
+func _on_title_collapse_pressed() -> void:
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
+
+func _on_webcam_collapse_pressed() -> void:
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_webcam_collapse_pressed()
+
+func _on_buttons_collapse_pressed() -> void:
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
+
+func _on_model_controls_collapse_pressed() -> void:
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
+
+func _on_metadata_collapse_pressed() -> void:
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_metadata_collapse_pressed()
+
+func _on_bottom_collapse_pressed() -> void:
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
+
+func _on_sidebar_collapse_pressed() -> void:
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_sidebar_collapse_pressed()
+
+func _on_sidebar_expand_pressed() -> void:
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_sidebar_expand_pressed()
