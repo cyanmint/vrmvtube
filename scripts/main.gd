@@ -150,6 +150,10 @@ func _ready() -> void:
 	if camera_mode_button:
 		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
 	
+	# Update webcam status for desktop platforms
+	if webcam_status_label and platform_name in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
+		webcam_status_label.text = "⚠️ Webcam Preview\nNot Available on Desktop\n\nGodot CameraServer\nonly works on:\n• Android\n• iOS\n• Web\n\nFace tracking still works\nusing simulation mode"
+	
 	# Load saved settings and apply
 	_load_and_apply_settings()
 	
@@ -604,7 +608,7 @@ func _update_vrm_materials(node: Node) -> void:
 		if mesh_instance.mesh:
 			print("Checking materials for mesh: ", node.name)
 			# DON'T duplicate materials - this causes the white flash!
-			# Just ensure the materials are properly visible
+			# Just ensure the materials are properly visible and enhanced
 			for i in range(mesh_instance.mesh.get_surface_count()):
 				var material := mesh_instance.mesh.surface_get_material(i)
 				if material:
@@ -616,10 +620,38 @@ func _update_vrm_materials(node: Node) -> void:
 							std_mat.albedo_color.a = 1.0
 							print("  - Fixed transparency on surface ", i)
 					elif material is ShaderMaterial:
-						# For MToon shader, only check critical transparency params
+						# For MToon shader, enhance rendering quality
 						var shader_mat := material as ShaderMaterial
-						# Don't reset shader or duplicate - just leave it as loaded
-						print("  - Shader material on surface ", i, " - keeping as-is")
+						
+						# Check if this is an MToon shader
+						if shader_mat.shader and shader_mat.shader.resource_path.contains("mtoon"):
+							# Enhance MToon shader parameters for better detail visibility
+							# These are non-destructive enhancements
+							
+							# Increase rim light for better edge definition
+							if shader_mat.get_shader_parameter("Rim_Lighting_Mix") != null:
+								var current_rim = shader_mat.get_shader_parameter("Rim_Lighting_Mix")
+								if current_rim < 0.3:
+									shader_mat.set_shader_parameter("Rim_Lighting_Mix", 0.3)
+							
+							# Ensure shade color isn't too dark (improves detail in shadows)
+							if shader_mat.get_shader_parameter("Shade_Color") != null:
+								var shade_color = shader_mat.get_shader_parameter("Shade_Color")
+								if shade_color is Color:
+									# Brighten shade color if it's too dark
+									var brightness = (shade_color.r + shade_color.g + shade_color.b) / 3.0
+									if brightness < 0.3:
+										var factor = 0.3 / brightness
+										shader_mat.set_shader_parameter("Shade_Color", Color(
+											shade_color.r * factor,
+											shade_color.g * factor,
+											shade_color.b * factor,
+											shade_color.a
+										))
+							
+							print("  - Enhanced MToon shader on surface ", i)
+						else:
+							print("  - Shader material on surface ", i, " - keeping as-is")
 					
 					print("  - Surface ", i, " material: ", material.get_class())
 	
