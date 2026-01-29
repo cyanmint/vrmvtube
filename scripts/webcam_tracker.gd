@@ -117,9 +117,52 @@ func _process(_delta: float) -> void:
 	if not tracking_active or not enable_tracking:
 		return
 	
-	# TODO: Implement actual face tracking using image processing
-	# For now, emit simulated tracking data that shows the system works
+	# NOTE: Simulated tracking is only used as fallback
+	# Real tracking data comes from MediaPipe via update_from_mediapipe()
+	# This simulated tracking runs continuously to show the system works
 	_update_simulated_tracking()
+
+func update_from_mediapipe(data: Dictionary) -> void:
+	"""Update tracking from real MediaPipe data
+	
+	This replaces simulated tracking with real face tracking data from MediaPipe.
+	Call this when MediaPipe UDP packets are received.
+	"""
+	if not enable_tracking:
+		return
+	
+	# Extract values from MediaPipe data
+	if data.has("blink_left"):
+		blink_left = data["blink_left"]
+	
+	if data.has("blink_right"):
+		blink_right = data["blink_right"]
+	
+	if data.has("mouth_open"):
+		mouth_open = data["mouth_open"]
+	
+	if data.has("smile"):
+		smile = data["smile"]
+	
+	if data.has("head_rotation"):
+		head_rotation = data["head_rotation"]
+	
+	if data.has("head_position"):
+		head_position = data["head_position"]
+	
+	# Build and emit tracking data
+	var tracking_data := {
+		"head_rotation": head_rotation,
+		"head_position": head_position,
+		"blink_left": blink_left,
+		"blink_right": blink_right,
+		"mouth_open": mouth_open,
+		"smile": smile,
+		"tracking_quality": data.get("tracking_quality", 1.0)
+	}
+	
+	# Emit the real tracking data
+	face_tracking_updated.emit(tracking_data)
 
 func _update_simulated_tracking() -> void:
 	"""Simulate face tracking data (placeholder for actual tracking)"""

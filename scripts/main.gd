@@ -19,6 +19,7 @@ var _updating_sliders_from_transform := false  # Prevent infinite loops
 @onready var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
 @onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
+@onready var mediapipe_receiver: Node = $MediaPipeReceiver
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
 @onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
@@ -102,6 +103,14 @@ func _ready() -> void:
 		print("Main: Connected to webcam signals")
 	else:
 		push_error("WebcamTracker node not found!")
+	
+	# Connect MediaPipe receiver for real face tracking
+	if mediapipe_receiver:
+		mediapipe_receiver.tracking_data_received.connect(_on_mediapipe_data_received)
+		print("Main: Connected to MediaPipe receiver")
+		print("Main: Run 'python tools/mediapipe_bridge.py' for real face tracking")
+	else:
+		push_warning("MediaPipeReceiver node not found - only simulated tracking available")
 	
 	# Connect model control sliders
 	if position_x_slider:
@@ -354,10 +363,10 @@ func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
 	
 	# Update HUD with tracking data visualization
 	if webcam_status_label:
-		var quality := tracking_data.get("tracking_quality", 0.0)
-		var blink_l := tracking_data.get("blink_left", 0.0)
-		var blink_r := tracking_data.get("blink_right", 0.0)
-		var mouth := tracking_data.get("mouth_open", 0.0)
+		var quality: float = tracking_data.get("tracking_quality", 0.0)
+		var blink_l: float = tracking_data.get("blink_left", 0.0)
+		var blink_r: float = tracking_data.get("blink_right", 0.0)
+		var mouth: float = tracking_data.get("mouth_open", 0.0)
 		
 		var status_text := ""
 		if webcam_tracker.is_tracking_active():
@@ -373,7 +382,21 @@ func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
 		status_text += "\nBlink L/R: %.2f / %.2f" % [blink_l, blink_r]
 		status_text += "\nMouth: %.2f" % mouth
 		
+		# Show MediaPipe status if receiver exists
+		if mediapipe_receiver:
+			var mp_status := mediapipe_receiver.get_status()
+			if mp_status["is_receiving"]:
+				status_text += "\n[MediaPipe: Active]"
+			else:
+				status_text += "\n[MediaPipe: Waiting]"
+		
 		webcam_status_label.text = status_text
+
+func _on_mediapipe_data_received(data: Dictionary) -> void:
+	"""Handle real MediaPipe tracking data from UDP receiver"""
+	if webcam_tracker:
+		# Pass real tracking data to webcam tracker
+		webcam_tracker.update_from_mediapipe(data)
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
