@@ -9,10 +9,12 @@ A virtual character animator application built with Godot Engine. This app uses 
 ## Features
 
 - 🎭 **VRM Model Support** - Load and animate VRM 0.0 and VRM 1.0 models
-- 🤖 **AI-Powered Tracking** - Hand and body tracking using Google MediaPipe
+- 🤖 **AI-Powered Tracking** - Hand and face tracking using Google MediaPipe  
 - 🎮 **Cross-Platform** - Runs on Windows, Linux, macOS, Android, and Web
 - 🎨 **MToon Shader** - Full support for VRM's MToon shading
 - 📹 **Webcam Support** - Real-time motion capture from your webcam
+- 😊 **Facial Expressions** - 52 blendshapes for realistic facial animation
+- 👋 **Hand Tracking** - Real-time hand landmark detection
 - 🎬 **VMC Protocol** - Compatible with Virtual Motion Capture protocol (planned)
 
 ## Inspiration & Credits
@@ -34,7 +36,7 @@ Special thanks to the VRM Consortium, V-Sekai team, and all contributors to thes
 
 ### Prerequisites
 
-- Godot Engine 4.6 or newer
+- Godot Engine 4.6 stable or newer
 - A webcam for motion tracking
 - (Optional) VRM models for testing
 
@@ -47,17 +49,19 @@ Special thanks to the VRM Consortium, V-Sekai team, and all contributors to thes
    ```
 
 2. **Open in Godot**
-   - Open Godot Engine 4.6+
+   - Open Godot Engine 4.6 stable or newer
    - Click "Import" and select the `project.godot` file
    - Wait for the project to import
 
-3. **Enable Plugins**
-   - Go to Project → Project Settings → Plugins
-   - Enable "VRM" plugin
-   - Enable "GDMP" plugin
+3. **Enable Plugins** (Already enabled by default)
+   - VRM plugin - for VRM model support
+   - Godot-MToon-Shader - for MToon rendering
+   - GDMP plugin - for MediaPipe tracking
 
 4. **Run the Project**
    - Press F5 or click the Play button
+   - Grant camera access when prompted
+   - The default VRM model will load automatically
 
 ## Building from Source
 
@@ -66,16 +70,20 @@ See [docs/building.md](docs/building.md) for detailed build instructions for all
 ## Usage
 
 1. **Load a VRM Model**
-   - Click "Load VRM" button
+   - Click "Load VRM Model" button
    - Select a `.vrm` file from your computer
+   - Or use the default cyanmint.vrm model that loads automatically
 
 2. **Start Tracking**
+   - Click "Start Tracking" button
    - Allow camera access when prompted
-   - Your hand movements will be tracked and applied to the model
+   - Your facial expressions and hand movements will be tracked
+   - The VRM model will mirror your expressions in real-time
 
-3. **Adjust Settings**
-   - Use the settings panel to configure tracking sensitivity
-   - Adjust camera settings and background
+3. **Adjust Camera**
+   - Camera preview shows in the bottom-right corner
+   - Use good lighting for better tracking accuracy
+   - Position your face clearly in the camera view
 
 ## Platform Support
 

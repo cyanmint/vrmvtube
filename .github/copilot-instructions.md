@@ -1,7 +1,7 @@
 # GitHub Copilot Development Instructions for VRMVTube
 
 ## Project Overview
-VRMVTube is a VTuber application built with Godot Engine 4.6+ that combines:
+VRMVTube is a VTuber application built with Godot Engine 4.6 stable that combines:
 - **VRM model support** via V-Sekai/godot-vrm addon
 - **MediaPipe hand/face tracking** via j20001970/GDMP addon
 - Inspired by Kariaro/VRigUnity but implemented entirely in Godot

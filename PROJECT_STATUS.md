@@ -2,14 +2,14 @@
 
 ## Project Overview
 
-VRMVTube is a VTuber application built entirely with Godot Engine 4.6, combining VRM model support and MediaPipe AI tracking. This project is inspired by VRigUnity but completely implemented in Godot for cross-platform support.
+VRMVTube is a VTuber application built entirely with Godot Engine 4.6 stable, combining VRM model support and MediaPipe AI tracking. This project is inspired by VRigUnity but completely implemented in Godot for cross-platform support.
 
 ## Current Implementation Status
 
 ### ✅ Completed Features
 
 1. **Project Setup**
-   - Godot 4.6 dev6 project created
+   - Godot 4.6 stable project
    - Project structure organized (scenes/, scripts/, assets/, docs/)
    - Comprehensive .gitignore configuration
    - Export presets for all platforms configured
@@ -21,14 +21,39 @@ VRMVTube is a VTuber application built entirely with Godot Engine 4.6, combining
    - Default sample model included (cyanmint.vrm)
    - VRM model loading implemented and tested
 
-3. **UI Implementation**
+3. **GDMP Integration**
+   - GDMP v0.6 addon with binaries for all platforms
+   - Binaries included in repository (95MB+)
+   - Platform-specific binaries:
+     - Windows (x64)
+     - Linux (x64, arm64)
+     - macOS (x64/ARM)
+     - Android (ARM)
+     - iOS
+     - Web (WASM)
+
+4. **Hand Tracking**
+   - HandTrackingManager script implemented
+   - MediaPipe hand landmarker model (7.8MB) included
+   - Real-time hand landmark detection
+   - Framework for mapping to VRM hand bones
+
+5. **Face Tracking**
+   - FaceTrackingManager script implemented
+   - MediaPipe face landmarker model (3.8MB) included
+   - Real-time face landmark and blendshape detection
+   - VRM blendshape mapping (52 blendshapes supported)
+   - Automatic application to VRM facial expressions
+
+6. **UI Implementation**
    - Main scene with 3D viewport
    - Load VRM button functional
+   - Start/Stop tracking button
+   - Camera preview (320x240)
    - Status display for user feedback
    - Camera and lighting setup
-   - File dialog for VRM selection
 
-4. **Documentation**
+7. **Documentation**
    - README.md with project overview
    - docs/building.md with build instructions
    - docs/development.md with architecture details
@@ -36,47 +61,32 @@ VRMVTube is a VTuber application built entirely with Godot Engine 4.6, combining
    - docs/licenses.md with all third-party attributions
    - .github/copilot-instructions.md for AI development
 
-5. **CI/CD Setup**
+8. **CI/CD Setup**
    - GitHub Actions workflow configured
-   - Multi-platform build support:
-     - Windows (x64)
-     - Linux (x64)
-     - macOS (x64/ARM)
-     - Android (ARM)
-     - Web (HTML5)
+   - Multi-platform build support (all platforms)
+   - Uses Godot 4.6 stable
 
-6. **License Compliance**
+9. **License Compliance**
    - All third-party code properly attributed
    - MIT licenses from godot-vrm, GDMP documented
    - CC0 1.0 Universal for project code
    - License compliance verified
 
-### 🚧 In Progress / TODO
+### 🚧 In Progress / Future Enhancements
 
-1. **GDMP Integration**
-   - GDMP addon copied to project
-   - Binary libraries need to be downloaded from GDMP releases
-   - MediaPipe tracking not yet implemented
-   - Platform-specific binaries needed for:
-     - Windows (x64)
-     - Linux (x64)
-     - macOS (x64/ARM)
-     - Android (ARM)
-     - Web (WASM)
+1. **Hand Bone Mapping**
+   - Map MediaPipe hand landmarks to VRM hand skeleton
+   - Implement IK for natural hand poses
+   - Add hand gesture recognition
 
-2. **Tracking Implementation**
-   - Hand tracking via MediaPipe (planned)
-   - Face tracking via MediaPipe (planned)
-   - Connection to VRM bone/blendshape system (planned)
-   - Real-time animation updates (planned)
-
-3. **Advanced Features**
+2. **Advanced Features**
    - VMC protocol support (planned)
    - Virtual camera output (planned)
    - Recording and playback (planned)
    - Advanced expression controls (planned)
+   - Head rotation from face landmarks (planned)
 
-4. **Testing**
+3. **Testing**
    - Build testing on all platforms needed
    - Performance optimization needed
    - Cross-platform compatibility testing

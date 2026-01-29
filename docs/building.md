@@ -42,20 +42,22 @@ cd vrmvtube
 
 ### 2. Install Godot Engine
 
-Download Godot 4.6+ from https://godotengine.org/download or use development builds from https://github.com/godotengine/godot-builds/releases
+Download Godot 4.6 stable or newer from https://godotengine.org/download
 
-For Linux (development version):
+For Linux (stable version):
 ```bash
-wget https://github.com/godotengine/godot-builds/releases/download/4.6-dev6/Godot_v4.6-dev6_linux.x86_64.zip
-unzip Godot_v4.6-dev6_linux.x86_64.zip
-chmod +x Godot_v4.6-dev6_linux.x86_64
+wget https://github.com/godotengine/godot/releases/download/4.6-stable/Godot_v4.6-stable_linux.x86_64.zip
+unzip Godot_v4.6-stable_linux.x86_64.zip
+chmod +x Godot_v4.6-stable_linux.x86_64
 ```
 
 ### 3. Download Export Templates
 
 In Godot Editor:
 - Go to Editor → Manage Export Templates
-- Download templates for Godot 4.6 (or use development templates)
+- Download templates for Godot 4.6 stable
+
+Note: Export templates must match your Godot version exactly.
 
 ## Building for Desktop Platforms
 
