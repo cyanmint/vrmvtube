@@ -94,6 +94,18 @@ func _initialize_gdmp() -> void:
 
 func _initialize_camera() -> void:
 	"""Initialize camera for tracking"""
+	var platform = OS.get_name()
+	
+	# CameraServer has limited support on desktop platforms in Godot 4.x
+	# It works on: Android, iOS, Web
+	# It does NOT work reliably on: Windows, macOS, Linux, X11
+	if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
+		push_warning("GDMPTracking: CameraServer not supported on desktop platform: ", platform)
+		push_warning("GDMPTracking: Webcam preview disabled on desktop. Use GDMP for face tracking without preview.")
+		push_warning("GDMPTracking: For webcam support on desktop, consider using external tools or GDMP native camera access.")
+		return
+	
+	# Mobile/Web platforms - CameraServer should work
 	var camera_server := CameraServer
 	camera_server.set_monitoring_feeds(true)
 	

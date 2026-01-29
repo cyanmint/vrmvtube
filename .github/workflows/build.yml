@@ -421,13 +421,39 @@ jobs:
           
           echo ""
           echo "Export command completed with exit code: $export_result"
-          echo "✓ Android build completed"
-          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
           
-          # Check what files were created
+          # Check what files were created in various locations
           echo ""
           echo "=== Files in builds/android ==="
           ls -lah builds/android/ || echo "Directory is empty or doesn't exist"
+          
+          echo ""
+          echo "=== Checking android/build directory (gradle output) ==="
+          if [ -d "android/build" ]; then
+            find android/build -name "*.apk" -type f -exec ls -lh {} \; || echo "No APK in android/build"
+          fi
+          
+          echo ""
+          echo "=== Checking android directory structure ==="
+          ls -lah android/ 2>/dev/null || echo "android/ directory not found"
+          
+          # Look for APK in gradle build outputs
+          if [ -d "android/build/outputs/apk" ]; then
+            echo ""
+            echo "=== Found gradle APK output directory ==="
+            find android/build/outputs/apk -name "*.apk" -type f -exec ls -lh {} \;
+            
+            # Copy the APK to expected location
+            echo "Copying APK from gradle output to builds/android/..."
+            find android/build/outputs/apk -name "*.apk" -type f -exec cp {} builds/android/VRMVTube.apk \;
+            
+            if [ -f "builds/android/VRMVTube.apk" ]; then
+              echo "✓ Successfully copied APK to builds/android/VRMVTube.apk"
+            fi
+          fi
+          
+          echo "✓ Android build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
           
           # Exit with same code as godot export
           exit $export_result
