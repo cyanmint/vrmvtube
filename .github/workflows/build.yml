@@ -458,6 +458,49 @@ jobs:
           # Exit with same code as godot export
           exit $export_result
       
+      - name: Sign APK with Debug Keystore
+        run: |
+          echo "=== Signing APK with debug keystore ==="
+          
+          if [ ! -f "builds/android/VRMVTube.apk" ]; then
+            echo "ERROR: APK file not found!"
+            exit 1
+          fi
+          
+          # Check if APK is already signed
+          echo "Checking if APK is signed..."
+          if jarsigner -verify builds/android/VRMVTube.apk 2>&1 | grep -q "jar is unsigned"; then
+            echo "⚠ APK is unsigned - signing now..."
+          else
+            echo "✓ APK appears to be signed already"
+          fi
+          
+          # Sign the APK
+          echo "Signing APK..."
+          jarsigner -verbose \
+            -sigalg SHA256withRSA \
+            -digestalg SHA-256 \
+            -keystore ~/.android/debug.keystore \
+            -storepass android \
+            -keypass android \
+            builds/android/VRMVTube.apk \
+            androiddebugkey
+          
+          # Verify signature
+          echo ""
+          echo "=== Verifying APK signature ==="
+          jarsigner -verify -verbose -certs builds/android/VRMVTube.apk
+          
+          if [ $? -eq 0 ]; then
+            echo "✓ APK signed and verified successfully"
+          else
+            echo "ERROR: APK verification failed"
+            exit 1
+          fi
+          
+          echo "Final APK size:"
+          ls -lh builds/android/VRMVTube.apk
+      
       - name: Verify APK
         run: |
           echo "Checking builds/android directory..."
