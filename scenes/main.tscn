@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://d2w8nkphxc7qy"]
+[gd_scene load_steps=8 format=3 uid="uid://d2w8nkphxc7qy"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_1"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="2_1"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/face_rigging.gd" id="4_1"]
 [ext_resource type="PackedScene" uid="uid://cgk7nq8yn7yux" path="res://scenes/settings_menu.tscn" id="5_1"]
 [ext_resource type="Script" path="res://scripts/mediapipe_receiver.gd" id="6_1"]
+[ext_resource type="Script" path="res://scripts/python_manager.gd" id="7_1"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -507,6 +508,9 @@ script = ExtResource("3_1")
 
 [node name="MediaPipeReceiver" type="Node" parent="."]
 script = ExtResource("6_1")
+
+[node name="PythonManager" type="Node" parent="."]
+script = ExtResource("7_1")
 
 [node name="FaceRigging" type="Node" parent="."]
 script = ExtResource("4_1")

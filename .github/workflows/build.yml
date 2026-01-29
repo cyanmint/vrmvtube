@@ -51,6 +51,14 @@ jobs:
           mkdir -p builds/windows
           godot --headless --verbose --export-release "Windows" builds/windows/${EXPORT_NAME}.exe
       
+      - name: Include Python Tools
+        run: |
+          mkdir -p builds/windows/tools
+          cp -r tools/*.py builds/windows/tools/ || true
+          cp tools/requirements.txt builds/windows/tools/ || true
+          cp tools/README.md builds/windows/tools/ || true
+          echo "Python tools included in Windows build"
+      
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -96,6 +104,15 @@ jobs:
           mkdir -p builds/linux
           godot --headless --verbose --export-release "Linux" builds/linux/${EXPORT_NAME}.x86_64
       
+      - name: Include Python Tools
+        run: |
+          mkdir -p builds/linux/tools
+          cp -r tools/*.py builds/linux/tools/ || true
+          cp tools/requirements.txt builds/linux/tools/ || true
+          cp tools/README.md builds/linux/tools/ || true
+          chmod +x builds/linux/tools/*.py || true
+          echo "Python tools included in Linux build"
+      
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -140,6 +157,14 @@ jobs:
         run: |
           mkdir -p builds/macos
           godot --headless --verbose --export-release "macOS" builds/macos/${EXPORT_NAME}.zip
+      
+      - name: Include Python Tools
+        run: |
+          mkdir -p builds/macos/tools
+          cp -r tools/*.py builds/macos/tools/ || true
+          cp tools/requirements.txt builds/macos/tools/ || true
+          cp tools/README.md builds/macos/tools/ || true
+          echo "Python tools included in macOS build"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

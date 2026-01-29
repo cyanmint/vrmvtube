@@ -20,6 +20,7 @@ var _updating_sliders_from_transform := false  # Prevent infinite loops
 @onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
 @onready var mediapipe_receiver: Node = $MediaPipeReceiver
+@onready var python_manager: Node = $PythonManager
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
 @onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
@@ -207,6 +208,26 @@ func _load_and_apply_settings() -> void:
 			var webcam_hud_visible = config.get_value("ui", "webcam_hud_visible", true)
 			if webcam_content:
 				webcam_content.visible = webcam_hud_visible
+				if webcam_collapse_button:
+					webcam_collapse_button.text = "▲" if not webcam_hud_visible else "▼"
+			print("Applied UI settings: webcam_hud_visible=", webcam_hud_visible)
+		
+		# Apply tracking settings and auto-start Python scripts
+		if config.has_section("tracking") and python_manager:
+			var auto_start_mediapipe = config.get_value("tracking", "auto_start_mediapipe", false)
+			var auto_start_openseeface = config.get_value("tracking", "auto_start_openseeface", false)
+			
+			if auto_start_mediapipe:
+				print("Auto-starting MediaPipe...")
+				python_manager.start_script(python_manager.PythonScript.MEDIAPIPE)
+			
+			if auto_start_openseeface:
+				print("Auto-starting OpenSeeFace...")
+				# Start OpenSeeFace with default args
+				python_manager.start_script(python_manager.PythonScript.OPENSEEFACE, 
+					["--ip", "127.0.0.1", "--port", "11573"])
+			
+			print("Applied tracking settings: mediapipe=", auto_start_mediapipe, " openseeface=", auto_start_openseeface)
 				if webcam_collapse_button:
 					webcam_collapse_button.text = "▲" if not webcam_hud_visible else "▼"
 			print("Applied UI settings: webcam_hud_visible=", webcam_hud_visible)

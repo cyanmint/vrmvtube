@@ -33,6 +33,11 @@ signal settings_saved(settings: Dictionary)
 		"msaa": 0,  # 0=Disabled, 1=2x, 2=4x, 3=8x
 		"shadow_quality": 1,  # 0=Low, 1=Medium, 2=High
 		"vsync": true
+	},
+	"tracking": {
+		"auto_start_mediapipe": false,
+		"auto_start_openseeface": false,
+		"preferred_method": "auto"  # auto, mediapipe, openseeface, vmc, simulated
 	}
 }
 
@@ -382,6 +387,12 @@ func _load_settings() -> void:
 		current_settings.graphics.shadow_quality = config.get_value("graphics", "shadow_quality", 1)
 		current_settings.graphics.vsync = config.get_value("graphics", "vsync", true)
 	
+	# Load tracking settings
+	if config.has_section("tracking"):
+		current_settings.tracking.auto_start_mediapipe = config.get_value("tracking", "auto_start_mediapipe", false)
+		current_settings.tracking.auto_start_openseeface = config.get_value("tracking", "auto_start_openseeface", false)
+		current_settings.tracking.preferred_method = config.get_value("tracking", "preferred_method", "auto")
+	
 	print("Settings: Loaded from ", CONFIG_PATH)
 
 func _save_settings() -> void:
@@ -411,6 +422,11 @@ func _save_settings() -> void:
 	config.set_value("graphics", "msaa", current_settings.graphics.msaa)
 	config.set_value("graphics", "shadow_quality", current_settings.graphics.shadow_quality)
 	config.set_value("graphics", "vsync", current_settings.graphics.vsync)
+	
+	# Save tracking settings
+	config.set_value("tracking", "auto_start_mediapipe", current_settings.tracking.auto_start_mediapipe)
+	config.set_value("tracking", "auto_start_openseeface", current_settings.tracking.auto_start_openseeface)
+	config.set_value("tracking", "preferred_method", current_settings.tracking.preferred_method)
 	
 	var err := config.save(CONFIG_PATH)
 	if err == OK:
