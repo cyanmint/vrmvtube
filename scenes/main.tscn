@@ -1,12 +1,23 @@
-[gd_scene load_steps=5 format=3 uid="uid://d2w8nkphxc7qy"]
+[gd_scene load_steps=6 format=3 uid="uid://d2w8nkphxc7qy"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_1"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="2_1"]
 [ext_resource type="Script" path="res://scripts/webcam_tracker.gd" id="3_1"]
 [ext_resource type="Script" path="res://scripts/face_rigging.gd" id="4_1"]
+[ext_resource type="PackedScene" uid="uid://cgk7nq8yn7yux" path="res://scenes/settings_menu.tscn" id="5_1"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0, 1, 0, 1)
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 1.5
+tonemap_mode = 2
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_1")
+
+[node name="ModelContainer" type="Node3D" parent="."]
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 3)
@@ -17,7 +28,8 @@ script = ExtResource("2_1")
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 3, 3)
 shadow_enabled = true
 
-[node name="Environment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -29,54 +41,284 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control"]
+[node name="SidebarCollapseTab" type="Button" parent="UI/Control"]
+visible = false
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 1
+anchor_left = 1.0
 anchor_right = 1.0
-offset_bottom = 120.0
-grow_horizontal = 2
+offset_left = -30.0
+offset_top = 10.0
+offset_right = -5.0
+offset_bottom = 60.0
+grow_horizontal = 0
+text = "◀"
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/Control/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/margin_top = 10
+[node name="RightPanel" type="VBoxContainer" parent="UI/Control"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 10.0
+grow_horizontal = 0
+theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="UI/Control/VBoxContainer/MarginContainer"]
+[node name="SidebarHeader" type="PanelContainer" parent="UI/Control/RightPanel"]
 layout_mode = 2
-text = "VRMVTube - VTubing with VRM Models"
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/SidebarHeader"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI/Control/RightPanel/SidebarHeader/MarginContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "HUD Panels"
 horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="ButtonContainer" type="HBoxContainer" parent="UI/Control/VBoxContainer"]
+[node name="SidebarCollapseButton" type="Button" parent="UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer"]
 layout_mode = 2
-alignment = 1
+text = "▶"
+flat = true
 
-[node name="LoadModelButton" type="Button" parent="UI/Control/VBoxContainer/ButtonContainer"]
+[node name="TitlePanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/TitlePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="Title" type="Label" parent="UI/Control/RightPanel/TitlePanel/MarginContainer"]
+layout_mode = 2
+text = "VRMVTube"
+horizontal_alignment = 1
+
+[node name="WebcamPreviewPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Webcam Preview"
+horizontal_alignment = 1
+
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "▼"
+flat = true
+
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="WebcamTextureRect" type="TextureRect" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer"]
+custom_minimum_size = Vector2(280, 210)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="StatusLabel" type="Label" parent="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer"]
+layout_mode = 2
+text = "Initializing..."
+horizontal_alignment = 1
+
+[node name="ButtonsPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ButtonsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="LoadModelButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Load VRM Model"
 
-[node name="InfoLabel" type="Label" parent="UI/Control/VBoxContainer"]
+[node name="ResetPoseButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "Loading... Webcam tracking will start automatically.
-Controls: Drag to rotate | Shift+Drag to pan | Scroll to zoom"
+text = "Reset Pose"
+
+[node name="SettingsButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Settings"
+
+[node name="InfoLabel" type="Label" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Loading...
+Drag to rotate | Shift+Drag to pan | Scroll to zoom"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ModelControlsPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+visible = false
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/ModelControlsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Model Controls"
 horizontal_alignment = 1
 
-[node name="BottomPanel" type="VBoxContainer" parent="UI/Control"]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -80.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="Credits" type="Label" parent="UI/Control/BottomPanel"]
+[node name="HSeparator" type="HSeparator" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-text = "Powered by godot-vrm (V-Sekai) | Inspired by VRigUnity"
-horizontal_alignment = 1
-vertical_alignment = 2
 
-[node name="PlatformInfo" type="Label" parent="UI/Control/BottomPanel"]
+[node name="PositionLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Position"
+
+[node name="PositionYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
+layout_mode = 2
+text = "Y:"
+size_flags_horizontal = 3
+
+[node name="PositionYSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = -2.0
+max_value = 2.0
+step = 0.01
+value = -0.5
+
+[node name="PositionYValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
+layout_mode = 2
+text = "-0.50"
+
+[node name="ScaleLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Scale"
+
+[node name="ScaleContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer"]
+layout_mode = 2
+text = "Scale:"
+size_flags_horizontal = 3
+
+[node name="ScaleSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.5
+max_value = 2.0
+step = 0.01
+value = 1.5
+
+[node name="ScaleValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer"]
+layout_mode = 2
+text = "1.50"
+
+[node name="MetadataPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+visible = false
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/MetadataPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="HeaderContainer" type="HBoxContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Model Metadata"
+horizontal_alignment = 1
+
+[node name="CollapseButton" type="Button" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "▼"
+flat = true
+
+[node name="ContentContainer" type="VBoxContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="MetadataLabel" type="RichTextLabel" parent="UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "No model loaded"
+fit_content = true
+scroll_active = false
+
+[node name="BottomPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/Control/RightPanel/BottomPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/Control/RightPanel/BottomPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="Credits" type="Label" parent="UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Powered by godot-vrm (V-Sekai)"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="PlatformInfo" type="Label" parent="UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Platform: Unknown"
 horizontal_alignment = 1
@@ -95,6 +337,12 @@ script = ExtResource("3_1")
 [node name="FaceRigging" type="Node" parent="."]
 script = ExtResource("4_1")
 
-[connection signal="pressed" from="UI/Control/VBoxContainer/ButtonContainer/LoadModelButton" to="." method="_on_load_model_button_pressed"]
+[node name="SettingsMenu" parent="." instance=ExtResource("5_1")]
+
+[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/LoadModelButton" to="." method="_on_load_model_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/ResetPoseButton" to="." method="_on_reset_pose_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton" to="." method="_on_webcam_collapse_pressed"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_file_selected"]
 [connection signal="face_tracking_updated" from="WebcamTracker" to="FaceRigging" method="apply_tracking_data"]
+[connection signal="settings_applied" from="SettingsMenu" to="." method="_on_settings_applied"]

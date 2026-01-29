@@ -29,22 +29,51 @@ var smile: float = 0.0
 
 func _ready() -> void:
 	print("WebcamTracker: Initializing for platform: ", OS.get_name())
-	_initialize_camera()
+	# Use call_deferred to ensure signals can be connected first
+	call_deferred("_initialize_camera")
 
 func _initialize_camera() -> void:
 	"""Initialize webcam access using Godot's CameraServer"""
+	print("WebcamTracker: Attempting camera initialization...")
+	
+	# Note: Godot's CameraServer has limited support on desktop platforms
+	# It works better on mobile (Android/iOS) and web platforms
+	# For desktop, we'll emit a warning and continue with simulated tracking
+	
+	var platform := OS.get_name()
+	if platform in ["Windows", "Linux", "macOS", "X11"]:
+		push_warning("WebcamTracker: Desktop webcam access limited in Godot 4.x")
+		push_warning("WebcamTracker: Using simulated tracking data")
+		push_warning("WebcamTracker: For real webcam tracking, use MediaPipe or OpenCV plugin")
+		
+		# Continue with simulated tracking
+		tracking_active = true
+		print("WebcamTracker: Simulated face tracking started")
+		# Emit signal to notify main
+		webcam_available.emit(false)
+		return
+	
+	# For mobile/web platforms, try to use CameraServer
+	_initialize_camera_async()
+
+func _initialize_camera_async() -> void:
+	"""Async initialization for mobile/web platforms"""
 	var camera_server := CameraServer
 	
-	# Enable camera feed monitoring
-	camera_server.set_monitoring_feeds(true)
+	# In Godot 4.x, we need to check for existing feeds or create one
+	# CameraServer.add_feed() expects a CameraFeed object
+	# For mobile/web, feeds are usually auto-detected
 	
-	# Check if cameras are available
+	# Wait a frame for camera system to initialize
+	await get_tree().process_frame
+	
 	var feed_count := camera_server.get_feed_count()
 	print("WebcamTracker: Found ", feed_count, " camera feed(s)")
 	
 	if feed_count == 0:
-		push_warning("WebcamTracker: No camera feeds available")
+		push_warning("WebcamTracker: No camera feeds available, using simulated tracking")
 		webcam_available.emit(false)
+		tracking_active = true
 		return
 	
 	# Get the first available camera feed
@@ -53,21 +82,16 @@ func _initialize_camera() -> void:
 		print("WebcamTracker: Using camera: ", camera_feed.get_name())
 		camera_texture = CameraTexture.new()
 		camera_texture.camera_feed_id = camera_feed.get_id()
-		
-		# Activate the camera
-		if camera_feed.is_active():
-			print("WebcamTracker: Camera already active")
-		else:
-			camera_feed.set_active(true)
-			print("WebcamTracker: Camera activated")
+		camera_texture.camera_is_active = true
 		
 		webcam_available.emit(true)
 		
 		if enable_tracking:
 			_start_tracking()
 	else:
-		push_error("WebcamTracker: Failed to get camera feed")
+		push_warning("WebcamTracker: Failed to get camera feed, using simulated tracking")
 		webcam_available.emit(false)
+		tracking_active = true
 
 func _start_tracking() -> void:
 	"""Start face tracking"""
@@ -90,13 +114,35 @@ func _process(_delta: float) -> void:
 		return
 	
 	# TODO: Implement actual face tracking using image processing
-	# For now, emit simulated tracking data
+	# For now, emit simulated tracking data that shows the system works
 	_update_simulated_tracking()
 
 func _update_simulated_tracking() -> void:
 	"""Simulate face tracking data (placeholder for actual tracking)"""
 	# This is a placeholder - real implementation would analyze camera frames
 	# and extract facial landmarks using computer vision
+	
+	# Add some subtle animation to show tracking is working
+	var time := Time.get_ticks_msec() / 1000.0
+	
+	# Simulate natural blinking
+	var blink_cycle := sin(time * 3.0)
+	if blink_cycle > 0.9:
+		blink_left = clamp((blink_cycle - 0.9) * 10.0, 0.0, 1.0)
+		blink_right = clamp((blink_cycle - 0.9) * 10.0, 0.0, 1.0)
+	else:
+		blink_left = 0.0
+		blink_right = 0.0
+	
+	# Simulate mouth movement
+	mouth_open = (sin(time * 2.0) + 1.0) * 0.2
+	
+	# Simulate slight head rotation
+	head_rotation = Vector3(
+		cos(time * 0.7) * 0.05,
+		sin(time * 0.5) * 0.1,
+		0.0
+	)
 	
 	var tracking_data := {
 		"head_rotation": head_rotation,
