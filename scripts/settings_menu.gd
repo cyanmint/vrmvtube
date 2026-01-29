@@ -427,38 +427,48 @@ func _update_camera_preview() -> void:
 	if not camera_preview or not preview_placeholder:
 		return
 	
-	var camera_texture: CameraTexture = null
+	var camera_texture: Texture2D = null
 	var platform = OS.get_name()
 	
-	# Try to get camera texture from GDMP tracking (for Android/Web)
+	# Try to get camera texture from GDMP tracking first
 	if gdmp_tracking and gdmp_tracking.has_method("get_camera_texture"):
 		camera_texture = gdmp_tracking.get_camera_texture()
 	
-	# Try CameraServer as fallback
+	# Try CameraServer feeds directly (works on Android, desktop)
 	if not camera_texture:
 		var camera_server = CameraServer
-		if camera_server.get_feed_count() > 0:
+		# Use feeds array (modern Godot 4.6 API)
+		var feeds = camera_server.feeds
+		if feeds.size() > 0:
 			var selected_index = current_settings.camera.selected_index
-			if selected_index >= 0 and selected_index < camera_server.get_feed_count():
-				var feed = camera_server.get_feed(selected_index)
+			# Bounds check
+			if selected_index >= 0 and selected_index < feeds.size():
+				var feed = feeds[selected_index]
 				if feed:
 					# Activate feed if not active
 					if not feed.is_active():
 						feed.set_active(true)
+						print("Settings: Activated camera feed: ", feed.get_name())
 					
-					# Reuse or create camera texture
-					if not cached_camera_texture:
-						cached_camera_texture = CameraTexture.new()
-						cached_camera_texture.camera_feed_id = feed.get_id()
-						cached_camera_texture.camera_is_active = true
-					
-					camera_texture = cached_camera_texture
+					# Get texture directly from feed (Godot 4.6+)
+					camera_texture = feed.get_texture()
+					if camera_texture:
+						print("Settings: Got texture from feed directly")
+					else:
+						# Fallback: create CameraTexture manually
+						if not cached_camera_texture:
+							cached_camera_texture = CameraTexture.new()
+							cached_camera_texture.camera_feed_id = feed.get_id()
+							cached_camera_texture.camera_is_active = true
+							print("Settings: Created CameraTexture manually with feed ID: ", feed.get_id())
+						camera_texture = cached_camera_texture
 	
 	# Update preview display
 	if camera_texture:
 		camera_preview.texture = camera_texture
 		camera_preview.visible = true
 		preview_placeholder.visible = false
+		print("Settings: Camera preview showing texture")
 	else:
 		camera_preview.texture = null
 		camera_preview.visible = false
@@ -468,6 +478,17 @@ func _update_camera_preview() -> void:
 		if platform in ["Android", "iOS"]:
 			# Check if GDMP is actually available and initialized
 			if gdmp_tracking and gdmp_tracking.has_method("is_gdmp_available"):
+				if gdmp_tracking.is_gdmp_available():
+					preview_placeholder.text = "Waiting for camera...\n\nIf permission was granted,\ncheck console logs for errors."
+				else:
+					preview_placeholder.text = "GDMP not available.\n\nCheck if GDMP plugin is enabled\nin Project Settings."
+			else:
+				preview_placeholder.text = "Camera will appear when\nface tracking is active.\n\nGrant camera permission to enable."
+		elif platform in ["Web", "HTML5"]:
+			preview_placeholder.text = "Web platform:\nCameraServer not supported.\n\nRequires JavaScript bridge\nfor camera access."
+		else:
+			# Desktop platforms
+			preview_placeholder.text = "No camera feed available\n\nCheck if webcam is connected\nand accessible to Godot"
 				if gdmp_tracking.is_gdmp_available():
 					preview_placeholder.text = "Waiting for camera...\n\nIf permission was granted,\ncheck console logs for errors."
 				else:
