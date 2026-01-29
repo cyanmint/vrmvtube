@@ -99,8 +99,8 @@ Download the latest release for your platform from the [Releases](../../releases
 - Run `python3 validate.py` to check project structure before testing
 
 **Known Issues:**
-- **Desktop Webcam:** Godot 4.x has limited webcam support on Windows/macOS/Linux. The app uses simulated tracking instead. See TROUBLESHOOTING.md for details.
-- **VRM Textures:** Ensure both VRM and MToon Shader plugins are enabled in Project Settings → Plugins
+- **Desktop Webcam Preview:** Godot 4.x CameraServer only works on mobile (Android/iOS) and Web platforms. Webcam preview is disabled on desktop (Windows/macOS/Linux). Face tracking still works using simulation mode on desktop. For webcam-based tracking on desktop, use external tools like MediaPipe with GDMP plugin.
+- **VRM Textures:** Ensure both VRM and MToon Shader plugins are enabled in Project Settings → Plugins. The app now includes enhanced lighting for better detail visibility.
 
 ### Getting VRM Models
 
