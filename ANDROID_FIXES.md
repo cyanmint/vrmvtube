@@ -17,7 +17,7 @@ Changed `screen/orientation=6` to `screen/orientation=1` in the Android export p
 
 **Technical Details:**
 According to Godot 4 documentation and Android's ActivityInfo constants:
-- `0` = SCREEN_ORIENTATION_UNSPECIFIED
+- `0` = SCREEN_ORIENTATION_UNSPECIFIED (system default, typically landscape)
 - `1` = **SCREEN_ORIENTATION_PORTRAIT** (forces portrait mode)
 - `6` = SCREEN_ORIENTATION_SENSOR_LANDSCAPE (auto-rotates in landscape)
 - `7` = SCREEN_ORIENTATION_SENSOR_PORTRAIT (auto-rotates in portrait)
@@ -115,9 +115,9 @@ If you need to change the orientation for a specific use case:
 screen/orientation=7  # SCREEN_ORIENTATION_SENSOR_PORTRAIT
 ```
 
-**For landscape mode:**
+**For landscape mode (unspecified/default):**
 ```ini
-screen/orientation=0  # SCREEN_ORIENTATION_LANDSCAPE
+screen/orientation=0  # SCREEN_ORIENTATION_UNSPECIFIED (typically defaults to landscape)
 ```
 
 **For sensor-based landscape:**
