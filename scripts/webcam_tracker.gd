@@ -38,40 +38,40 @@ func _initialize_camera() -> void:
 	
 	# Note: Godot's CameraServer has limited support on desktop platforms
 	# It works better on mobile (Android/iOS) and web platforms
-	# For desktop, we'll emit a warning and continue with simulated tracking
+	# However, we'll try to access it on all platforms
 	
 	var platform := OS.get_name()
 	if platform in ["Windows", "Linux", "macOS", "X11"]:
-		push_warning("WebcamTracker: Desktop webcam access limited in Godot 4.x")
-		push_warning("WebcamTracker: Using simulated tracking data")
-		push_warning("WebcamTracker: For real webcam tracking, use MediaPipe or OpenCV plugin")
-		
-		# Continue with simulated tracking
-		tracking_active = true
-		print("WebcamTracker: Simulated face tracking started")
-		# Emit signal to notify main
-		webcam_available.emit(false)
-		return
-	
-	# For mobile/web platforms, try to use CameraServer
-	_initialize_camera_async()
+		push_warning("WebcamTracker: Desktop platform detected - webcam support may be limited")
+		push_warning("WebcamTracker: Attempting to access webcam, will fallback to simulated tracking if unavailable")
+		# Try to initialize camera for desktop platforms too
+		_initialize_camera_async()
+	else:
+		# For mobile/web platforms, try to use CameraServer
+		_initialize_camera_async()
 
 func _initialize_camera_async() -> void:
-	"""Async initialization for mobile/web platforms"""
+	"""Async initialization for all platforms"""
 	var camera_server := CameraServer
+	
+	# Enable camera feed monitoring FIRST - this is crucial for desktop platforms
+	camera_server.set_monitoring_feeds(true)
+	print("WebcamTracker: Enabled camera feed monitoring")
 	
 	# In Godot 4.x, we need to check for existing feeds or create one
 	# CameraServer.add_feed() expects a CameraFeed object
-	# For mobile/web, feeds are usually auto-detected
+	# For mobile/web/desktop, feeds are auto-detected when monitoring is enabled
 	
 	# Wait a frame for camera system to initialize
 	await get_tree().process_frame
+	await get_tree().process_frame  # Extra frame for desktop platforms
 	
 	var feed_count := camera_server.get_feed_count()
 	print("WebcamTracker: Found ", feed_count, " camera feed(s)")
 	
 	if feed_count == 0:
 		push_warning("WebcamTracker: No camera feeds available, using simulated tracking")
+		push_warning("WebcamTracker: For real webcam tracking, consider using MediaPipe or OpenCV plugin")
 		webcam_available.emit(false)
 		tracking_active = true
 		return
@@ -83,6 +83,10 @@ func _initialize_camera_async() -> void:
 		camera_texture = CameraTexture.new()
 		camera_texture.camera_feed_id = camera_feed.get_id()
 		camera_texture.camera_is_active = true
+		
+		# Activate the feed
+		camera_feed.set_active(true)
+		print("WebcamTracker: Camera feed activated")
 		
 		webcam_available.emit(true)
 		

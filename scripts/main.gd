@@ -98,6 +98,7 @@ func _ready() -> void:
 	# Connect webcam tracker signals BEFORE it initializes
 	if webcam_tracker:
 		webcam_tracker.webcam_available.connect(_on_webcam_available)
+		webcam_tracker.face_tracking_updated.connect(_on_face_tracking_updated)
 		print("Main: Connected to webcam signals")
 	else:
 		push_error("WebcamTracker node not found!")
@@ -191,6 +192,15 @@ func _load_and_apply_settings() -> void:
 			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_enabled else DisplayServer.VSYNC_DISABLED)
 			
 			print("Applied graphics settings: resolution_scale=", resolution_scale, " msaa=", msaa, " vsync=", vsync_enabled)
+		
+		# Apply UI settings
+		if config.has_section("ui"):
+			var webcam_hud_visible = config.get_value("ui", "webcam_hud_visible", true)
+			if webcam_content:
+				webcam_content.visible = webcam_hud_visible
+				if webcam_collapse_button:
+					webcam_collapse_button.text = "▲" if not webcam_hud_visible else "▼"
+			print("Applied UI settings: webcam_hud_visible=", webcam_hud_visible)
 
 func _get_last_model_path() -> String:
 	"""Get the last loaded model path from settings, or default"""
@@ -335,6 +345,35 @@ func _on_webcam_available(available: bool) -> void:
 		webcam_status_label.text = "Simulated Tracking"
 		# Show a placeholder image or keep the texture rect empty
 		webcam_texture_rect.texture = null
+
+func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
+	"""Handle face tracking data updates"""
+	# Pass tracking data to face rigging system
+	if face_rigging:
+		face_rigging.apply_tracking_data(tracking_data)
+	
+	# Update HUD with tracking data visualization
+	if webcam_status_label:
+		var quality := tracking_data.get("tracking_quality", 0.0)
+		var blink_l := tracking_data.get("blink_left", 0.0)
+		var blink_r := tracking_data.get("blink_right", 0.0)
+		var mouth := tracking_data.get("mouth_open", 0.0)
+		
+		var status_text := ""
+		if webcam_tracker.is_tracking_active():
+			if webcam_tracker.get_camera_texture():
+				status_text = "Webcam Active"
+			else:
+				status_text = "Simulated Tracking"
+		else:
+			status_text = "Tracking Inactive"
+		
+		# Add tracking data visualization
+		status_text += "\nQuality: %.0f%%" % (quality * 100.0)
+		status_text += "\nBlink L/R: %.2f / %.2f" % [blink_l, blink_r]
+		status_text += "\nMouth: %.2f" % mouth
+		
+		webcam_status_label.text = status_text
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
@@ -706,6 +745,20 @@ func _on_webcam_collapse_pressed() -> void:
 		webcam_content.visible = not webcam_content.visible
 		if webcam_collapse_button:
 			webcam_collapse_button.text = "▲" if not webcam_content.visible else "▼"
+		
+		# Save the state to settings
+		_save_webcam_hud_state(webcam_content.visible)
+
+func _save_webcam_hud_state(visible: bool) -> void:
+	"""Save webcam HUD visibility state to settings"""
+	var config := ConfigFile.new()
+	config.load("user://vrmvtube_settings.cfg")  # Load existing settings
+	config.set_value("ui", "webcam_hud_visible", visible)
+	var err := config.save("user://vrmvtube_settings.cfg")
+	if err == OK:
+		print("Saved webcam HUD state: ", visible)
+	else:
+		push_error("Failed to save webcam HUD state")
 
 func _on_sidebar_collapse_pressed() -> void:
 	"""Collapse the entire sidebar"""
