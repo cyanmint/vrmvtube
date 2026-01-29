@@ -173,26 +173,22 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
       
-      - name: Download Godot
-        run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip
-          unzip -q Godot_v${GODOT_VERSION}_linux.x86_64.zip
-          chmod +x Godot_v${GODOT_VERSION}_linux.x86_64
-          mkdir -p $HOME/.local/bin
-          mv Godot_v${GODOT_VERSION}_linux.x86_64 $HOME/.local/bin/godot
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       
-      - name: Download Export Templates
+      - name: Android Build with Gradle
         run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz
-          mkdir -p $HOME/.local/share/godot/export_templates
-          unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
-          mv templates $HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}
-          
-      - name: Android Build
-        run: |
-          mkdir -v -p build/android
-          godot --headless --verbose --export-release "Android" ./build/android/$EXPORT_NAME.apk
+          cd android/build
+          chmod +x gradlew
+          ./gradlew assembleDebug \
+            -Pexport_package_name="org.vrmvtube.vrmvtube" \
+            -Pexport_version_code="1" \
+            -Pexport_version_name="1.0"
+          mkdir -p ../../build/android
+          cp build/outputs/apk/standard/debug/android_debug.apk ../../build/android/$EXPORT_NAME.apk
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
