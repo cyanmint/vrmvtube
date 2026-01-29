@@ -44,6 +44,10 @@ signal settings_saved(settings: Dictionary)
 var original_settings := {}
 const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 
+# Reference to GDMP tracking for camera preview
+var gdmp_tracking: Node = null
+var cached_camera_texture: CameraTexture = null
+
 # UI References
 @onready var tab_container: TabContainer = $MarginContainer/VBoxContainer/TabContainer
 @onready var save_button: Button = $MarginContainer/VBoxContainer/ButtonPanel/SaveButton
@@ -64,6 +68,8 @@ const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 # Camera Tab
 @onready var camera_option: OptionButton = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/CameraOption
 @onready var camera_info_label: Label = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/InfoLabel
+@onready var camera_preview: TextureRect = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/PreviewContainer/CameraPreview
+@onready var preview_placeholder: Label = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/PreviewContainer/PreviewPlaceholder
 
 # Graphics Tab
 @onready var resolution_scale_slider: HSlider = $MarginContainer/VBoxContainer/TabContainer/Graphics/VBoxContainer/ResolutionScale/Slider
@@ -76,6 +82,13 @@ const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 @onready var about_text: RichTextLabel = $MarginContainer/VBoxContainer/TabContainer/About/ScrollContainer/AboutText
 
 func _ready() -> void:
+	# Get reference to GDMP tracking node from main scene
+	var main_scene = get_tree().root.get_node_or_null("Main")
+	if main_scene:
+		gdmp_tracking = main_scene.get_node_or_null("GDMPTracking")
+		if gdmp_tracking:
+			print("Settings: Found GDMP tracking node for camera preview")
+	
 	# Load settings from file
 	_load_settings()
 	
@@ -95,7 +108,9 @@ func _setup_ui() -> void:
 	"""Setup UI elements with current settings"""
 	# Window properties
 	title = "Settings"
-	size = Vector2i(600, 500)
+	# Don't set size manually - let it auto-adjust to content
+	# Use min_size instead to ensure it's not too small
+	min_size = Vector2i(600, 600)
 	
 	# Model tab
 	if model_path_label:
@@ -212,7 +227,11 @@ func _populate_cameras() -> void:
 		camera_option.add_item("No cameras detected", 0)
 		camera_option.disabled = true
 		if camera_info_label:
-			camera_info_label.text = "Desktop webcam access is limited in Godot 4.x\nSimulated tracking is used instead"
+			var platform = OS.get_name()
+			if platform in ["Web", "HTML5"]:
+				camera_info_label.text = "Web platform: CameraServer not supported\nRequires JavaScript bridge for camera access"
+			else:
+				camera_info_label.text = "No cameras detected\nMake sure a webcam is connected and accessible"
 
 func _setup_about_text() -> void:
 	"""Setup about tab content"""
@@ -325,6 +344,9 @@ func _on_camera_selected(index: int) -> void:
 	current_settings.camera.selected_index = index
 	if camera_option and index >= 0 and index < camera_option.item_count:
 		current_settings.camera.device_name = camera_option.get_item_text(index)
+	
+	# Update camera preview with new selection
+	_update_camera_preview()
 
 func _on_resolution_scale_changed(value: float) -> void:
 	"""Handle resolution scale change"""
@@ -395,6 +417,90 @@ func _load_settings() -> void:
 	
 	print("Settings: Loaded from ", CONFIG_PATH)
 
+func _process(_delta: float) -> void:
+	"""Update camera preview if window is visible"""
+	if visible:
+		_update_camera_preview()
+
+func _update_camera_preview() -> void:
+	"""Update the camera preview texture"""
+	if not camera_preview or not preview_placeholder:
+		return
+	
+	var camera_texture: Texture2D = null
+	var platform = OS.get_name()
+	
+	# Try to get camera texture from GDMP tracking first
+	if gdmp_tracking and gdmp_tracking.has_method("get_camera_texture"):
+		camera_texture = gdmp_tracking.get_camera_texture()
+	
+	# Try CameraServer feeds directly (works on Android, desktop)
+	if not camera_texture:
+		var camera_server = CameraServer
+		# Use feeds array (modern Godot 4.6 API)
+		var feeds = camera_server.feeds
+		if feeds.size() > 0:
+			var selected_index = current_settings.camera.selected_index
+			# Bounds check
+			if selected_index >= 0 and selected_index < feeds.size():
+				var feed = feeds[selected_index]
+				if feed:
+					# Activate feed if not active
+					if not feed.is_active():
+						feed.set_active(true)
+						print("Settings: Activated camera feed: ", feed.get_name())
+					
+					# Get texture directly from feed (Godot 4.6+)
+					camera_texture = feed.get_texture()
+					if camera_texture:
+						print("Settings: Got texture from feed directly")
+					else:
+						# Fallback: create CameraTexture manually
+						if not cached_camera_texture:
+							cached_camera_texture = CameraTexture.new()
+							cached_camera_texture.camera_feed_id = feed.get_id()
+							cached_camera_texture.camera_is_active = true
+							print("Settings: Created CameraTexture manually with feed ID: ", feed.get_id())
+						camera_texture = cached_camera_texture
+	
+	# Update preview display
+	if camera_texture:
+		camera_preview.texture = camera_texture
+		camera_preview.visible = true
+		preview_placeholder.visible = false
+		print("Settings: Camera preview showing texture")
+	else:
+		camera_preview.texture = null
+		camera_preview.visible = false
+		preview_placeholder.visible = true
+		
+		# Update placeholder text based on platform and GDMP status
+		if platform in ["Android", "iOS"]:
+			# Check if GDMP is actually available and initialized
+			if gdmp_tracking and gdmp_tracking.has_method("is_gdmp_available"):
+				if gdmp_tracking.is_gdmp_available():
+					preview_placeholder.text = "Waiting for camera...\n\nIf permission was granted,\ncheck console logs for errors."
+				else:
+					preview_placeholder.text = "GDMP not available.\n\nCheck if GDMP plugin is enabled\nin Project Settings."
+			else:
+				preview_placeholder.text = "Camera will appear when\nface tracking is active.\n\nGrant camera permission to enable."
+		elif platform in ["Web", "HTML5"]:
+			preview_placeholder.text = "Web platform:\nCameraServer not supported.\n\nRequires JavaScript bridge\nfor camera access."
+		else:
+			# Desktop platforms
+			preview_placeholder.text = "No camera feed available\n\nCheck if webcam is connected\nand accessible to Godot"
+				if gdmp_tracking.is_gdmp_available():
+					preview_placeholder.text = "Waiting for camera...\n\nIf permission was granted,\ncheck console logs for errors."
+				else:
+					preview_placeholder.text = "GDMP not available.\n\nCheck if GDMP plugin is enabled\nin Project Settings."
+			else:
+				preview_placeholder.text = "Camera will appear when\nface tracking is active.\n\nGrant camera permission to enable."
+		elif platform in ["Web", "HTML5"]:
+			preview_placeholder.text = "Web platform:\nCameraServer not supported.\n\nRequires JavaScript bridge\nfor camera access."
+		else:
+			# Desktop platforms
+			preview_placeholder.text = "No camera feed available\n\nCheck if webcam is connected\nand accessible to Godot"
+
 func _save_settings() -> void:
 	"""Save settings to config file"""
 	var config := ConfigFile.new()
@@ -439,4 +545,8 @@ func show_settings() -> void:
 	# Reload original settings when opening
 	original_settings = current_settings.duplicate(true)
 	_setup_ui()
+	
+	# Update camera preview immediately
+	_update_camera_preview()
+	
 	popup_centered()

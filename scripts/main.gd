@@ -98,10 +98,28 @@ func _ready() -> void:
 	# Connect GDMP face tracking - the only tracking system!
 	if gdmp_tracking:
 		gdmp_tracking.tracking_data_received.connect(_on_face_tracking_updated)
+		gdmp_tracking.camera_started.connect(_on_camera_started)
+		gdmp_tracking.camera_failed.connect(_on_camera_failed)
 		print("Main: Connected to GDMP native tracking")
-		if not gdmp_tracking.is_gdmp_available():
-			print("Main: GDMP not installed - download from https://github.com/j20001970/GDMP/releases")
-			print("Main: Using enhanced simulation until GDMP is installed")
+		
+		# Wait a frame for GDMP to initialize
+		await get_tree().process_frame
+		
+		# Update platform info with GDMP status
+		if gdmp_tracking.is_gdmp_available():
+			print("Main: ✅ GDMP is available and active!")
+			if platform_info:
+				var tracking_status = ""
+				if platform_name in ["Android", "iOS", "Web", "HTML5"]:
+					tracking_status = "\n📹 Face Tracking: GDMP Native"
+				else:
+					tracking_status = "\n📹 Face Tracking: Simulated (GDMP camera N/A)"
+				platform_info.text = "Platform: " + platform_name + vcam_support + tracking_status
+		else:
+			print("Main: ⚠️ GDMP not available - using simulated tracking")
+			print("Main: Check console for GDMP initialization errors")
+			if platform_info:
+				platform_info.text = "Platform: " + platform_name + vcam_support + "\n📹 Face Tracking: Simulated (GDMP N/A)"
 	else:
 		push_error("GDMPTracking node not found!")
 	
@@ -150,9 +168,16 @@ func _ready() -> void:
 	if camera_mode_button:
 		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
 	
-	# Update webcam status for desktop platforms
-	if webcam_status_label and platform_name in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
-		webcam_status_label.text = "⚠️ Webcam Preview\nNot Available on Desktop\n\nGodot CameraServer\nonly works on:\n• Android\n• iOS\n• Web\n\nFace tracking still works\nusing simulation mode"
+	# Update webcam status based on platform and GDMP availability
+	if webcam_status_label:
+		if platform_name in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
+			webcam_status_label.text = "⚠️ Webcam Preview\nNot Available on Desktop\n\nGodot CameraServer\nonly works on:\n• Android\n• iOS\n• Web\n\nFace tracking still works\nusing simulation mode"
+		elif platform_name in ["Android", "iOS", "Web", "HTML5"]:
+			# Check GDMP status for mobile/web - will update later when camera initializes
+			if gdmp_tracking and gdmp_tracking.is_gdmp_available():
+				webcam_status_label.text = "📹 Initializing Camera...\n\nPlease grant camera\npermission when prompted.\n\nMediaPipe face tracking\nwill start automatically."
+			else:
+				webcam_status_label.text = "⚠️ GDMP Not Available\n\nUsing simulated tracking.\n\nCheck console logs for\nGDMP status details."
 	
 	# Load saved settings and apply
 	_load_and_apply_settings()
@@ -339,6 +364,18 @@ func _on_camera_mode_button_pressed() -> void:
 	"""Toggle camera mode when button is pressed"""
 	if camera_controller:
 		camera_controller.toggle_mode()
+
+func _on_camera_started() -> void:
+	"""Called when camera successfully starts"""
+	print("Main: Camera started successfully!")
+	if webcam_status_label:
+		webcam_status_label.text = "✅ Camera Active!\n\nMediaPipe face tracking\nrunning with webcam.\n\nYour expressions are\ntracked in real-time."
+
+func _on_camera_failed(reason: String) -> void:
+	"""Called when camera fails to start"""
+	push_error("Main: Camera failed: ", reason)
+	if webcam_status_label:
+		webcam_status_label.text = "❌ Camera Failed\n\nReason: " + reason + "\n\nUsing simulated tracking.\n\nCheck camera permissions\nin Android settings."
 
 func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
 	"""Handle face tracking data updates from GDMP"""

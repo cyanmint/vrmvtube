@@ -5,7 +5,8 @@
 [node name="SettingsMenu" type="Window"]
 title = "Settings"
 initial_position = 2
-size = Vector2i(600, 500)
+size = Vector2i(600, 650)
+min_size = Vector2i(600, 600)
 script = ExtResource("1_1")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
@@ -163,6 +164,30 @@ layout_mode = 2
 layout_mode = 2
 text = "Note: Desktop webcam access is limited in Godot 4.x
 Simulated tracking is used on Windows/Mac/Linux platforms."
+autowrap_mode = 3
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer"]
+layout_mode = 2
+
+[node name="PreviewLabel" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer"]
+layout_mode = 2
+text = "Camera Preview:"
+
+[node name="PreviewContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer"]
+custom_minimum_size = Vector2(320, 240)
+layout_mode = 2
+
+[node name="CameraPreview" type="TextureRect" parent="MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/PreviewContainer"]
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PreviewPlaceholder" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/PreviewContainer"]
+layout_mode = 2
+text = "No camera feed available
+Camera will be activated on Android/Web platforms"
+horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Graphics" type="MarginContainer" parent="MarginContainer/VBoxContainer/TabContainer"]

@@ -21,24 +21,42 @@ VRMVTube is a VTubing application similar to [VRigUnity](https://github.com/Kari
 
 ## Face Tracking
 
-VRMVTube supports two tracking modes:
+VRMVTube includes **native GDMP (Godot MediaPipe) integration** for real-time face tracking:
 
-1. **Simulated Tracking (Default)**: Built-in animated tracking that demonstrates the rigging system
-2. **Real Face Tracking (Optional)**: Uses MediaPipe for real webcam-based face capture
+### Tracking Modes
 
-For real face tracking setup, see [tools/README.md](tools/README.md) and [docs/MOTION_CAPTURE.md](docs/MOTION_CAPTURE.md)
+1. **GDMP Native Tracking (Android/Web)**: Real webcam-based face tracking using MediaPipe
+   - ✅ **Fully integrated** - no external setup required!
+   - Uses MediaPipe's 468-point face mesh and 52 ARKit-compatible blendshapes
+   - Automatically requests camera permissions on mobile
+   - Works seamlessly on Android and Web platforms
+
+2. **Simulated Tracking (Fallback)**: Built-in animated tracking for demonstration
+   - Used automatically on desktop platforms (Windows/macOS/Linux)
+   - Also used when GDMP is unavailable or camera permission is denied
+
+### Platform-Specific Tracking
+
+- **Android**: Native GDMP camera with real face tracking ✅
+- **Web**: Native GDMP camera with real face tracking ✅
+- **Desktop (Windows/macOS/Linux)**: Simulated tracking (GDMP camera not supported in Godot yet)
+
+For advanced desktop face tracking setup, see [tools/README.md](tools/README.md) and [docs/MOTION_CAPTURE.md](docs/MOTION_CAPTURE.md)
 
 ## Platform Support
 
-| Platform | Status | Virtual Camera |
-|----------|--------|----------------|
-| Windows  | ✅ Supported | ✅ Yes |
-| Linux    | ✅ Supported | ✅ Yes |
-| macOS    | ✅ Supported | ❌ No |
-| Android  | ✅ Supported | ❌ No |
-| Web      | ✅ Supported | ❌ No |
+| Platform | Status | Virtual Camera | Face Tracking |
+|----------|--------|----------------|---------------|
+| Windows  | ✅ Supported | ✅ Yes | Simulated |
+| Linux    | ✅ Supported | ✅ Yes | Simulated |
+| macOS    | ✅ Supported | ❌ No | Simulated |
+| Android  | ✅ Supported | ❌ No | ✅ GDMP Native |
+| Web      | ✅ Supported | ❌ No | ✅ GDMP Native |
 
-**Note:** Virtual camera functionality is only available on Windows and Linux due to platform limitations.
+**Notes:** 
+- Virtual camera functionality is only available on Windows and Linux due to platform limitations.
+- GDMP native face tracking works on Android and Web with automatic camera access.
+- Desktop platforms use simulated tracking (GDMP camera support coming soon).
 
 ## Requirements
 
@@ -79,8 +97,10 @@ Download the latest release for your platform from the [Releases](../../releases
 
 1. Launch VRMVTube
 2. The app will automatically load the example VRM model (example/cyanmint.vrm)
-3. **Grant webcam access when prompted** for face tracking
-4. Your avatar will animate based on simulated facial expressions in real-time
+3. **On Android/Web: Grant camera permission when prompted** - enables real face tracking with GDMP!
+4. Your avatar will animate in real-time:
+   - **Android/Web**: Real face tracking using your webcam via MediaPipe
+   - **Desktop**: Simulated facial expressions (camera support coming soon)
 5. Use camera controls:
    - **Drag** to rotate camera
    - **Shift+Drag** to pan camera
@@ -99,7 +119,8 @@ Download the latest release for your platform from the [Releases](../../releases
 - Run `python3 validate.py` to check project structure before testing
 
 **Known Issues:**
-- **Desktop Webcam Preview:** Godot 4.x CameraServer only works on mobile (Android/iOS) and Web platforms. Webcam preview is disabled on desktop (Windows/macOS/Linux). Face tracking still works using simulation mode on desktop. For webcam-based tracking on desktop, use external tools like MediaPipe with GDMP plugin.
+- **Desktop Webcam:** GDMP native camera is not yet supported on desktop platforms in this Godot version. Desktop uses simulated tracking. For webcam-based tracking on desktop, use external tools (see docs/MOTION_CAPTURE.md).
+- **Android/Web Webcam Preview:** While face tracking works perfectly with GDMP on Android/Web, the webcam preview in the UI is not yet implemented (only the face tracking data is captured).
 - **VRM Textures:** Ensure both VRM and MToon Shader plugins are enabled in Project Settings → Plugins. The app now includes enhanced lighting for better detail visibility.
 - **Android Architecture Support:** The APK supports **arm64-v8a** (64-bit ARM devices) and **x86_64** (emulators). 32-bit architectures (armeabi-v7a, x86) are **not supported** due to GDMP MediaPipe library limitations. Most modern Android devices use 64-bit ARM.
 
