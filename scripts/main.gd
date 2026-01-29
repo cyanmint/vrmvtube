@@ -56,7 +56,7 @@ func _ready() -> void:
 		# Update UI with GDMP status
 		var platform_name := OS.get_name()
 		var vcam_supported := platform_name in ["Windows", "Linux", "X11"]
-		var gdmp_available := gdmp_tracking.is_gdmp_available()
+		var gdmp_available: bool = gdmp_tracking.is_gdmp_available()
 		
 		ui_controller.update_platform_info(platform_name, vcam_supported, gdmp_available)
 		
@@ -256,7 +256,7 @@ func _load_vrm_runtime(path: String) -> Node:
 	
 	# Import VRM
 	var state := GLTFState.new()
-	var vrm_extension := load("res://addons/vrm/vrm_extension.gd").new()
+	var vrm_extension: GLTFDocumentExtension = load("res://addons/vrm/vrm_extension.gd").new()
 	state.add_used_extension("VRM", true)
 	state.register_gltf_document_extension(vrm_extension, true)
 	
@@ -334,7 +334,7 @@ func _on_model_position_changed(pos: Vector3) -> void:
 	if not camera_controller:
 		return
 	
-	var current_transform := camera_controller.get_model_transform()
+	var current_transform: Dictionary = camera_controller.get_model_transform()
 	camera_controller.set_model_transform(pos, current_transform.rotation, current_transform.scale)
 
 func _on_model_rotation_changed(rot: Vector3) -> void:
@@ -342,7 +342,7 @@ func _on_model_rotation_changed(rot: Vector3) -> void:
 	if not camera_controller:
 		return
 	
-	var current_transform := camera_controller.get_model_transform()
+	var current_transform: Dictionary = camera_controller.get_model_transform()
 	camera_controller.set_model_transform(current_transform.position, rot, current_transform.scale)
 
 func _on_load_model_button_pressed() -> void:

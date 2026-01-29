@@ -497,17 +497,6 @@ func _update_camera_preview() -> void:
 		else:
 			# Desktop platforms
 			preview_placeholder.text = "No camera feed available\n\nCheck if webcam is connected\nand accessible to Godot"
-				if gdmp_tracking.is_gdmp_available():
-					preview_placeholder.text = "Waiting for camera...\n\nIf permission was granted,\ncheck console logs for errors."
-				else:
-					preview_placeholder.text = "GDMP not available.\n\nCheck if GDMP plugin is enabled\nin Project Settings."
-			else:
-				preview_placeholder.text = "Camera will appear when\nface tracking is active.\n\nGrant camera permission to enable."
-		elif platform in ["Web", "HTML5"]:
-			preview_placeholder.text = "Web platform:\nCameraServer not supported.\n\nRequires JavaScript bridge\nfor camera access."
-		else:
-			# Desktop platforms
-			preview_placeholder.text = "No camera feed available\n\nCheck if webcam is connected\nand accessible to Godot"
 
 func _save_settings() -> void:
 	"""Save settings to config file"""
