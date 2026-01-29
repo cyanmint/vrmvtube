@@ -28,10 +28,18 @@ var sidebar_collapsed := false
 @onready var buttons_panel: PanelContainer = $UI/Control/RightPanel/ButtonsPanel
 @onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ModelControlsPanel
 @onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/BottomPanel
+@onready var position_x_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer/PositionXSlider
+@onready var position_x_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer/PositionXValue
 @onready var position_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
 @onready var position_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
-@onready var scale_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleSlider
-@onready var scale_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleValue
+@onready var position_z_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer/PositionZSlider
+@onready var position_z_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer/PositionZValue
+@onready var rotation_x_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer/RotationXSlider
+@onready var rotation_x_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer/RotationXValue
+@onready var rotation_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer/RotationYSlider
+@onready var rotation_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer/RotationYValue
+@onready var rotation_z_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer/RotationZSlider
+@onready var rotation_z_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer/RotationZValue
 @onready var settings_menu: Window = $SettingsMenu
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var right_panel: VBoxContainer = $UI/Control/RightPanel
@@ -85,10 +93,18 @@ func _ready() -> void:
 		push_error("WebcamTracker node not found!")
 	
 	# Connect model control sliders
+	if position_x_slider:
+		position_x_slider.value_changed.connect(_on_position_x_changed)
 	if position_y_slider:
 		position_y_slider.value_changed.connect(_on_position_y_changed)
-	if scale_slider:
-		scale_slider.value_changed.connect(_on_scale_changed)
+	if position_z_slider:
+		position_z_slider.value_changed.connect(_on_position_z_changed)
+	if rotation_x_slider:
+		rotation_x_slider.value_changed.connect(_on_rotation_x_changed)
+	if rotation_y_slider:
+		rotation_y_slider.value_changed.connect(_on_rotation_y_changed)
+	if rotation_z_slider:
+		rotation_z_slider.value_changed.connect(_on_rotation_z_changed)
 	
 	# Connect collapse buttons
 	if webcam_collapse_button:
@@ -183,13 +199,27 @@ func _load_model_transform() -> void:
 			config.get_value("model", "rotation_y", 0.0),
 			config.get_value("model", "rotation_z", 0.0)
 		)
-		var scale_val = config.get_value("model", "scale", 1.5)
+		# Scale is always 1.0, ignore saved value
 		
-		camera_controller.set_model_transform(pos, rot, scale_val)
-		print("Loaded model transform: pos=", pos, " rot=", rot, " scale=", scale_val)
+		camera_controller.set_model_transform(pos, rot, 1.0)
+		print("Loaded model transform: pos=", pos, " rot=", rot, " scale=1.0")
+		
+		# Update sliders to match loaded values
+		if position_x_slider:
+			position_x_slider.value = pos.x
+		if position_y_slider:
+			position_y_slider.value = pos.y
+		if position_z_slider:
+			position_z_slider.value = pos.z
+		if rotation_x_slider:
+			rotation_x_slider.value = rad_to_deg(rot.x)
+		if rotation_y_slider:
+			rotation_y_slider.value = rad_to_deg(rot.y)
+		if rotation_z_slider:
+			rotation_z_slider.value = rad_to_deg(rot.z)
 	elif camera_controller:
 		# Use defaults if no saved transform
-		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.5)
+		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.0)
 		print("Using default model transform")
 
 func _save_last_model(path: String) -> void:
@@ -207,7 +237,7 @@ func _save_last_model(path: String) -> void:
 		config.set_value("model", "rotation_x", transform_data.rotation.x)
 		config.set_value("model", "rotation_y", transform_data.rotation.y)
 		config.set_value("model", "rotation_z", transform_data.rotation.z)
-		config.set_value("model", "scale", transform_data.scale)
+		# Don't save scale - it's always 1.0
 	
 	config.save("user://vrmvtube_settings.cfg")
 	print("Saved last model path and transform")
@@ -364,30 +394,75 @@ func _load_vrm_model(path: String) -> void:
 func _on_reset_pose_button_pressed() -> void:
 	"""Reset model to default position, rotation, and scale"""
 	if camera_controller:
-		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.5)
+		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.0)
 		
-		# Reset sliders to match default values
+		# Reset all sliders to match default values
+		if position_x_slider:
+			position_x_slider.value = 0.0
 		if position_y_slider:
 			position_y_slider.value = -0.5
-		if scale_slider:
-			scale_slider.value = 1.5
+		if position_z_slider:
+			position_z_slider.value = 0.0
+		if rotation_x_slider:
+			rotation_x_slider.value = 0.0
+		if rotation_y_slider:
+			rotation_y_slider.value = 0.0
+		if rotation_z_slider:
+			rotation_z_slider.value = 0.0
+
+func _on_position_x_changed(value: float) -> void:
+	"""Update model X position via camera controller"""
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.position.x = value
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if position_x_value:
+		position_x_value.text = "%.2f" % value
 
 func _on_position_y_changed(value: float) -> void:
 	"""Update model Y position via camera controller"""
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
 		transform_data.position.y = value
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, transform_data.scale)
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
 	if position_y_value:
 		position_y_value.text = "%.2f" % value
 
-func _on_scale_changed(value: float) -> void:
-	"""Update model scale via camera controller"""
+func _on_position_z_changed(value: float) -> void:
+	"""Update model Z position via camera controller"""
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, value)
-	if scale_value:
-		scale_value.text = "%.2f" % value
+		transform_data.position.z = value
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if position_z_value:
+		position_z_value.text = "%.2f" % value
+
+func _on_rotation_x_changed(value: float) -> void:
+	"""Update model X rotation via camera controller"""
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.rotation.x = deg_to_rad(value)
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if rotation_x_value:
+		rotation_x_value.text = str(int(value)) + "°"
+
+func _on_rotation_y_changed(value: float) -> void:
+	"""Update model Y rotation via camera controller"""
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.rotation.y = deg_to_rad(value)
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if rotation_y_value:
+		rotation_y_value.text = str(int(value)) + "°"
+
+func _on_rotation_z_changed(value: float) -> void:
+	"""Update model Z rotation via camera controller"""
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.rotation.z = deg_to_rad(value)
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if rotation_z_value:
+		rotation_z_value.text = str(int(value)) + "°"
 
 func _update_vrm_materials(node: Node) -> void:
 	"""Recursively update materials on VRM model - DO NOT duplicate to prevent white flash"""

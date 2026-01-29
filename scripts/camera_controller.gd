@@ -29,7 +29,7 @@ var _last_mouse_position: Vector2 = Vector2.ZERO
 # Model transform (these are applied to the model, not camera)
 var _model_rotation: Vector3 = Vector3.ZERO  # Euler angles in radians
 var _model_position: Vector3 = Vector3(0, -0.5, 0)
-var _model_scale: float = 1.5
+var _model_scale: float = 1.0  # Always 1.0 - no scaling
 
 # Touch/pinch support
 var _touch_points: Dictionary = {}
@@ -62,7 +62,8 @@ func set_model_transform(pos: Vector3, rot: Vector3, scale_val: float) -> void:
 	"""Set model transform from saved data"""
 	_model_position = pos
 	_model_rotation = rot
-	_model_scale = scale_val
+	# Scale is always 1.0, ignore saved scale value
+	_model_scale = 1.0
 	_apply_model_transform()
 
 func get_model_transform() -> Dictionary:

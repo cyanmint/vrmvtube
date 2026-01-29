@@ -210,6 +210,27 @@ layout_mode = 2
 layout_mode = 2
 text = "Position"
 
+[node name="PositionXContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
+layout_mode = 2
+text = "X:"
+size_flags_horizontal = 3
+
+[node name="PositionXSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = -2.0
+max_value = 2.0
+step = 0.01
+value = 0.0
+
+[node name="PositionXValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
+layout_mode = 2
+text = "0.00"
+
 [node name="PositionYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
@@ -231,30 +252,93 @@ value = -0.5
 layout_mode = 2
 text = "-0.50"
 
-[node name="ScaleLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "Scale"
-
-[node name="ScaleContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+[node name="PositionZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer"]
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
 layout_mode = 2
-text = "Scale:"
+text = "Z:"
 size_flags_horizontal = 3
 
-[node name="ScaleSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer"]
+[node name="PositionZSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
-min_value = 0.5
+min_value = -2.0
 max_value = 2.0
 step = 0.01
-value = 1.5
+value = 0.0
 
-[node name="ScaleValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer"]
+[node name="PositionZValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
 layout_mode = 2
-text = "1.50"
+text = "0.00"
+
+[node name="RotationLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Rotation (degrees)"
+
+[node name="RotationXContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
+layout_mode = 2
+text = "X:"
+size_flags_horizontal = 3
+
+[node name="RotationXSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+value = 0.0
+
+[node name="RotationXValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
+layout_mode = 2
+text = "0°"
+
+[node name="RotationYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
+layout_mode = 2
+text = "Y:"
+size_flags_horizontal = 3
+
+[node name="RotationYSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+value = 0.0
+
+[node name="RotationYValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
+layout_mode = 2
+text = "0°"
+
+[node name="RotationZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
+layout_mode = 2
+text = "Z:"
+size_flags_horizontal = 3
+
+[node name="RotationZSlider" type="HSlider" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = -180.0
+max_value = 180.0
+step = 1.0
+value = 0.0
+
+[node name="RotationZValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
+layout_mode = 2
+text = "0°"
 
 [node name="MetadataPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
 visible = false
