@@ -46,6 +46,7 @@ const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 
 # Reference to GDMP tracking for camera preview
 var gdmp_tracking: Node = null
+var cached_camera_texture: CameraTexture = null
 
 # UI References
 @onready var tab_container: TabContainer = $MarginContainer/VBoxContainer/TabContainer
@@ -107,7 +108,9 @@ func _setup_ui() -> void:
 	"""Setup UI elements with current settings"""
 	# Window properties
 	title = "Settings"
-	size = Vector2i(600, 500)
+	# Don't set size manually - let it auto-adjust to content
+	# Use min_size instead to ensure it's not too small
+	min_size = Vector2i(600, 600)
 	
 	# Model tab
 	if model_path_label:
@@ -420,25 +423,34 @@ func _update_camera_preview() -> void:
 	if not camera_preview or not preview_placeholder:
 		return
 	
-	# Try to get camera texture from GDMP tracking
 	var camera_texture: CameraTexture = null
+	var platform = OS.get_name()
+	
+	# Try to get camera texture from GDMP tracking (for Android/Web)
 	if gdmp_tracking and gdmp_tracking.has_method("get_camera_texture"):
 		camera_texture = gdmp_tracking.get_camera_texture()
 	
-	# Also try CameraServer for desktop/web platforms
+	# Try CameraServer as fallback
 	if not camera_texture:
 		var camera_server = CameraServer
 		if camera_server.get_feed_count() > 0:
 			var selected_index = current_settings.camera.selected_index
 			if selected_index >= 0 and selected_index < camera_server.get_feed_count():
 				var feed = camera_server.get_feed(selected_index)
-				if feed and feed.is_active():
-					var cam_tex = CameraTexture.new()
-					cam_tex.camera_feed_id = feed.get_id()
-					cam_tex.camera_is_active = true
-					camera_texture = cam_tex
+				if feed:
+					# Activate feed if not active
+					if not feed.is_active():
+						feed.set_active(true)
+					
+					# Reuse or create camera texture
+					if not cached_camera_texture:
+						cached_camera_texture = CameraTexture.new()
+						cached_camera_texture.camera_feed_id = feed.get_id()
+						cached_camera_texture.camera_is_active = true
+					
+					camera_texture = cached_camera_texture
 	
-	# Update preview
+	# Update preview display
 	if camera_texture:
 		camera_preview.texture = camera_texture
 		camera_preview.visible = true
@@ -448,10 +460,16 @@ func _update_camera_preview() -> void:
 		camera_preview.visible = false
 		preview_placeholder.visible = true
 		
-		# Update placeholder text based on platform
-		var platform = OS.get_name()
+		# Update placeholder text based on platform and GDMP status
 		if platform in ["Android", "iOS", "Web", "HTML5"]:
-			preview_placeholder.text = "Camera preview will appear when\nface tracking is active.\n\nGrant camera permission to enable."
+			# Check if GDMP is actually available and initialized
+			if gdmp_tracking and gdmp_tracking.has_method("is_gdmp_available"):
+				if gdmp_tracking.is_gdmp_available():
+					preview_placeholder.text = "Waiting for camera...\n\nIf camera permission was granted,\ncheck console logs for errors."
+				else:
+					preview_placeholder.text = "GDMP not available.\n\nCheck if GDMP plugin is enabled\nin Project Settings."
+			else:
+				preview_placeholder.text = "Camera will appear when\nface tracking is active.\n\nGrant camera permission to enable."
 		else:
 			preview_placeholder.text = "No camera feed available\n\nDesktop webcam access is limited in Godot 4.x\nCamera works on Android/Web platforms"
 
