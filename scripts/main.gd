@@ -18,7 +18,7 @@ var _updating_sliders_from_transform := false  # Prevent infinite loops
 
 @onready var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
 @onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
-@onready var webcam_tracker: Node = $WebcamTracker
+@onready var gdmp_tracking: Node = $GDMPTracking
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
 @onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
@@ -95,12 +95,15 @@ func _ready() -> void:
 	else:
 		push_error("Platform info label not found!")
 	
-	# Connect webcam tracker signals BEFORE it initializes
-	if webcam_tracker:
-		webcam_tracker.webcam_available.connect(_on_webcam_available)
-		print("Main: Connected to webcam signals")
+	# Connect GDMP face tracking - the only tracking system!
+	if gdmp_tracking:
+		gdmp_tracking.tracking_data_received.connect(_on_face_tracking_updated)
+		print("Main: Connected to GDMP native tracking")
+		if not gdmp_tracking.is_gdmp_available():
+			print("Main: GDMP not installed - download from https://github.com/j20001970/GDMP/releases")
+			print("Main: Using enhanced simulation until GDMP is installed")
 	else:
-		push_error("WebcamTracker node not found!")
+		push_error("GDMPTracking node not found!")
 	
 	# Connect model control sliders
 	if position_x_slider:
@@ -191,6 +194,21 @@ func _load_and_apply_settings() -> void:
 			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_enabled else DisplayServer.VSYNC_DISABLED)
 			
 			print("Applied graphics settings: resolution_scale=", resolution_scale, " msaa=", msaa, " vsync=", vsync_enabled)
+		
+		# Apply UI settings
+		if config.has_section("ui"):
+			var webcam_hud_visible = config.get_value("ui", "webcam_hud_visible", true)
+			if webcam_content:
+				webcam_content.visible = webcam_hud_visible
+				if webcam_collapse_button:
+					webcam_collapse_button.text = "▲" if not webcam_hud_visible else "▼"
+			print("Applied UI settings: webcam_hud_visible=", webcam_hud_visible)
+		
+		# Tracking settings - GDMP and VMC work automatically, no Python needed
+		if config.has_section("tracking"):
+			var use_gdmp = config.get_value("tracking", "use_gdmp", true)
+			var use_vmc = config.get_value("tracking", "use_vmc", true)
+			print("Applied tracking settings: gdmp=", use_gdmp, " vmc=", use_vmc)
 
 func _get_last_model_path() -> String:
 	"""Get the last loaded model path from settings, or default"""
@@ -318,23 +336,31 @@ func _on_camera_mode_button_pressed() -> void:
 	if camera_controller:
 		camera_controller.toggle_mode()
 
-func _on_webcam_available(available: bool) -> void:
-	"""Handle webcam availability status"""
-	if available:
-		print("Main: Webcam is available and tracking is active")
-		info_label.text = "Webcam tracking active.\n" + info_label.text.split("\n")[-1] if "\n" in info_label.text else info_label.text
-		webcam_status_label.text = "Webcam Active"
+func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
+	"""Handle face tracking data updates from GDMP"""
+	# Pass tracking data to face rigging system
+	if face_rigging:
+		face_rigging.apply_tracking_data(tracking_data)
+	
+	# Update HUD with tracking data visualization
+	if webcam_status_label:
+		var quality: float = tracking_data.get("tracking_quality", 0.0)
+		var blink_l: float = tracking_data.get("blink_left", 0.0)
+		var blink_r: float = tracking_data.get("blink_right", 0.0)
+		var mouth: float = tracking_data.get("mouth_open", 0.0)
+		var source: String = tracking_data.get("source", "unknown")
 		
-		# Set webcam texture to preview
-		var camera_texture = webcam_tracker.get_camera_texture()
-		if camera_texture:
-			webcam_texture_rect.texture = camera_texture
-	else:
-		push_warning("Main: Webcam is not available. Using simulated face tracking.")
-		info_label.text = "Simulated tracking active.\n" + info_label.text.split("\n")[-1] if "\n" in info_label.text else info_label.text
-		webcam_status_label.text = "Simulated Tracking"
-		# Show a placeholder image or keep the texture rect empty
-		webcam_texture_rect.texture = null
+		var status_text := ""
+		if gdmp_tracking and gdmp_tracking.is_gdmp_available():
+			status_text = "✅ GDMP Native"
+		else:
+			status_text = "🎭 Simulated"
+		
+		status_text += "\nQuality: %.0f%%" % (quality * 100.0)
+		status_text += "\nBlink L/R: %.2f / %.2f" % [blink_l, blink_r]
+		status_text += "\nMouth: %.2f" % mouth
+		
+		webcam_status_label.text = status_text
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
@@ -706,6 +732,22 @@ func _on_webcam_collapse_pressed() -> void:
 		webcam_content.visible = not webcam_content.visible
 		if webcam_collapse_button:
 			webcam_collapse_button.text = "▲" if not webcam_content.visible else "▼"
+		
+		# Save the state to settings
+		_save_webcam_hud_state(webcam_content.visible)
+
+func _save_webcam_hud_state(visible: bool) -> void:
+	"""Save webcam HUD visibility state to settings"""
+	var config := ConfigFile.new()
+	# Load existing settings - ignore error as file may not exist yet
+	# ConfigFile.set_value() and save() will work regardless
+	config.load("user://vrmvtube_settings.cfg")
+	config.set_value("ui", "webcam_hud_visible", visible)
+	var err := config.save("user://vrmvtube_settings.cfg")
+	if err == OK:
+		print("Saved webcam HUD state: ", visible)
+	else:
+		push_error("Failed to save webcam HUD state")
 
 func _on_sidebar_collapse_pressed() -> void:
 	"""Collapse the entire sidebar"""

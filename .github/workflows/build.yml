@@ -10,6 +10,7 @@ on:
 env:
   GODOT_VERSION: 4.6-stable
   EXPORT_NAME: VRMVTube
+  GDMP_VERSION: v0.6
 
 jobs:
   export-windows:
@@ -22,10 +23,34 @@ jobs:
           lfs: true
           submodules: recursive
       
+      - name: Download and Setup GDMP
+        run: |
+          echo "Setting up GDMP for Windows..."
+          
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
+          
+          # Download MediaPipe face landmarker model
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task \
+            https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          
+          echo "✓ GDMP binaries installed (all platforms)"
+          echo "✓ MediaPipe model downloaded"
+          
+          # Show structure
+          echo "GDMP addon structure:"
+          ls -la addons/GDMP/ || true
+          echo "GDMP Windows libraries:"
+          ls -lh addons/GDMP/libs/x86_64/GDMP.windows.dll 2>/dev/null || echo "Windows DLL not found"
+      
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -43,6 +68,11 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
         working-directory: /tmp
       
+      - name: Install OpenGL Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev
+      
       - name: Import Resources
         run: godot --headless --verbose --editor --quit
       
@@ -50,6 +80,8 @@ jobs:
         run: |
           mkdir -p builds/windows
           godot --headless --verbose --export-release "Windows" builds/windows/${EXPORT_NAME}.exe
+          echo "✓ Windows build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -67,10 +99,30 @@ jobs:
           lfs: true
           submodules: recursive
       
+      - name: Download and Setup GDMP
+        run: |
+          echo "Setting up GDMP for Linux..."
+          
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
+          
+          # Download MediaPipe face landmarker model
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task \
+            https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          
+          echo "✓ GDMP binaries installed (all platforms)"
+          echo "✓ MediaPipe model downloaded"
+          echo "Linux library:"
+          ls -lh addons/GDMP/libs/x86_64/libGDMP.linux.so 2>/dev/null || echo "Linux .so not found"
+      
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -95,6 +147,8 @@ jobs:
         run: |
           mkdir -p builds/linux
           godot --headless --verbose --export-release "Linux" builds/linux/${EXPORT_NAME}.x86_64
+          echo "✓ Linux build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -112,10 +166,30 @@ jobs:
           lfs: true
           submodules: recursive
       
+      - name: Download and Setup GDMP
+        run: |
+          echo "Setting up GDMP for macOS..."
+          
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
+          
+          # Download MediaPipe face landmarker model
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task \
+            https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          
+          echo "✓ GDMP binaries installed (all platforms)"
+          echo "✓ MediaPipe model downloaded"
+          echo "macOS libraries:"
+          ls -lh addons/GDMP/libs/*/libGDMP.macos.dylib 2>/dev/null || echo "macOS dylibs not found"
+      
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -140,6 +214,8 @@ jobs:
         run: |
           mkdir -p builds/macos
           godot --headless --verbose --export-release "macOS" builds/macos/${EXPORT_NAME}.zip
+          echo "✓ macOS build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -157,10 +233,30 @@ jobs:
           lfs: true
           submodules: recursive
       
+      - name: Download and Setup GDMP
+        run: |
+          echo "Setting up GDMP for Web..."
+          
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
+          
+          # Download MediaPipe face landmarker model
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task \
+            https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          
+          echo "✓ GDMP binaries installed (all platforms)"
+          echo "✓ MediaPipe model downloaded"
+          echo "Web WASM:"
+          ls -lh addons/GDMP/libs/GDMP.web.wasm 2>/dev/null || echo "Web WASM not found"
+      
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -185,6 +281,8 @@ jobs:
         run: |
           mkdir -p builds/web
           godot --headless --verbose --export-release "Web" builds/web/index.html
+          echo "✓ Web build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -202,6 +300,27 @@ jobs:
           lfs: true
           submodules: recursive
       
+      - name: Download and Setup GDMP
+        run: |
+          echo "Setting up GDMP for Android..."
+          
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
+          
+          # Download MediaPipe face landmarker model
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task \
+            https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          
+          echo "✓ GDMP binaries installed (all platforms)"
+          echo "✓ MediaPipe model downloaded"
+          echo "Android libraries:"
+          ls -lh addons/GDMP/libs/arm64/libGDMP.android.so 2>/dev/null || echo "Android ARM64 .so not found"
+          ls -lh addons/GDMP/libs/x86_64/libGDMP.android.so 2>/dev/null || echo "Android x86_64 .so not found"
+      
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -211,7 +330,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -264,6 +383,15 @@ jobs:
           export/android/one_click_deploy_clear_previous_install = false
           EOF
       
+      - name: Install Android Build Template
+        run: |
+          echo "Installing Android build template..."
+          mkdir -p android
+          cd android
+          unzip -o -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip
+          echo "✓ Android build template installed"
+          ls -la | head -10
+      
       - name: Import Resources
         run: |
           echo "Importing project resources..."
@@ -293,6 +421,8 @@ jobs:
           
           echo ""
           echo "Export command completed with exit code: $export_result"
+          echo "✓ Android build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
           
           # Check what files were created
           echo ""

@@ -22,7 +22,7 @@ builds/
 *.app
 
 # Android build template (will be installed by CI)
-android/build/
+android/
 
 # System/tool-specific ignores
 .DS_Store
@@ -50,3 +50,7 @@ Thumbs.db
 # Temporary files
 /tmp/
 *.tmp
+
+# GDMP binaries (CI downloads these, we only vendor source)
+addons/GDMP/libs/
+addons/GDMP/models/

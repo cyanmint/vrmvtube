@@ -1,0 +1,16 @@
+# Ignore executables directory
+/bin
+
+# Ignore Python directories
+__pycache__/
+venv/
+
+# Ignore clangd compilation database files
+.cache/
+compile_commands.json
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build

@@ -12,11 +12,21 @@ VRMVTube is a VTubing application similar to [VRigUnity](https://github.com/Kari
 **Key Features:**
 - VRM model support (VRM 0.x and 1.0)
 - Cross-platform support: Windows, macOS, Linux, Android, and Web
-- **Webcam-based face tracking (all platforms)**
+- **Real face tracking with MediaPipe (optional)**
+- **Simulated tracking (built-in fallback)**
 - **Real-time face rigging with VRM blend shapes**
 - Interactive camera controls (drag, pan, zoom)
 - Virtual camera output (Windows and Linux only)
 - Real-time avatar rendering with MToon shader
+
+## Face Tracking
+
+VRMVTube supports two tracking modes:
+
+1. **Simulated Tracking (Default)**: Built-in animated tracking that demonstrates the rigging system
+2. **Real Face Tracking (Optional)**: Uses MediaPipe for real webcam-based face capture
+
+For real face tracking setup, see [tools/README.md](tools/README.md) and [docs/MOTION_CAPTURE.md](docs/MOTION_CAPTURE.md)
 
 ## Platform Support
 
