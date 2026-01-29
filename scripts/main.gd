@@ -39,8 +39,7 @@ var sidebar_collapsed := false
 @onready var sidebar_collapse_tab: Button = $UI/Control/SidebarCollapseTab
 @onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/MetadataPanel
 @onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
-@ontml:parameter>
-<parameter name="metadata_collapse_button: Button = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
 @onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
 @onready var camera_controller: Camera3D = $Camera3D
 @onready var camera_mode_button: Button = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/CameraModeButton
