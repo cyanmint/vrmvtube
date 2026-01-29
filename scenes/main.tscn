@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://d2w8nkphxc7qy"]
+[gd_scene load_steps=12 format=3 uid="uid://d2w8nkphxc7qy"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_1"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="2_1"]
@@ -7,6 +7,10 @@
 [ext_resource type="PackedScene" uid="uid://cgk7nq8yn7yux" path="res://scenes/settings_menu.tscn" id="5_1"]
 [ext_resource type="Script" path="res://scripts/mediapipe_receiver.gd" id="6_1"]
 [ext_resource type="Script" path="res://scripts/python_manager.gd" id="7_1"]
+[ext_resource type="Script" path="res://scripts/openseeface_receiver.gd" id="8_1"]
+[ext_resource type="Script" path="res://scripts/vmc_receiver.gd" id="9_1"]
+[ext_resource type="Script" path="res://scripts/vmc_sender.gd" id="10_1"]
+[ext_resource type="Script" path="res://scripts/android_tracking.gd" id="11_1"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -508,6 +512,18 @@ script = ExtResource("3_1")
 
 [node name="MediaPipeReceiver" type="Node" parent="."]
 script = ExtResource("6_1")
+
+[node name="OpenSeeFaceReceiver" type="Node" parent="."]
+script = ExtResource("8_1")
+
+[node name="VMCReceiver" type="Node" parent="."]
+script = ExtResource("9_1")
+
+[node name="VMCSender" type="Node" parent="."]
+script = ExtResource("10_1")
+
+[node name="AndroidTracking" type="Node" parent="."]
+script = ExtResource("11_1")
 
 [node name="PythonManager" type="Node" parent="."]
 script = ExtResource("7_1")

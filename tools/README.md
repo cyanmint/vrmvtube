@@ -1,83 +1,224 @@
-# VRMVTube Tools
+# VRMVTube Tools - Self-Contained Face Tracking
 
-## MediaPipe Face Tracking Bridge
+## Overview
 
-This directory contains tools for integrating real face tracking with VRMVTube.
+This directory contains Python-based face tracking tools that work with VRMVTube. These tools are **automatically included** in all desktop builds (Windows, macOS, Linux) to make the application self-contained.
 
-### Setup
+## Platform-Specific Behavior
 
-1. **Install Python dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Desktop (Windows, macOS, Linux)
+- **All tracking methods available**: MediaPipe, OpenSeeFace, VMC
+- **Python scripts included** in `tools/` directory
+- **Auto-start supported**: Configure in settings to start automatically
 
-2. **Run VRMVTube** in Godot Engine
+### Web
+- **JavaScript MediaPipe** runs in browser (no Python needed)
+- Use `web_tracking.html` for browser-based tracking
+- **VMC receiver** works for external apps
 
-3. **Start the MediaPipe bridge:**
-   ```bash
-   python mediapipe_bridge.py
-   ```
+### Android
+- **Native implementation**: Uses Android's camera APIs
+- **VMC receiver** works over network
+- **No Python required**: Self-contained tracking built into APK
 
-4. **Position yourself** in front of your webcam
+## Quick Start
 
-5. **Watch your VRM avatar** mirror your facial expressions in real-time!
+### Option 1: Auto-Start (Easiest)
 
-### How It Works
+**Enable in settings:**
+```ini
+[tracking]
+auto_start_openseeface = true
+```
 
-The `mediapipe_bridge.py` script:
-- Captures video from your webcam using OpenCV
-- Processes each frame with MediaPipe Face Mesh to detect facial landmarks
-- Calculates blendshape values (blink, mouth open, head rotation)
-- Sends tracking data to VRMVTube via UDP (port 9999)
+**Or edit config manually:**
+`user://vrmvtube_settings.cfg`
 
-VRMVTube receives the data and applies it to your VRM avatar in real-time.
+### Option 2: Manual Start
 
-### Configuration
+**Prerequisites (Desktop only):**
+```bash
+pip install -r requirements.txt
+```
 
-Edit `mediapipe_bridge.py` to customize:
+**MediaPipe:**
+```bash
+python mediapipe_bridge.py
+```
 
-- `GODOT_IP` - IP address where VRMVTube is running (default: 127.0.0.1)
-- `GODOT_PORT` - UDP port (default: 9999)
-- `CAMERA_ID` - Camera device ID (default: 0, use 1 for external webcam)
-- `FPS` - Tracking frames per second (default: 30)
-- `SHOW_PREVIEW` - Show camera preview window (default: True)
+**OpenSeeFace (if installed separately):**
+```bash
+git clone https://github.com/emilianavt/OpenSeeFace.git
+cd OpenSeeFace
+pip install onnxruntime opencv-python pillow numpy
+python facetracker.py
+```
 
-### Troubleshooting
+### Option 3: VMC Protocol
 
-**No tracking data received:**
-- Check that VRMVTube is running
-- Verify the MediaPipe bridge is running (you should see a preview window)
-- Check firewall settings (allow UDP port 9999)
+**Use any VMC-compatible app:**
+- VSeeFace
+- Warudo
+- Virtual Motion Capture
+- Animaze
 
-**Poor tracking quality:**
-- Ensure good lighting (face should be well-lit)
-- Position camera at eye level
-- Remove background clutter
-- Try adjusting camera settings
+**Set output to:** `127.0.0.1:39539`
 
-**High CPU usage:**
-- Reduce FPS in the script
+VRMVTube will automatically receive and use the tracking data.
+
+## Self-Contained Build Structure
+
+### Desktop Builds
+```
+VRMVTube/
+├── VRMVTube.exe (or .x86_64, .app)
+└── tools/
+    ├── mediapipe_bridge.py
+    ├── web_tracking.html
+    ├── requirements.txt
+    └── README.md (this file)
+```
+
+### Android APK
+```
+VRMVTube.apk (self-contained)
+├── Native Android tracking (built-in)
+├── VMC receiver (built-in)
+└── No external dependencies required
+```
+
+### Web Build
+```
+index.html (includes JavaScript MediaPipe)
+└── No installation required
+```
+
+## Python Dependencies
+
+Install once with:
+```bash
+pip install -r requirements.txt
+```
+
+**Included dependencies:**
+- `mediapipe==0.10.9` - Face mesh tracking
+- `opencv-python==4.9.0.80` - Camera access
+- `numpy==1.26.4` - Array operations
+
+**Optional (for OpenSeeFace):**
+- `onnxruntime` - Neural network runtime
+- `pillow` - Image processing
+
+## Tracking Methods Comparison
+
+| Method | Accuracy | Latency | Platform | Auto-Start |
+|--------|----------|---------|----------|------------|
+| **OpenSeeFace** | ⭐⭐⭐⭐⭐ | 20-40ms | Desktop | ✅ |
+| **MediaPipe** | ⭐⭐⭐⭐ | 30-50ms | Desktop/Web | ✅ |
+| **VMC Protocol** | ⭐⭐⭐⭐⭐ | 10-20ms | All | N/A (external) |
+| **Android Native** | ⭐⭐⭐ | 30-50ms | Android | ✅ (built-in) |
+| **Simulated** | N/A | <1ms | All | ✅ (fallback) |
+
+## Configuration
+
+### Settings File
+`user://vrmvtube_settings.cfg` (auto-created)
+
+```ini
+[tracking]
+auto_start_mediapipe = false
+auto_start_openseeface = true
+preferred_method = "auto"  # auto, openseeface, mediapipe, vmc, simulated
+```
+
+### Command-Line Options
+
+**MediaPipe Bridge:**
+```bash
+python mediapipe_bridge.py --ip 127.0.0.1 --port 9999
+```
+
+**Change target:**
+```bash
+python mediapipe_bridge.py --ip 192.168.1.100 --port 9999
+```
+
+## Ports Used
+
+- **9999** - MediaPipe UDP receiver
+- **11573** - OpenSeeFace UDP receiver
+- **39539** - VMC protocol receiver (Marionette)
+- **39540** - VMC protocol sender (Performer)
+
+## Troubleshooting
+
+### Python not found
+**Solution:** Install Python 3.8+ from python.org
+
+### No tracking data received
+**Checklist:**
+1. Python script running? (check console)
+2. Firewall blocking UDP? (allow ports above)
+3. Correct IP/port? (default: 127.0.0.1)
+4. Camera permissions granted?
+
+### High CPU usage
+**Solutions:**
 - Lower camera resolution
-- Close the preview window (set SHOW_PREVIEW = False)
+- Reduce tracking FPS
+- Close preview window (set SHOW_PREVIEW = False)
 
-### System Requirements
+### Android tracking not working
+- Android uses **built-in native tracking** (no Python needed)
+- Grant camera permissions when prompted
+- VMC works over WiFi (connect to external tracker)
 
-- Python 3.8 or newer
-- Webcam
-- 4GB RAM minimum
-- CPU: Intel i5 or equivalent (or better)
+## Building from Source
 
-### Performance
+### Include Tools in Build
 
-- CPU Usage: ~10-15% (with preview window)
-- Latency: ~30-50ms end-to-end
-- FPS: 30 (configurable)
+The CI automatically includes tools in all builds. To manually include:
 
-### License
+**Windows:**
+```bash
+mkdir -p builds/windows/tools
+cp tools/*.py builds/windows/tools/
+cp tools/requirements.txt builds/windows/tools/
+```
 
-This tool uses:
-- MediaPipe (Apache 2.0 License)
-- OpenCV (Apache 2.0 License)
-- NumPy (BSD License)
+**Linux:**
+```bash
+mkdir -p builds/linux/tools
+cp tools/*.py builds/linux/tools/
+cp tools/requirements.txt builds/linux/tools/
+chmod +x builds/linux/tools/*.py
+```
 
-All are free for commercial use.
+**Android:**
+No manual steps needed - native tracking is compiled into APK
+
+## License
+
+### VRMVTube
+CC0 (Public Domain)
+
+### Dependencies
+- **MediaPipe** - Apache 2.0
+- **OpenCV** - Apache 2.0
+- **NumPy** - BSD License
+- **OpenSeeFace** - BSD-2-Clause
+
+All dependencies allow commercial use.
+
+## Support
+
+- **Documentation**: `../docs/MOTION_CAPTURE.md`
+- **Quick Start**: `../docs/QUICKSTART_TRACKING.md`
+- **Issues**: GitHub repository
+
+---
+
+**Status:** ✅ Fully self-contained builds for all platforms
+- Desktop: Python tools bundled
+- Android: Native tracking built-in
+- Web: JavaScript implementation

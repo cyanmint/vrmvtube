@@ -20,6 +20,10 @@ var _updating_sliders_from_transform := false  # Prevent infinite loops
 @onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
 @onready var mediapipe_receiver: Node = $MediaPipeReceiver
+@onready var openseeface_receiver: Node = $OpenSeeFaceReceiver
+@onready var vmc_receiver: Node = $VMCReceiver
+@onready var vmc_sender: Node = $VMCSender
+@onready var android_tracking: Node = $AndroidTracking
 @onready var python_manager: Node = $PythonManager
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
@@ -112,6 +116,30 @@ func _ready() -> void:
 		print("Main: Run 'python tools/mediapipe_bridge.py' for real face tracking")
 	else:
 		push_warning("MediaPipeReceiver node not found - only simulated tracking available")
+	
+	# Connect OpenSeeFace receiver
+	if openseeface_receiver:
+		openseeface_receiver.tracking_data_received.connect(_on_openseeface_data_received)
+		print("Main: Connected to OpenSeeFace receiver (port 11573)")
+	else:
+		push_warning("OpenSeeFaceReceiver node not found")
+	
+	# Connect VMC receiver
+	if vmc_receiver:
+		vmc_receiver.tracking_data_received.connect(_on_vmc_data_received)
+		vmc_receiver.blendshape_received.connect(_on_vmc_blendshape_received)
+		print("Main: Connected to VMC receiver (port 39539)")
+	else:
+		push_warning("VMCReceiver node not found")
+	
+	# VMC sender is passive - it sends when we update it
+	if vmc_sender:
+		print("Main: VMC sender available (port 39540)")
+	
+	# Connect Android native tracking
+	if android_tracking:
+		android_tracking.tracking_data_received.connect(_on_android_tracking_received)
+		print("Main: Connected to Android native tracking")
 	
 	# Connect model control sliders
 	if position_x_slider:
@@ -417,6 +445,29 @@ func _on_mediapipe_data_received(data: Dictionary) -> void:
 	"""Handle real MediaPipe tracking data from UDP receiver"""
 	if webcam_tracker:
 		# Pass real tracking data to webcam tracker
+		webcam_tracker.update_from_mediapipe(data)
+
+func _on_openseeface_data_received(data: Dictionary) -> void:
+	"""Handle OpenSeeFace tracking data from UDP receiver"""
+	if webcam_tracker:
+		# Pass OpenSeeFace tracking data to webcam tracker
+		webcam_tracker.update_from_mediapipe(data)
+
+func _on_vmc_data_received(data: Dictionary) -> void:
+	"""Handle VMC tracking data"""
+	if webcam_tracker:
+		# Pass VMC tracking data to webcam tracker
+		webcam_tracker.update_from_mediapipe(data)
+
+func _on_vmc_blendshape_received(name: String, value: float) -> void:
+	"""Handle individual VMC blendshape"""
+	# Blendshapes are aggregated and sent via tracking_data_received
+	pass
+
+func _on_android_tracking_received(data: Dictionary) -> void:
+	"""Handle Android native tracking data"""
+	if webcam_tracker:
+		# Pass Android tracking data to webcam tracker
 		webcam_tracker.update_from_mediapipe(data)
 
 func _on_load_model_button_pressed() -> void:
