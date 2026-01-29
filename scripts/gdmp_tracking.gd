@@ -101,12 +101,28 @@ func _initialize_gdmp() -> void:
 		_start_simulated_tracking()
 		return
 	
-	# Set model path
-	base_options.model_asset_path = "res://addons/GDMP/models/face_landmarker.task"
+	# Set model path - verify it exists first
+	var model_path = "res://addons/GDMP/models/face_landmarker.task"
+	
+	# Check if model file exists
+	if not FileAccess.file_exists(model_path):
+		push_error("GDMPTracking: Model file not found at: ", model_path)
+		push_error("GDMPTracking: GDMP face_landmarker.task must be included in the build!")
+		push_error("GDMPTracking: Check if the file is being excluded by export settings.")
+		gdmp_available = false
+		_start_simulated_tracking()
+		return
+	
+	print("GDMPTracking: Model file found at: ", model_path)
+	base_options.model_asset_path = model_path
 	
 	# Initialize with live stream mode for real-time tracking
 	# Parameters: base_options, running_mode, num_faces, min_face_detection_conf, min_face_presence_conf, min_tracking_conf, output_blendshapes, output_matrices
-	var init_success = face_landmarker.initialize(
+	# Wrap in try-catch equivalent to handle potential crashes
+	var init_success = false
+	
+	# GDScript doesn't have try-catch, but we can check return value
+	init_success = face_landmarker.initialize(
 		base_options,
 		2,  # RUNNING_MODE_LIVE_STREAM (0=IMAGE, 1=VIDEO, 2=LIVE_STREAM)
 		1,  # num_faces: detect 1 face
@@ -119,7 +135,12 @@ func _initialize_gdmp() -> void:
 	
 	if not init_success:
 		push_error("GDMPTracking: Failed to initialize face landmarker")
+		push_error("GDMPTracking: This may be due to:")
+		push_error("  - Model file corruption or wrong format")
+		push_error("  - Insufficient memory on device")
+		push_error("  - GDMP library version mismatch")
 		gdmp_available = false
+		face_landmarker = null
 		_start_simulated_tracking()
 		return
 	
@@ -129,7 +150,7 @@ func _initialize_gdmp() -> void:
 	print("GDMPTracking: ✅ Face landmarker initialized successfully")
 	
 	if use_camera:
-		_initialize_camera()
+		await _initialize_camera()  # Wait for camera to be ready
 	
 	tracking_active = true
 	print("GDMPTracking: ✅ Native tracking active")
@@ -146,6 +167,9 @@ func _initialize_camera() -> void:
 		if not camera_helper:
 			push_error("GDMPTracking: Failed to create MediaPipeCameraHelper")
 			return
+		
+		# Connect camera frame signal to process each frame
+		camera_helper.new_frame.connect(_on_camera_frame)
 		
 		# Check camera permission (mobile platforms)
 		if platform in ["Android", "iOS"]:
@@ -258,7 +282,7 @@ func _generate_enhanced_tracking() -> Dictionary:
 		"head_rotation": head_rotation,
 		"head_position": Vector3.ZERO,
 		"tracking_quality": 0.7 if gdmp_available else 0.5,
-		"source": "gdmp_native" if gdmp_available else "simulated"
+		"source": "simulated"
 	}
 
 func _convert_gdmp_to_tracking_data(gdmp_result) -> Dictionary:
@@ -336,6 +360,18 @@ func _on_face_landmarker_result(result, image, timestamp_ms: int) -> void:
 	"""Callback when face landmarker detects a face"""
 	if result:
 		latest_face_result = result
+
+func _on_camera_frame(image) -> void:
+	"""Callback when camera produces a new frame
+	
+	This connects the camera helper to the face landmarker.
+	Each camera frame is sent to face landmarker for processing.
+	"""
+	if face_landmarker and image:
+		# Send frame to face landmarker for async processing
+		# Results will come back via _on_face_landmarker_result callback
+		var timestamp_ms = Time.get_ticks_msec()
+		face_landmarker.detect_async(image, timestamp_ms, Rect2(), 0)
 
 func _estimate_head_rotation(landmarks: Array) -> Vector3:
 	"""Estimate head rotation from face landmarks
