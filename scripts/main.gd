@@ -752,7 +752,9 @@ func _on_webcam_collapse_pressed() -> void:
 func _save_webcam_hud_state(visible: bool) -> void:
 	"""Save webcam HUD visibility state to settings"""
 	var config := ConfigFile.new()
-	config.load("user://vrmvtube_settings.cfg")  # Load existing settings
+	# Load existing settings - ignore error as file may not exist yet
+	# ConfigFile.set_value() and save() will work regardless
+	config.load("user://vrmvtube_settings.cfg")
 	config.set_value("ui", "webcam_hud_visible", visible)
 	var err := config.save("user://vrmvtube_settings.cfg")
 	if err == OK:
