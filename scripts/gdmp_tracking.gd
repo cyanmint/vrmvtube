@@ -185,7 +185,7 @@ func _generate_enhanced_tracking() -> Dictionary:
 	)
 	
 	# Occasional smile
-	var smile := max(0.0, sin(time_elapsed * 0.2) * 0.3)
+	var smile: float = max(0.0, sin(time_elapsed * 0.2) * 0.3)
 	
 	return {
 		"blink_left": blink_left,

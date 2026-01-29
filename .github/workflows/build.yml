@@ -30,8 +30,8 @@ jobs:
           # Download unified GDMP release (contains all platforms)
           wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
-          unzip -q GDMP-${GDMP_VERSION}.zip
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
@@ -101,8 +101,8 @@ jobs:
           # Download unified GDMP release (contains all platforms)
           wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
-          unzip -q GDMP-${GDMP_VERSION}.zip
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
@@ -168,8 +168,8 @@ jobs:
           # Download unified GDMP release (contains all platforms)
           wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
-          unzip -q GDMP-${GDMP_VERSION}.zip
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
@@ -235,8 +235,8 @@ jobs:
           # Download unified GDMP release (contains all platforms)
           wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
-          unzip -q GDMP-${GDMP_VERSION}.zip
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
@@ -302,8 +302,8 @@ jobs:
           # Download unified GDMP release (contains all platforms)
           wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
-          unzip -q GDMP-${GDMP_VERSION}.zip
+          # Extract to current directory - force overwrite to avoid prompts
+          unzip -o -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
