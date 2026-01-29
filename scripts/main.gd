@@ -118,7 +118,8 @@ func _setup_ui_controller() -> void:
 	
 	# Connect UI signals
 	ui_controller.connect_ui_signals()
-	ui_controller.model_transform_requested.connect(_on_ui_transform_requested)
+	ui_controller.model_position_changed.connect(_on_model_position_changed)
+	ui_controller.model_rotation_changed.connect(_on_model_rotation_changed)
 	
 	# Connect button signals
 	var load_button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/LoadModelButton
@@ -328,24 +329,21 @@ func _on_model_transform_changed(pos: Vector3, rot: Vector3, scale_factor: float
 	config.set_value("model", "rotation_z", rot.z)
 	config.save("user://vrmvtube_settings.cfg")
 
-func _on_ui_transform_requested(pos: Vector3, rot: Vector3) -> void:
-	"""UI requested model transform change"""
+func _on_model_position_changed(pos: Vector3) -> void:
+	"""UI position sliders changed"""
 	if not camera_controller:
 		return
 	
 	var current_transform := camera_controller.get_model_transform()
+	camera_controller.set_model_transform(pos, current_transform.rotation, current_transform.scale)
+
+func _on_model_rotation_changed(rot: Vector3) -> void:
+	"""UI rotation sliders changed"""
+	if not camera_controller:
+		return
 	
-	# Update only non-zero values
-	if pos != Vector3.ZERO:
-		current_transform.position = pos
-	if rot != Vector3.ZERO:
-		current_transform.rotation = rot
-	
-	camera_controller.set_model_transform(
-		current_transform.position,
-		current_transform.rotation,
-		current_transform.scale
-	)
+	var current_transform := camera_controller.get_model_transform()
+	camera_controller.set_model_transform(current_transform.position, rot, current_transform.scale)
 
 func _on_load_model_button_pressed() -> void:
 	"""Open file dialog to load VRM model"""

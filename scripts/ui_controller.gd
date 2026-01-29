@@ -10,7 +10,8 @@ extends Node
 signal load_model_requested()
 signal reset_pose_requested()
 signal settings_requested()
-signal model_transform_requested(position: Vector3, rotation: Vector3)
+signal model_position_changed(position: Vector3)
+signal model_rotation_changed(rotation: Vector3)
 
 # UI node references (set by main scene)
 var info_label: Label
@@ -205,8 +206,7 @@ func _on_position_x_changed(value: float) -> void:
 	if position_x_value:
 		position_x_value.text = "%.2f" % value
 	var pos := Vector3(value, position_y_slider.value if position_y_slider else 0.0, position_z_slider.value if position_z_slider else 0.0)
-	var rot := Vector3.ZERO
-	model_transform_requested.emit(pos, rot)
+	model_position_changed.emit(pos)
 
 func _on_position_y_changed(value: float) -> void:
 	if _updating_sliders:
@@ -214,8 +214,7 @@ func _on_position_y_changed(value: float) -> void:
 	if position_y_value:
 		position_y_value.text = "%.2f" % value
 	var pos := Vector3(position_x_slider.value if position_x_slider else 0.0, value, position_z_slider.value if position_z_slider else 0.0)
-	var rot := Vector3.ZERO
-	model_transform_requested.emit(pos, rot)
+	model_position_changed.emit(pos)
 
 func _on_position_z_changed(value: float) -> void:
 	if _updating_sliders:
@@ -223,35 +222,31 @@ func _on_position_z_changed(value: float) -> void:
 	if position_z_value:
 		position_z_value.text = "%.2f" % value
 	var pos := Vector3(position_x_slider.value if position_x_slider else 0.0, position_y_slider.value if position_y_slider else 0.0, value)
-	var rot := Vector3.ZERO
-	model_transform_requested.emit(pos, rot)
+	model_position_changed.emit(pos)
 
 func _on_rotation_x_changed(value: float) -> void:
 	if _updating_sliders:
 		return
 	if rotation_x_value:
 		rotation_x_value.text = str(int(value)) + "°"
-	var pos := Vector3.ZERO
 	var rot := Vector3(deg_to_rad(value), deg_to_rad(rotation_y_slider.value if rotation_y_slider else 0.0), deg_to_rad(rotation_z_slider.value if rotation_z_slider else 0.0))
-	model_transform_requested.emit(pos, rot)
+	model_rotation_changed.emit(rot)
 
 func _on_rotation_y_changed(value: float) -> void:
 	if _updating_sliders:
 		return
 	if rotation_y_value:
 		rotation_y_value.text = str(int(value)) + "°"
-	var pos := Vector3.ZERO
 	var rot := Vector3(deg_to_rad(rotation_x_slider.value if rotation_x_slider else 0.0), deg_to_rad(value), deg_to_rad(rotation_z_slider.value if rotation_z_slider else 0.0))
-	model_transform_requested.emit(pos, rot)
+	model_rotation_changed.emit(rot)
 
 func _on_rotation_z_changed(value: float) -> void:
 	if _updating_sliders:
 		return
 	if rotation_z_value:
 		rotation_z_value.text = str(int(value)) + "°"
-	var pos := Vector3.ZERO
 	var rot := Vector3(deg_to_rad(rotation_x_slider.value if rotation_x_slider else 0.0), deg_to_rad(rotation_y_slider.value if rotation_y_slider else 0.0), deg_to_rad(value))
-	model_transform_requested.emit(pos, rot)
+	model_rotation_changed.emit(rot)
 
 # Text input handlers
 func _on_position_x_input(text: String) -> void:
