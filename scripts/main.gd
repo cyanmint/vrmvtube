@@ -20,6 +20,7 @@ var viewport_container: SubViewportContainer
 var camera_preview: TextureRect
 var status_label: Label
 var control_panel: ControlPanel
+var settings_popup: Window
 
 # Control mode
 enum ControlMode {
@@ -62,7 +63,8 @@ func setup_ui_references() -> void:
 	status_label = get_node_or_null("VBoxContainer/StatusLabel")
 	viewport_container = get_node_or_null("VBoxContainer/ContentContainer/ViewportContainer")
 	camera_preview = get_node_or_null("VBoxContainer/ContentContainer/CameraPreview")
-	control_panel = get_node_or_null("VBoxContainer/ControlPanel")
+	settings_popup = get_node_or_null("SettingsPopup")
+	control_panel = get_node_or_null("SettingsPopup/ControlPanel")
 	
 	if control_panel:
 		control_panel.mode_changed.connect(_on_mode_changed)
@@ -195,6 +197,9 @@ func _on_start_tracking_button_pressed():
 	if hand_tracking_manager and hand_tracking_manager.has_method("start_tracking"):
 		if hand_tracking_manager.start_tracking():
 			update_status("Hand tracking started")
+			# Connect hand landmarks signal
+			if hand_tracking_manager.has_signal("hand_landmarks_updated"):
+				hand_tracking_manager.connect("hand_landmarks_updated", _on_hand_landmarks_updated)
 		else:
 			update_status("Failed to start hand tracking")
 	
@@ -203,14 +208,126 @@ func _on_start_tracking_button_pressed():
 		if face_tracking_manager.start_tracking():
 			update_status("Face tracking started")
 
+func _on_settings_button_pressed():
+	# Toggle settings popup
+	if settings_popup:
+		settings_popup.visible = !settings_popup.visible
+		if settings_popup.visible:
+			# Center the popup
+			var window_size = get_viewport().get_visible_rect().size
+			var popup_size = settings_popup.size
+			settings_popup.position = Vector2i(
+				int((window_size.x - popup_size.x) / 2),
+				int((window_size.y - popup_size.y) / 2)
+			)
+
 func _on_tracking_error(error_message: String) -> void:
 	update_status("Tracking error: " + error_message)
 	push_error("[Main] Tracking error: " + error_message)
 
 func _on_face_blendshapes_updated(blendshapes) -> void:
 	# Apply blendshapes to VRM model
-	# This will be implemented when VRM model has blend shape mesh
-	pass
+	if not vrm_model_node or vrm_model_node.get_child_count() == 0:
+		return
+	
+	var model_instance = vrm_model_node.get_child(0)
+	if not model_instance:
+		return
+	
+	# Find the mesh instance with blendshapes
+	var mesh_instances = _find_nodes_by_type(model_instance, "MeshInstance3D")
+	for mesh_instance in mesh_instances:
+		if mesh_instance.mesh and mesh_instance.mesh.get_blend_shape_count() > 0:
+			# Apply blendshapes from MediaPipe to VRM mesh
+			_apply_blendshapes_to_mesh(mesh_instance, blendshapes)
+
+func _on_hand_landmarks_updated(landmarks: Array) -> void:
+	# Apply hand landmarks to VRM model hand bones
+	if not vrm_model_node or vrm_model_node.get_child_count() == 0:
+		return
+	
+	var model_instance = vrm_model_node.get_child(0)
+	if not model_instance:
+		return
+	
+	# Find skeleton and apply hand tracking
+	var skeleton = _find_node_by_type(model_instance, "Skeleton3D")
+	if skeleton:
+		_apply_hand_tracking_to_skeleton(skeleton, landmarks)
+
+# Helper function to find nodes by type
+func _find_nodes_by_type(root: Node, type: String) -> Array:
+	var result = []
+	if root.is_class(type):
+		result.append(root)
+	for child in root.get_children():
+		result.append_array(_find_nodes_by_type(child, type))
+	return result
+
+func _find_node_by_type(root: Node, type: String) -> Node:
+	if root.is_class(type):
+		return root
+	for child in root.get_children():
+		var found = _find_node_by_type(child, type)
+		if found:
+			return found
+	return null
+
+func _apply_blendshapes_to_mesh(mesh_instance: MeshInstance3D, blendshapes) -> void:
+	# This function applies MediaPipe blendshapes to VRM mesh
+	# MediaPipe provides blendshapes as classifications
+	if not blendshapes or not blendshapes.has_method("get_categories"):
+		return
+	
+	var categories = blendshapes.get_categories() if blendshapes.has_method("get_categories") else []
+	if categories.is_empty():
+		return
+		
+	# Map MediaPipe blendshape names to VRM blend shape indices
+	for category in categories:
+		var shape_name = category.category_name if category.has_method("get_category_name") else ""
+		var shape_value = category.score if category.has("score") else 0.0
+		
+		# Try to find matching blend shape in mesh
+		var mesh = mesh_instance.mesh
+		for i in range(mesh.get_blend_shape_count()):
+			var blend_name = mesh.get_blend_shape_name(i)
+			# Simple name matching - can be improved with better mapping
+			if blend_name.to_lower().contains(shape_name.to_lower()):
+				mesh_instance.set_blend_shape_value(i, shape_value)
+				break
+
+func _apply_hand_tracking_to_skeleton(skeleton: Skeleton3D, landmarks: Array) -> void:
+	# This function applies MediaPipe hand landmarks to VRM skeleton bones
+	# landmarks is an array of hand landmark data
+	if landmarks.is_empty():
+		return
+	
+	# Get the first hand (you can extend this for both hands)
+	var hand_data = landmarks[0] if landmarks.size() > 0 else null
+	if not hand_data:
+		return
+	
+	# Map MediaPipe hand landmarks to VRM finger bones
+	# This is a simplified version - full implementation would map each finger joint
+	var finger_bone_mapping = {
+		"LeftThumb": [1, 2, 3, 4],  # Thumb landmarks
+		"LeftIndex": [5, 6, 7, 8],  # Index finger landmarks
+		"LeftMiddle": [9, 10, 11, 12],  # Middle finger landmarks
+		"LeftRing": [13, 14, 15, 16],  # Ring finger landmarks
+		"LeftLittle": [17, 18, 19, 20],  # Pinky landmarks
+	}
+	
+	# Apply rotations to finger bones based on landmarks
+	# This is a placeholder - actual implementation would calculate proper rotations
+	# from landmark positions
+	for bone_name in finger_bone_mapping:
+		var bone_idx = skeleton.find_bone(bone_name)
+		if bone_idx != -1:
+			# Calculate rotation based on landmarks (simplified)
+			# In a real implementation, you would calculate the rotation
+			# from the landmark positions
+			pass
 
 func _on_mode_changed(new_mode: String) -> void:
 	if new_mode == "move":
