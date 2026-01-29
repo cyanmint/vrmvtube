@@ -14,7 +14,7 @@ config/name="VRMVTube"
 config/description="VTuber application with VRM model support and MediaPipe tracking for Godot Engine"
 config/version="0.1.0"
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.6", "GL Compatibility")
+config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [display]

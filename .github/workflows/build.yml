@@ -1,7 +1,7 @@
 name: Build Multi-Platform
 
 # CI/CD workflow to build VRMVTube for all supported platforms
-# Based on Godot 4.6 development version
+# Based on Godot 4.6 stable
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
     types: [ created ]
 
 env:
-  GODOT_VERSION: "4.6-dev6"
+  GODOT_VERSION: "4.6-stable"
   EXPORT_NAME: vrmvtube
 
 jobs:
