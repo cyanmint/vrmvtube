@@ -172,10 +172,14 @@ text = "Reset Pose"
 layout_mode = 2
 text = "Settings"
 
+[node name="CameraModeButton" type="Button" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Mode: ROTATE (R)"
+
 [node name="InfoLabel" type="Label" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Loading...
-Drag to rotate | Shift+Drag to pan | Scroll to zoom"
+Drag to rotate/pan | Q/E zoom | R mode | WASD move | C config | L load"
 horizontal_alignment = 1
 autowrap_mode = 3
 
@@ -342,6 +346,7 @@ script = ExtResource("4_1")
 [connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/LoadModelButton" to="." method="_on_load_model_button_pressed"]
 [connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/ResetPoseButton" to="." method="_on_reset_pose_button_pressed"]
 [connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/CameraModeButton" to="." method="_on_camera_mode_button_pressed"]
 [connection signal="pressed" from="UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton" to="." method="_on_webcam_collapse_pressed"]
 [connection signal="file_selected" from="FileDialog" to="." method="_on_file_selected"]
 [connection signal="face_tracking_updated" from="WebcamTracker" to="FaceRigging" method="apply_tracking_data"]

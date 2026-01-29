@@ -39,8 +39,23 @@ var sidebar_collapsed := false
 @onready var sidebar_collapse_tab: Button = $UI/Control/SidebarCollapseTab
 @onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/MetadataPanel
 @onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
-@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@ontml:parameter>
+<parameter name="metadata_collapse_button: Button = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
 @onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var camera_controller: Camera3D = $Camera3D
+@onready var camera_mode_button: Button = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/CameraModeButton
+
+func _input(event: InputEvent) -> void:
+	# Keyboard hotkeys
+	if event is InputEventKey and event.pressed and not event.echo:
+		# C for configuration (settings)
+		if event.keycode == KEY_C:
+			_on_settings_button_pressed()
+			get_viewport().set_input_as_handled()
+		# L for loading VRM
+		elif event.keycode == KEY_L:
+			_on_load_model_button_pressed()
+			get_viewport().set_input_as_handled()
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -86,6 +101,12 @@ func _ready() -> void:
 	if metadata_collapse_button:
 		metadata_collapse_button.pressed.connect(_on_metadata_collapse_pressed)
 	
+	# Connect camera mode signal
+	if camera_controller:
+		camera_controller.mode_changed.connect(_on_camera_mode_changed)
+	if camera_mode_button:
+		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
+	
 	# Load default VRM model - use call_deferred to ensure scene is ready
 	print("Checking for default VRM model at: ", DEFAULT_VRM_PATH)
 	
@@ -106,7 +127,21 @@ func _ready() -> void:
 		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
 		# Set info label to show instructions
 		if info_label:
-			info_label.text = "No model loaded.\nUse 'Load VRM Model' button\nDrag to rotate | Shift+Drag to pan | Scroll to zoom"
+			info_label.text = "No model loaded.\nUse 'Load VRM Model' button or press L\nDrag to rotate/pan | Q/E to zoom | R to switch mode"
+
+func _on_camera_mode_changed(is_pan_mode: bool) -> void:
+	"""Update UI when camera mode changes"""
+	if camera_mode_button:
+		camera_mode_button.text = "Mode: PAN (R)" if is_pan_mode else "Mode: ROTATE (R)"
+	
+	# Update info label with current mode
+	var mode_text = "PAN" if is_pan_mode else "ROTATE"
+	print("Camera mode changed to: ", mode_text)
+
+func _on_camera_mode_button_pressed() -> void:
+	"""Toggle camera mode when button is pressed"""
+	if camera_controller:
+		camera_controller.toggle_pan_mode()
 
 func _on_webcam_available(available: bool) -> void:
 	"""Handle webcam availability status"""
@@ -219,7 +254,7 @@ func _load_vrm_model(path: String) -> void:
 		_update_metadata_display(current_vrm_instance)
 		
 		print("VRM model loaded successfully")
-		info_label.text = "VRM model loaded: " + path.get_file() + "\nControls: Drag to rotate | Shift+Drag to pan | Scroll to zoom"
+		info_label.text = "VRM model loaded: " + path.get_file() + "\nDrag to rotate/pan | Q/E zoom | R mode | WASD move | C config | L load"
 		
 		# Show model controls and metadata
 		if model_controls_panel:
