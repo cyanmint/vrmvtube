@@ -640,7 +640,7 @@ func _update_vrm_materials(node: Node) -> void:
 								if shade_color is Color:
 									# Brighten shade color if it's too dark
 									var brightness = (shade_color.r + shade_color.g + shade_color.b) / 3.0
-									if brightness < 0.3:
+									if brightness < 0.3 and brightness > 0.001:  # Avoid division by zero
 										var factor = 0.3 / brightness
 										shader_mat.set_shader_parameter("Shade_Color", Color(
 											shade_color.r * factor,
