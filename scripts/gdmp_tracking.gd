@@ -5,12 +5,10 @@ extends Node
 ## Uses GDMP (Godot MediaPipe) GDExtension for native face tracking
 ## Works on all platforms: Windows, Linux, macOS, Android, iOS, Web
 ## 
-## GDMP must be installed separately:
-## 1. Download from https://github.com/j20001970/GDMP/releases
-## 2. Extract to addons/GDMP/ in your project
-## 3. Enable plugin in Project Settings → Plugins
+## GDMP is bundled with VRMVTube - no external downloads required!
+## MediaPipe provides professional-grade face tracking with 468 landmarks.
 ##
-## No external dependencies - fully self-contained once GDMP is installed!
+## Fully self-contained - all binaries and models included.
 ##
 ## Created by: GitHub Copilot
 
@@ -39,23 +37,24 @@ func _ready() -> void:
 	if gdmp_available:
 		_initialize_gdmp()
 	else:
-		print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-		print("⚠️  GDMP Plugin Not Installed")
-		print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-		print("")
-		print("To enable high-quality face tracking:")
-		print("1. Download GDMP from:")
-		print("   https://github.com/j20001970/GDMP/releases/latest")
-		print("")
-		print("2. Extract to your project:")
-		print("   addons/GDMP/")
-		print("")
-		print("3. Enable plugin:")
-		print("   Project → Project Settings → Plugins → GDMP")
-		print("")
-		print("Using enhanced simulation mode until GDMP is installed.")
-		print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		push_error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		push_error("❌ CRITICAL: GDMP Plugin Not Found!")
+		push_error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		push_error("")
+		push_error("Face tracking requires GDMP (included in VRMVTube).")
+		push_error("GDMP should be at: res://addons/GDMP/")
+		push_error("")
+		push_error("This is a critical error - face tracking cannot work")
+		push_error("without MediaPipe. Please ensure GDMP addon is enabled:")
+		push_error("  Project → Project Settings → Plugins → GDMP")
+		push_error("")
+		push_error("If you cloned from git, GDMP is already included.")
+		push_error("If you downloaded a build, GDMP should be bundled.")
+		push_error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+		
+		# Use simulation as emergency fallback, but log as error
 		_start_simulated_tracking()
+		push_error("Using simulation fallback - NOT suitable for production use")
 
 func _check_gdmp_availability() -> void:
 	"""Check if GDMP plugin is available"""

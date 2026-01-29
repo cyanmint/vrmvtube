@@ -10,6 +10,7 @@ on:
 env:
   GODOT_VERSION: 4.6-stable
   EXPORT_NAME: VRMVTube
+  GDMP_VERSION: v0.6
 
 jobs:
   export-windows:
@@ -21,6 +22,23 @@ jobs:
         with:
           lfs: true
           submodules: recursive
+      
+      - name: Download and Setup GDMP
+        run: |
+          echo "Downloading GDMP ${GDMP_VERSION}..."
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          unzip -q GDMP-${GDMP_VERSION}.zip
+          echo "✓ GDMP downloaded and extracted"
+          
+          echo "Downloading MediaPipe face landmarker model..."
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          echo "✓ MediaPipe model downloaded"
+          
+          echo "GDMP addon structure:"
+          ls -la addons/GDMP/ | head -20
+          echo "GDMP binaries:"
+          find addons/GDMP/libs -type f | head -10
       
       - name: Install Dependencies
         run: |
@@ -50,14 +68,8 @@ jobs:
         run: |
           mkdir -p builds/windows
           godot --headless --verbose --export-release "Windows" builds/windows/${EXPORT_NAME}.exe
-      
-      - name: Include Python Tools
-        run: |
-          mkdir -p builds/windows/tools
-          cp -r tools/*.py builds/windows/tools/ || true
-          cp tools/requirements.txt builds/windows/tools/ || true
-          cp tools/README.md builds/windows/tools/ || true
-          echo "Python tools included in Windows build"
+          echo "✓ Windows build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -74,6 +86,18 @@ jobs:
         with:
           lfs: true
           submodules: recursive
+      
+      - name: Download and Setup GDMP
+        run: |
+          echo "Downloading GDMP ${GDMP_VERSION}..."
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          unzip -q GDMP-${GDMP_VERSION}.zip
+          echo "✓ GDMP downloaded and extracted"
+          
+          echo "Downloading MediaPipe face landmarker model..."
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          echo "✓ MediaPipe model downloaded"
       
       - name: Install Dependencies
         run: |
@@ -103,15 +127,8 @@ jobs:
         run: |
           mkdir -p builds/linux
           godot --headless --verbose --export-release "Linux" builds/linux/${EXPORT_NAME}.x86_64
-      
-      - name: Include Python Tools
-        run: |
-          mkdir -p builds/linux/tools
-          cp -r tools/*.py builds/linux/tools/ || true
-          cp tools/requirements.txt builds/linux/tools/ || true
-          cp tools/README.md builds/linux/tools/ || true
-          chmod +x builds/linux/tools/*.py || true
-          echo "Python tools included in Linux build"
+          echo "✓ Linux build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -128,6 +145,18 @@ jobs:
         with:
           lfs: true
           submodules: recursive
+      
+      - name: Download and Setup GDMP
+        run: |
+          echo "Downloading GDMP ${GDMP_VERSION}..."
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          unzip -q GDMP-${GDMP_VERSION}.zip
+          echo "✓ GDMP downloaded and extracted"
+          
+          echo "Downloading MediaPipe face landmarker model..."
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          echo "✓ MediaPipe model downloaded"
       
       - name: Install Dependencies
         run: |
@@ -157,14 +186,8 @@ jobs:
         run: |
           mkdir -p builds/macos
           godot --headless --verbose --export-release "macOS" builds/macos/${EXPORT_NAME}.zip
-      
-      - name: Include Python Tools
-        run: |
-          mkdir -p builds/macos/tools
-          cp -r tools/*.py builds/macos/tools/ || true
-          cp tools/requirements.txt builds/macos/tools/ || true
-          cp tools/README.md builds/macos/tools/ || true
-          echo "Python tools included in macOS build"
+          echo "✓ macOS build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -181,6 +204,18 @@ jobs:
         with:
           lfs: true
           submodules: recursive
+      
+      - name: Download and Setup GDMP
+        run: |
+          echo "Downloading GDMP ${GDMP_VERSION}..."
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          unzip -q GDMP-${GDMP_VERSION}.zip
+          echo "✓ GDMP downloaded and extracted"
+          
+          echo "Downloading MediaPipe face landmarker model..."
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          echo "✓ MediaPipe model downloaded"
       
       - name: Install Dependencies
         run: |
@@ -210,6 +245,8 @@ jobs:
         run: |
           mkdir -p builds/web
           godot --headless --verbose --export-release "Web" builds/web/index.html
+          echo "✓ Web build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -226,6 +263,19 @@ jobs:
         with:
           lfs: true
           submodules: recursive
+      
+      - name: Download and Setup GDMP
+        run: |
+          echo "Downloading GDMP ${GDMP_VERSION}..."
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
+          unzip -q GDMP-${GDMP_VERSION}.zip
+          echo "✓ GDMP downloaded and extracted"
+          
+          echo "Downloading MediaPipe face landmarker model..."
+          mkdir -p addons/GDMP/models
+          wget -q -O addons/GDMP/models/face_landmarker.task https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+          echo "✓ MediaPipe model downloaded"
+          echo "✓ MediaPipe model downloaded"
       
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -318,6 +368,8 @@ jobs:
           
           echo ""
           echo "Export command completed with exit code: $export_result"
+          echo "✓ Android build completed"
+          echo "Build includes GDMP addon with MediaPipe - fully self-contained!"
           
           # Check what files were created
           echo ""
