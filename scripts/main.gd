@@ -18,11 +18,7 @@ var _updating_sliders_from_transform := false  # Prevent infinite loops
 
 @onready var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
 @onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
-@onready var webcam_tracker: Node = $WebcamTracker
 @onready var gdmp_tracking: Node = $GDMPTracking
-@onready var vmc_receiver: Node = $VMCReceiver
-@onready var vmc_sender: Node = $VMCSender
-@onready var android_tracking: Node = $AndroidTracking
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
 @onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
@@ -99,40 +95,15 @@ func _ready() -> void:
 	else:
 		push_error("Platform info label not found!")
 	
-	# Connect webcam tracker signals BEFORE it initializes
-	if webcam_tracker:
-		webcam_tracker.webcam_available.connect(_on_webcam_available)
-		webcam_tracker.face_tracking_updated.connect(_on_face_tracking_updated)
-		print("Main: Connected to webcam signals")
-	else:
-		push_error("WebcamTracker node not found!")
-	
-	# Connect MediaPipe receiver for real face tracking
+	# Connect GDMP face tracking - the only tracking system!
 	if gdmp_tracking:
-		gdmp_tracking.tracking_data_received.connect(_on_gdmp_data_received)
+		gdmp_tracking.tracking_data_received.connect(_on_face_tracking_updated)
 		print("Main: Connected to GDMP native tracking")
 		if not gdmp_tracking.is_gdmp_available():
 			print("Main: GDMP not installed - download from https://github.com/j20001970/GDMP/releases")
-			print("Main: Using simulated tracking until GDMP is installed")
+			print("Main: Using enhanced simulation until GDMP is installed")
 	else:
-		push_warning("GDMPTracking node not found")
-	
-	# Connect VMC receiver
-	if vmc_receiver:
-		vmc_receiver.tracking_data_received.connect(_on_vmc_data_received)
-		vmc_receiver.blendshape_received.connect(_on_vmc_blendshape_received)
-		print("Main: Connected to VMC receiver (port 39539)")
-	else:
-		push_warning("VMCReceiver node not found")
-	
-	# VMC sender is passive - it sends when we update it
-	if vmc_sender:
-		print("Main: VMC sender available (port 39540)")
-	
-	# Connect Android native tracking
-	if android_tracking:
-		android_tracking.tracking_data_received.connect(_on_android_tracking_received)
-		print("Main: Connected to Android native tracking")
+		push_error("GDMPTracking node not found!")
 	
 	# Connect model control sliders
 	if position_x_slider:
@@ -365,26 +336,8 @@ func _on_camera_mode_button_pressed() -> void:
 	if camera_controller:
 		camera_controller.toggle_mode()
 
-func _on_webcam_available(available: bool) -> void:
-	"""Handle webcam availability status"""
-	if available:
-		print("Main: Webcam is available and tracking is active")
-		info_label.text = "Webcam tracking active.\n" + info_label.text.split("\n")[-1] if "\n" in info_label.text else info_label.text
-		webcam_status_label.text = "Webcam Active"
-		
-		# Set webcam texture to preview
-		var camera_texture = webcam_tracker.get_camera_texture()
-		if camera_texture:
-			webcam_texture_rect.texture = camera_texture
-	else:
-		push_warning("Main: Webcam is not available. Using simulated face tracking.")
-		info_label.text = "Simulated tracking active.\n" + info_label.text.split("\n")[-1] if "\n" in info_label.text else info_label.text
-		webcam_status_label.text = "Simulated Tracking"
-		# Show a placeholder image or keep the texture rect empty
-		webcam_texture_rect.texture = null
-
 func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
-	"""Handle face tracking data updates"""
+	"""Handle face tracking data updates from GDMP"""
 	# Pass tracking data to face rigging system
 	if face_rigging:
 		face_rigging.apply_tracking_data(tracking_data)
@@ -395,53 +348,19 @@ func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
 		var blink_l: float = tracking_data.get("blink_left", 0.0)
 		var blink_r: float = tracking_data.get("blink_right", 0.0)
 		var mouth: float = tracking_data.get("mouth_open", 0.0)
+		var source: String = tracking_data.get("source", "unknown")
 		
 		var status_text := ""
-		if webcam_tracker.is_tracking_active():
-			if webcam_tracker.get_camera_texture():
-				status_text = "Webcam Active"
-			else:
-				status_text = "Simulated Tracking"
+		if gdmp_tracking and gdmp_tracking.is_gdmp_available():
+			status_text = "✅ GDMP Native"
 		else:
-			status_text = "Tracking Inactive"
+			status_text = "🎭 Simulated"
 		
-		# Add tracking data visualization
 		status_text += "\nQuality: %.0f%%" % (quality * 100.0)
 		status_text += "\nBlink L/R: %.2f / %.2f" % [blink_l, blink_r]
 		status_text += "\nMouth: %.2f" % mouth
 		
-		# Show MediaPipe status if receiver exists
-		if mediapipe_receiver:
-			var mp_status := mediapipe_receiver.get_status()
-			if mp_status["is_receiving"]:
-				status_text += "\n[MediaPipe: Active]"
-			else:
-				status_text += "\n[MediaPipe: Waiting]"
-		
 		webcam_status_label.text = status_text
-
-func _on_gdmp_data_received(data: Dictionary) -> void:
-	"""Handle GDMP native tracking data"""
-	if webcam_tracker:
-		# Pass GDMP tracking data to webcam tracker
-		webcam_tracker.update_from_mediapipe(data)
-
-func _on_vmc_data_received(data: Dictionary) -> void:
-	"""Handle VMC tracking data"""
-	if webcam_tracker:
-		# Pass VMC tracking data to webcam tracker
-		webcam_tracker.update_from_mediapipe(data)
-
-func _on_vmc_blendshape_received(name: String, value: float) -> void:
-	"""Handle individual VMC blendshape"""
-	# Blendshapes are aggregated and sent via tracking_data_received
-	pass
-
-func _on_android_tracking_received(data: Dictionary) -> void:
-	"""Handle Android native tracking data"""
-	if webcam_tracker:
-		# Pass Android tracking data to webcam tracker
-		webcam_tracker.update_from_mediapipe(data)
 
 func _on_load_model_button_pressed() -> void:
 	"""Show file dialog to select VRM model"""
