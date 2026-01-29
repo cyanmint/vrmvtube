@@ -22,7 +22,7 @@ builds/
 *.app
 
 # Android build template (will be installed by CI)
-android/build/
+android/
 
 # System/tool-specific ignores
 .DS_Store

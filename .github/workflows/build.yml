@@ -378,6 +378,15 @@ jobs:
           export/android/one_click_deploy_clear_previous_install = false
           EOF
       
+      - name: Install Android Build Template
+        run: |
+          echo "Installing Android build template..."
+          mkdir -p android
+          cd android
+          unzip -o -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip
+          echo "✓ Android build template installed"
+          ls -la | head -10
+      
       - name: Import Resources
         run: |
           echo "Importing project resources..."
