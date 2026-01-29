@@ -262,16 +262,33 @@ func _on_model_transform_changed(position: Vector3, rotation: Vector3, scale_fac
 	
 	if position_x_slider:
 		position_x_slider.value = position.x
+	if position_x_value:
+		position_x_value.text = "%.2f" % position.x
+	
 	if position_y_slider:
 		position_y_slider.value = position.y
+	if position_y_value:
+		position_y_value.text = "%.2f" % position.y
+	
 	if position_z_slider:
 		position_z_slider.value = position.z
+	if position_z_value:
+		position_z_value.text = "%.2f" % position.z
+	
 	if rotation_x_slider:
 		rotation_x_slider.value = rad_to_deg(rotation.x)
+	if rotation_x_value:
+		rotation_x_value.text = str(int(rad_to_deg(rotation.x))) + "°"
+	
 	if rotation_y_slider:
 		rotation_y_slider.value = rad_to_deg(rotation.y)
+	if rotation_y_value:
+		rotation_y_value.text = str(int(rad_to_deg(rotation.y))) + "°"
+	
 	if rotation_z_slider:
 		rotation_z_slider.value = rad_to_deg(rotation.z)
+	if rotation_z_value:
+		rotation_z_value.text = str(int(rad_to_deg(rotation.z))) + "°"
 	
 	_updating_sliders_from_transform = false
 	

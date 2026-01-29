@@ -20,7 +20,12 @@ config/icon="res://icon.svg"
 
 window/size/resizable=true
 window/stretch/mode="viewport"
+window/stretch/aspect="expand"
 window/handheld/orientation=1
+
+[dotnet]
+
+project/assembly_name="VRMVTube"
 
 [editor_plugins]
 
