@@ -150,18 +150,14 @@ func update_model_sliders(pos: Vector3, rot: Vector3) -> void:
 		position_x_value.text = "%.2f" % pos.x
 	
 	if position_y_slider:
-		var y_value: float = pos.y
-		position_y_slider.value = y_value
+		position_y_slider.value = float(pos.y)
 	if position_y_value:
-		var y_text: float = pos.y
-		position_y_value.text = "%.2f" % y_text
+		position_y_value.text = "%.2f" % float(pos.y)
 	
 	if position_z_slider:
-		var z_value: float = pos.z
-		position_z_slider.value = z_value
+		position_z_slider.value = float(pos.z)
 	if position_z_value:
-		var z_text: float = pos.z
-		position_z_value.text = "%.2f" % z_text
+		position_z_value.text = "%.2f" % float(pos.z)
 	
 	if rotation_x_slider:
 		rotation_x_slider.value = rad_to_deg(rot.x)
@@ -183,7 +179,8 @@ func update_model_sliders(pos: Vector3, rot: Vector3) -> void:
 func update_camera_mode_button(is_move_mode: bool) -> void:
 	"""Update camera mode button text"""
 	if camera_mode_button:
-		camera_mode_button.text = "Mode: MOVE (R)" if is_move_mode else "Mode: ROTATE (R)"
+		var mode_text: String = "Mode: MOVE (R)" if is_move_mode else "Mode: ROTATE (R)"
+		camera_mode_button.text = mode_text
 
 func update_vrm_metadata(vrm_meta: Variant) -> void:
 	"""Display VRM model metadata"""
