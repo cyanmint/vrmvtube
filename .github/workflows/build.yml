@@ -179,16 +179,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       
-      - name: Android Build with Gradle
+      - name: Download Godot
         run: |
-          cd android/build
-          chmod +x gradlew
-          ./gradlew assembleDebug \
-            -Pexport_package_name="org.vrmvtube.vrmvtube" \
-            -Pexport_version_code="1" \
-            -Pexport_version_name="1.0"
-          mkdir -p ../../build/android
-          cp build/outputs/apk/standard/debug/android_debug.apk ../../build/android/$EXPORT_NAME.apk
+          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip
+          unzip -q Godot_v${GODOT_VERSION}_linux.x86_64.zip
+          chmod +x Godot_v${GODOT_VERSION}_linux.x86_64
+          mkdir -p $HOME/.local/bin
+          mv Godot_v${GODOT_VERSION}_linux.x86_64 $HOME/.local/bin/godot
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      - name: Download Export Templates
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz
+          mkdir -p $HOME/.local/share/godot/export_templates
+          unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
+          mv templates $HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}
+      
+      - name: Android Build
+        run: |
+          mkdir -v -p build/android
+          godot --headless --verbose --export-debug "Android" ./build/android/$EXPORT_NAME.apk
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
