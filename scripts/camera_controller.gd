@@ -74,7 +74,29 @@ func get_model_transform() -> Dictionary:
 		"scale": _model_scale
 	}
 
+func _is_mouse_over_ui() -> bool:
+	"""Check if mouse is currently over the HUD panel"""
+	var mouse_pos = get_viewport().get_mouse_position()
+	
+	# Get the RightPanel (HUD) node
+	var main_scene = get_tree().root.get_node_or_null("Main")
+	if not main_scene:
+		return false
+	
+	var ui_control = main_scene.get_node_or_null("UI/Control/RightPanel")
+	if not ui_control or not ui_control is Control:
+		return false
+	
+	# Check if mouse is within RightPanel bounds
+	var ui_rect = ui_control.get_global_rect()
+	return ui_rect.has_point(mouse_pos)
+
 func _input(event: InputEvent) -> void:
+	# Ignore mouse input if hovering over HUD
+	if event is InputEventMouse:
+		if _is_mouse_over_ui():
+			return
+	
 	# Keyboard hotkeys
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
