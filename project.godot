@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [display]
+
 window/handheld/orientation=1
 
 [dotnet]
