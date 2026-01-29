@@ -8,10 +8,10 @@
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
-background_color = Color(0, 1, 0, 1)
+background_color = Color(0.1, 0.1, 0.1, 1)
 ambient_light_source = 2
 ambient_light_color = Color(1, 1, 1, 1)
-ambient_light_energy = 1.5
+ambient_light_energy = 0.5
 tonemap_mode = 2
 
 [node name="Main" type="Node3D"]
@@ -227,9 +227,11 @@ max_value = 2.0
 step = 0.01
 value = 0.0
 
-[node name="PositionXValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
+[node name="PositionXValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer"]
 layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
 text = "0.00"
+alignment = 1
 
 [node name="PositionYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -248,9 +250,11 @@ max_value = 2.0
 step = 0.01
 value = -0.5
 
-[node name="PositionYValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
+[node name="PositionYValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer"]
 layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
 text = "-0.50"
+alignment = 1
 
 [node name="PositionZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -269,9 +273,11 @@ max_value = 2.0
 step = 0.01
 value = 0.0
 
-[node name="PositionZValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
+[node name="PositionZValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer"]
 layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
 text = "0.00"
+alignment = 1
 
 [node name="RotationLabel" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -294,9 +300,11 @@ max_value = 180.0
 step = 1.0
 value = 0.0
 
-[node name="RotationXValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
+[node name="RotationXValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer"]
 layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
 text = "0°"
+alignment = 1
 
 [node name="RotationYContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -315,9 +323,11 @@ max_value = 180.0
 step = 1.0
 value = 0.0
 
-[node name="RotationYValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
+[node name="RotationYValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer"]
 layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
 text = "0°"
+alignment = 1
 
 [node name="RotationZContainer" type="HBoxContainer" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -336,9 +346,11 @@ max_value = 180.0
 step = 1.0
 value = 0.0
 
-[node name="RotationZValue" type="Label" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
+[node name="RotationZValue" type="LineEdit" parent="UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer"]
 layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
 text = "0°"
+alignment = 1
 
 [node name="MetadataPanel" type="PanelContainer" parent="UI/Control/RightPanel"]
 visible = false

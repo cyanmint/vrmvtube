@@ -19,7 +19,7 @@ config/icon="res://icon.svg"
 [display]
 
 window/size/resizable=true
-window/stretch/mode="canvas_items"
+window/stretch/mode="viewport"
 window/handheld/orientation=1
 
 [editor_plugins]

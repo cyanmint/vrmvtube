@@ -14,6 +14,7 @@ const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
 
 var current_vrm_instance: Node = null
 var sidebar_collapsed := false
+var _updating_sliders_from_transform := false  # Prevent infinite loops
 
 @onready var info_label: Label = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/InfoLabel
 @onready var platform_info: Label = $UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer/PlatformInfo
@@ -29,17 +30,17 @@ var sidebar_collapsed := false
 @onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ModelControlsPanel
 @onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/BottomPanel
 @onready var position_x_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer/PositionXSlider
-@onready var position_x_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer/PositionXValue
+@onready var position_x_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionXContainer/PositionXValue
 @onready var position_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
-@onready var position_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
+@onready var position_y_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
 @onready var position_z_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer/PositionZSlider
-@onready var position_z_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer/PositionZValue
+@onready var position_z_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionZContainer/PositionZValue
 @onready var rotation_x_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer/RotationXSlider
-@onready var rotation_x_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer/RotationXValue
+@onready var rotation_x_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationXContainer/RotationXValue
 @onready var rotation_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer/RotationYSlider
-@onready var rotation_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer/RotationYValue
+@onready var rotation_y_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationYContainer/RotationYValue
 @onready var rotation_z_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer/RotationZSlider
-@onready var rotation_z_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer/RotationZValue
+@onready var rotation_z_value: LineEdit = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/RotationZContainer/RotationZValue
 @onready var settings_menu: Window = $SettingsMenu
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var right_panel: VBoxContainer = $UI/Control/RightPanel
@@ -95,16 +96,28 @@ func _ready() -> void:
 	# Connect model control sliders
 	if position_x_slider:
 		position_x_slider.value_changed.connect(_on_position_x_changed)
+	if position_x_value:
+		position_x_value.text_submitted.connect(_on_position_x_input)
 	if position_y_slider:
 		position_y_slider.value_changed.connect(_on_position_y_changed)
+	if position_y_value:
+		position_y_value.text_submitted.connect(_on_position_y_input)
 	if position_z_slider:
 		position_z_slider.value_changed.connect(_on_position_z_changed)
+	if position_z_value:
+		position_z_value.text_submitted.connect(_on_position_z_input)
 	if rotation_x_slider:
 		rotation_x_slider.value_changed.connect(_on_rotation_x_changed)
+	if rotation_x_value:
+		rotation_x_value.text_submitted.connect(_on_rotation_x_input)
 	if rotation_y_slider:
 		rotation_y_slider.value_changed.connect(_on_rotation_y_changed)
+	if rotation_y_value:
+		rotation_y_value.text_submitted.connect(_on_rotation_y_input)
 	if rotation_z_slider:
 		rotation_z_slider.value_changed.connect(_on_rotation_z_changed)
+	if rotation_z_value:
+		rotation_z_value.text_submitted.connect(_on_rotation_z_input)
 	
 	# Connect collapse buttons
 	if webcam_collapse_button:
@@ -243,7 +256,26 @@ func _save_last_model(path: String) -> void:
 	print("Saved last model path and transform")
 
 func _on_model_transform_changed(position: Vector3, rotation: Vector3, scale_factor: float) -> void:
-	"""Auto-save model transform when it changes"""
+	"""Auto-save model transform when it changes AND update sliders"""
+	# Update sliders to reflect current model transform
+	_updating_sliders_from_transform = true
+	
+	if position_x_slider:
+		position_x_slider.value = position.x
+	if position_y_slider:
+		position_y_slider.value = position.y
+	if position_z_slider:
+		position_z_slider.value = position.z
+	if rotation_x_slider:
+		rotation_x_slider.value = rad_to_deg(rotation.x)
+	if rotation_y_slider:
+		rotation_y_slider.value = rad_to_deg(rotation.y)
+	if rotation_z_slider:
+		rotation_z_slider.value = rad_to_deg(rotation.z)
+	
+	_updating_sliders_from_transform = false
+	
+	# Auto-save
 	_save_last_model(_get_last_model_path())
 
 func _on_camera_mode_changed(is_move_mode: bool) -> void:
@@ -412,6 +444,8 @@ func _on_reset_pose_button_pressed() -> void:
 
 func _on_position_x_changed(value: float) -> void:
 	"""Update model X position via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
 		transform_data.position.x = value
@@ -421,6 +455,8 @@ func _on_position_x_changed(value: float) -> void:
 
 func _on_position_y_changed(value: float) -> void:
 	"""Update model Y position via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
 		transform_data.position.y = value
@@ -430,6 +466,8 @@ func _on_position_y_changed(value: float) -> void:
 
 func _on_position_z_changed(value: float) -> void:
 	"""Update model Z position via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
 		transform_data.position.z = value
@@ -439,6 +477,8 @@ func _on_position_z_changed(value: float) -> void:
 
 func _on_rotation_x_changed(value: float) -> void:
 	"""Update model X rotation via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
 		transform_data.rotation.x = deg_to_rad(value)
@@ -448,6 +488,8 @@ func _on_rotation_x_changed(value: float) -> void:
 
 func _on_rotation_y_changed(value: float) -> void:
 	"""Update model Y rotation via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
 		transform_data.rotation.y = deg_to_rad(value)
@@ -457,12 +499,51 @@ func _on_rotation_y_changed(value: float) -> void:
 
 func _on_rotation_z_changed(value: float) -> void:
 	"""Update model Z rotation via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
 	if camera_controller:
 		var transform_data = camera_controller.get_model_transform()
 		transform_data.rotation.z = deg_to_rad(value)
 		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
 	if rotation_z_value:
 		rotation_z_value.text = str(int(value)) + "°"
+
+# LineEdit input handlers
+func _on_position_x_input(text: String) -> void:
+	"""Handle direct input for X position"""
+	var value = text.to_float()
+	if position_x_slider:
+		position_x_slider.value = clamp(value, position_x_slider.min_value, position_x_slider.max_value)
+
+func _on_position_y_input(text: String) -> void:
+	"""Handle direct input for Y position"""
+	var value = text.to_float()
+	if position_y_slider:
+		position_y_slider.value = clamp(value, position_y_slider.min_value, position_y_slider.max_value)
+
+func _on_position_z_input(text: String) -> void:
+	"""Handle direct input for Z position"""
+	var value = text.to_float()
+	if position_z_slider:
+		position_z_slider.value = clamp(value, position_z_slider.min_value, position_z_slider.max_value)
+
+func _on_rotation_x_input(text: String) -> void:
+	"""Handle direct input for X rotation"""
+	var value = text.replace("°", "").to_float()
+	if rotation_x_slider:
+		rotation_x_slider.value = clamp(value, rotation_x_slider.min_value, rotation_x_slider.max_value)
+
+func _on_rotation_y_input(text: String) -> void:
+	"""Handle direct input for Y rotation"""
+	var value = text.replace("°", "").to_float()
+	if rotation_y_slider:
+		rotation_y_slider.value = clamp(value, rotation_y_slider.min_value, rotation_y_slider.max_value)
+
+func _on_rotation_z_input(text: String) -> void:
+	"""Handle direct input for Z rotation"""
+	var value = text.replace("°", "").to_float()
+	if rotation_z_slider:
+		rotation_z_slider.value = clamp(value, rotation_z_slider.min_value, rotation_z_slider.max_value)
 
 func _update_vrm_materials(node: Node) -> void:
 	"""Recursively update materials on VRM model - DO NOT duplicate to prevent white flash"""
