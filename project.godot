@@ -23,7 +23,7 @@ window/size/viewport_height=1280
 window/size/mode=3
 window/size/resizable=false
 window/stretch/mode="canvas_items"
-window/handheld/orientation="portrait"
+window/handheld/orientation=1
 
 [editor_plugins]
 
