@@ -195,15 +195,16 @@ jobs:
           unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
           mv templates $HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}
       
-      - name: Setup Android Build Template AAR Files
+      - name: Setup Android Build Template
         run: |
-          # Extract android_source.zip to a temp location
-          mkdir -p /tmp/android_source
-          cd /tmp/android_source
+          # Install the Android build template by extracting android_source.zip
+          # This is required when using gradle_build/use_gradle_build=true
+          mkdir -p android/build
+          cd android/build
           unzip -q $HOME/.local/share/godot/export_templates/${GODOT_TEMPLATES_VERSION}/android_source.zip
-          # Copy the AAR libs to the project's android/build directory
-          mkdir -p $GITHUB_WORKSPACE/android/build/libs
-          cp -r libs/* $GITHUB_WORKSPACE/android/build/libs/
+          # Create .build_version file to match the template version
+          echo "${GODOT_TEMPLATES_VERSION}" > .build_version
+          ls -la
       
       - name: Android Build
         run: |
