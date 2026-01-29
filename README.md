@@ -101,6 +101,7 @@ Download the latest release for your platform from the [Releases](../../releases
 **Known Issues:**
 - **Desktop Webcam Preview:** Godot 4.x CameraServer only works on mobile (Android/iOS) and Web platforms. Webcam preview is disabled on desktop (Windows/macOS/Linux). Face tracking still works using simulation mode on desktop. For webcam-based tracking on desktop, use external tools like MediaPipe with GDMP plugin.
 - **VRM Textures:** Ensure both VRM and MToon Shader plugins are enabled in Project Settings → Plugins. The app now includes enhanced lighting for better detail visibility.
+- **Android Architecture Support:** The APK supports **arm64-v8a** (64-bit ARM devices) and **x86_64** (emulators). 32-bit architectures (armeabi-v7a, x86) are **not supported** due to GDMP MediaPipe library limitations. Most modern Android devices use 64-bit ARM.
 
 ### Getting VRM Models
 
