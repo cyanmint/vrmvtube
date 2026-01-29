@@ -50,7 +50,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -67,6 +67,11 @@ jobs:
           mkdir -p ~/.local/share/godot/export_templates/4.6.stable
           mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
         working-directory: /tmp
+      
+      - name: Install OpenGL Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Import Resources
         run: godot --headless --verbose --editor --quit
@@ -117,7 +122,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -184,7 +189,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -251,7 +256,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
@@ -325,7 +330,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1
+          sudo apt-get install -y wget unzip libfontconfig1 libfreetype6 libxcursor1 libxinerama1 libxi6 libxrandr2 libgl1 libgles2-mesa-dev libegl1-mesa-dev
       
       - name: Download Godot
         run: |
