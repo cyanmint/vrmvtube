@@ -87,11 +87,22 @@ func _ready() -> void:
 		metadata_collapse_button.pressed.connect(_on_metadata_collapse_pressed)
 	
 	# Load default VRM model - use call_deferred to ensure scene is ready
+	print("Checking for default VRM model at: ", DEFAULT_VRM_PATH)
+	
+	# Android-specific: Check if file exists and log platform info
+	if OS.get_name() == "Android":
+		print("Android platform detected - VRM file check")
+		print("  - File exists: ", FileAccess.file_exists(DEFAULT_VRM_PATH))
+		print("  - User data dir: ", OS.get_user_data_dir())
+	
 	if FileAccess.file_exists(DEFAULT_VRM_PATH):
-		print("Loading default VRM model...")
+		print("Default VRM model found! Loading...")
 		call_deferred("_load_vrm_model", DEFAULT_VRM_PATH)
 	else:
-		print("No default VRM model found at: ", DEFAULT_VRM_PATH)
+		print("WARNING: No default VRM model found at: ", DEFAULT_VRM_PATH)
+		if OS.get_name() == "Android":
+			print("Android: The VRM file may not have been included in the APK export.")
+			print("Android: Check export_presets.cfg include_filter setting.")
 		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
 		# Set info label to show instructions
 		if info_label:
