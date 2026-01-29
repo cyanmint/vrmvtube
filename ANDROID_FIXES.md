@@ -9,11 +9,17 @@ This document describes the Android-specific issues that were identified and fix
 **Problem:**
 The app was configured for portrait orientation but was still starting in landscape mode on Android devices.
 
-**Root Cause:**
-The `project.godot` file had `window/handheld/orientation="portrait"` (a STRING value), but Godot's Android export requires an INTEGER value for this setting. The string value was likely being misinterpreted or defaulting to 0 (landscape).
+**Root Causes (Multiple Issues Found):**
 
-**CRITICAL FINDING:**  
-After analyzing the Godot engine source code, I discovered that Android exports use the PROJECT SETTING `display/window/handheld/orientation`, NOT the export preset's `screen/orientation` value!
+1. **STRING vs INTEGER:** The `project.godot` file had `window/handheld/orientation="portrait"` (a STRING value), but Godot's Android export requires an INTEGER value for this setting.
+
+2. **FULLSCREEN MODE OVERRIDE:** The `window/size/mode=3` (exclusive fullscreen) setting was overriding the orientation on Android. This is a known Godot issue where fullscreen mode combined with specific window sizes can force landscape orientation.
+
+**CRITICAL FINDINGS:**  
+- Android exports use the PROJECT SETTING `display/window/handheld/orientation`, NOT the export preset's `screen/orientation` value
+- The value MUST be an integer, not a string
+- Explicit fullscreen mode (mode=3) causes orientation override conflicts on Android
+- Android apps are automatically fullscreen, so mode=3 is unnecessary and harmful
 
 From `platform/android/export/export_plugin.cpp`:
 ```cpp
@@ -23,8 +29,10 @@ const int screen_orientation =
     ));
 ```
 
-**Fix:**
-Changed `window/handheld/orientation="portrait"` to `window/handheld/orientation=1` in project.godot.
+**Fixes Applied:**
+1. Changed `window/handheld/orientation="portrait"` to `window/handheld/orientation=1` in project.godot
+2. **Removed `window/size/mode=3`** (exclusive fullscreen mode)
+3. Changed `window/size/resizable=false` to `window/size/resizable=true`
 
 **Technical Details:**
 According to Godot 4 engine source code and Android's ActivityInfo constants:
@@ -37,10 +45,11 @@ According to Godot 4 engine source code and Android's ActivityInfo constants:
 - `6` = SCREEN_SENSOR (allows all rotations)
 - `7` = SCREEN_FULL_SENSOR
 
-**IMPORTANT:** The project.godot setting MUST use an integer value, not a string like "portrait".
-
 **Files Modified:**
-- `project.godot` (line 26) - Changed from STRING to INTEGER value
+- `project.godot` (lines 19-26)
+  - Changed orientation from STRING to INTEGER value
+  - **REMOVED `window/size/mode=3` (fullscreen override)**
+  - Changed `resizable=false` to `resizable=true`
 - `export_presets.cfg` (line 181) - Also changed for consistency (though Android doesn't use this value)
 
 **Reference:**
@@ -172,19 +181,28 @@ If the VRM model still doesn't load after these fixes:
 
 ### App Still Starts in Landscape
 
-If the app still starts in landscape after the fix:
+If the app still starts in landscape after these fixes:
 
-1. **CRITICAL: Check project.godot uses INTEGER, not STRING**
-   - WRONG: `window/handheld/orientation="portrait"`
-   - RIGHT: `window/handheld/orientation=1`
+1. **CRITICAL: Check project.godot settings**
+   - WRONG: `window/handheld/orientation="portrait"` (string)
+   - RIGHT: `window/handheld/orientation=1` (integer)
+   - **MUST NOT HAVE:** `window/size/mode=3` (this overrides orientation!)
    
-2. Verify you're using the newly built APK (not an old cached version)
+2. **Verify no fullscreen mode:**
+   - The `[display]` section should NOT contain `window/size/mode=3`
+   - Android handles fullscreen automatically
+   
+3. Rebuild the APK completely (don't use cached build)
 
-3. Uninstall the old app completely before installing the new one
+4. Uninstall the old app completely before installing the new one
 
-4. The export preset's `screen/orientation` value is NOT used by Android exports in Godot - the project.godot setting takes precedence
+5. The export preset's `screen/orientation` value is NOT used by Android exports in Godot - the project.godot setting takes precedence
 
-5. If using Godot Editor, check that the Project Settings → Display → Window → Handheld → Orientation is set to the correct integer value
+### Known Godot Issues
+
+- **Fullscreen mode override:** `window/size/mode=3` combined with window sizes can override orientation (GitHub issue #103495)
+- **Window size overrides:** Matching device resolution can trigger unintended fullscreen/orientation behavior (GitHub issue #67854)
+- On Android, explicit fullscreen mode is unnecessary and can cause conflicts
 
 ## Conclusion
 
