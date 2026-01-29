@@ -44,7 +44,7 @@ func load_settings() -> void:
 				current_settings = json.data
 				print("[Settings] Loaded settings from file")
 			else:
-				print("[Settings] Error parsing settings file, using defaults")
+				print("[Settings] Error parsing settings file at line ", json.get_error_line(), ": ", json.get_error_message())
 				current_settings = default_settings.duplicate(true)
 		else:
 			print("[Settings] Failed to open settings file, using defaults")
@@ -61,7 +61,9 @@ func save_settings() -> void:
 		file.close()
 		print("[Settings] Settings saved")
 	else:
-		push_error("[Settings] Failed to save settings file")
+		var error := FileAccess.get_open_error()
+		push_error("[Settings] Failed to save settings file. Error: ", error)
+		# Could notify user here via a signal if needed
 
 func get_setting(path: String, default_value = null):
 	var keys := path.split("/")
@@ -82,6 +84,10 @@ func set_setting(path: String, value) -> void:
 	for i in range(keys.size() - 1):
 		var key = keys[i]
 		if not (current is Dictionary and key in current):
+			current[key] = {}
+		elif not current[key] is Dictionary:
+			# If the intermediate value is not a dictionary, replace it
+			push_warning("[Settings] Overwriting non-dictionary value at path: ", "/".join(keys.slice(0, i + 1)))
 			current[key] = {}
 		current = current[key]
 	

@@ -39,26 +39,26 @@ func _ready() -> void:
 	setup_ui_references()
 
 func setup_ui_references() -> void:
-	mode_button = get_node_or_null("ModeButton")
+	mode_button = get_node_or_null("MarginContainer/HBoxContainer/ModeButton")
 	
 	# Camera controls
-	camera_pos_x = get_node_or_null("CameraPanel/CameraPosition/PosX")
-	camera_pos_y = get_node_or_null("CameraPanel/CameraPosition/PosY")
-	camera_pos_z = get_node_or_null("CameraPanel/CameraPosition/PosZ")
-	camera_rot_x = get_node_or_null("CameraPanel/CameraRotation/RotX")
-	camera_rot_y = get_node_or_null("CameraPanel/CameraRotation/RotY")
-	camera_rot_z = get_node_or_null("CameraPanel/CameraRotation/RotZ")
+	camera_pos_x = get_node_or_null("MarginContainer/HBoxContainer/CameraPanel/CameraPosition/PosX")
+	camera_pos_y = get_node_or_null("MarginContainer/HBoxContainer/CameraPanel/CameraPosition/PosY")
+	camera_pos_z = get_node_or_null("MarginContainer/HBoxContainer/CameraPanel/CameraPosition/PosZ")
+	camera_rot_x = get_node_or_null("MarginContainer/HBoxContainer/CameraPanel/CameraRotation/RotX")
+	camera_rot_y = get_node_or_null("MarginContainer/HBoxContainer/CameraPanel/CameraRotation/RotY")
+	camera_rot_z = get_node_or_null("MarginContainer/HBoxContainer/CameraPanel/CameraRotation/RotZ")
 	
 	# Model controls
-	model_pos_x = get_node_or_null("ModelPanel/ModelPosition/PosX")
-	model_pos_y = get_node_or_null("ModelPanel/ModelPosition/PosY")
-	model_pos_z = get_node_or_null("ModelPanel/ModelPosition/PosZ")
-	model_rot_x = get_node_or_null("ModelPanel/ModelRotation/RotX")
-	model_rot_y = get_node_or_null("ModelPanel/ModelRotation/RotY")
-	model_rot_z = get_node_or_null("ModelPanel/ModelRotation/RotZ")
+	model_pos_x = get_node_or_null("MarginContainer/HBoxContainer/ModelPanel/ModelPosition/PosX")
+	model_pos_y = get_node_or_null("MarginContainer/HBoxContainer/ModelPanel/ModelPosition/PosY")
+	model_pos_z = get_node_or_null("MarginContainer/HBoxContainer/ModelPanel/ModelPosition/PosZ")
+	model_rot_x = get_node_or_null("MarginContainer/HBoxContainer/ModelPanel/ModelRotation/RotX")
+	model_rot_y = get_node_or_null("MarginContainer/HBoxContainer/ModelPanel/ModelRotation/RotY")
+	model_rot_z = get_node_or_null("MarginContainer/HBoxContainer/ModelPanel/ModelRotation/RotZ")
 	
 	# Camera selector
-	camera_selector = get_node_or_null("CameraPanel/CameraSelector")
+	camera_selector = get_node_or_null("MarginContainer/HBoxContainer/CameraPanel/CameraSelector")
 	
 	# Connect signals
 	if mode_button:

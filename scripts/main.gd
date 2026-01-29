@@ -169,11 +169,16 @@ func _on_load_vrm_button_pressed():
 	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	file_dialog.filters = ["*.vrm ; VRM Model Files"]
 	file_dialog.file_selected.connect(_on_vrm_file_selected)
+	file_dialog.close_requested.connect(func(): file_dialog.queue_free())
 	add_child(file_dialog)
 	file_dialog.popup_centered(Vector2i(800, 600))
 
 func _on_vrm_file_selected(path: String) -> void:
 	load_vrm_model(path)
+	# Clean up the file dialog after selection
+	var file_dialog = get_node_or_null("FileDialog")
+	if file_dialog:
+		file_dialog.queue_free()
 
 func _on_start_tracking_button_pressed():
 	print("[Main] Starting tracking...")
@@ -256,6 +261,10 @@ func _input(event: InputEvent) -> void:
 				
 				if control_panel:
 					control_panel.update_camera_ui()
+				
+				# Save camera position to settings
+				if settings:
+					settings.set_camera_position(camera_3d.position)
 		
 		elif current_mode == ControlMode.ROTATE:
 			# Rotate camera X/Y
@@ -266,6 +275,10 @@ func _input(event: InputEvent) -> void:
 				
 				if control_panel:
 					control_panel.update_camera_ui()
+				
+				# Save camera rotation to settings
+				if settings:
+					settings.set_camera_rotation(camera_3d.rotation_degrees)
 	
 	# Handle mouse wheel for Z axis
 	elif event is InputEventMouseButton:
@@ -276,9 +289,15 @@ func _input(event: InputEvent) -> void:
 				if current_mode == ControlMode.MOVE:
 					# Move camera Z
 					camera_3d.position.z += scroll_delta
+					# Save camera position to settings
+					if settings:
+						settings.set_camera_position(camera_3d.position)
 				elif current_mode == ControlMode.ROTATE:
 					# Rotate camera Z
 					camera_3d.rotation_degrees.z += scroll_delta * 10.0
+					# Save camera rotation to settings
+					if settings:
+						settings.set_camera_rotation(camera_3d.rotation_degrees)
 				
 				if control_panel:
 					control_panel.update_camera_ui()
