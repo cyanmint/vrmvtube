@@ -64,7 +64,7 @@ func setup_ui_references() -> void:
 	viewport_container = get_node_or_null("VBoxContainer/ContentContainer/ViewportContainer")
 	camera_preview = get_node_or_null("VBoxContainer/ContentContainer/CameraPreview")
 	settings_popup = get_node_or_null("SettingsPopup")
-	control_panel = get_node_or_null("SettingsPopup/ControlPanel")
+	control_panel = get_node_or_null("SettingsPopup/ScrollContainer/ControlPanel")
 	
 	if control_panel:
 		control_panel.mode_changed.connect(_on_mode_changed)
