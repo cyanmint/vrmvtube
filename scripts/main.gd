@@ -90,7 +90,7 @@ func _ready() -> void:
 	print("Checking for default VRM model at: ", DEFAULT_VRM_PATH)
 	
 	# Android-specific: Check if file exists and log platform info
-	if OS.get_name() == "Android":
+	if platform_name == "Android":
 		print("Android platform detected - VRM file check")
 		print("  - File exists: ", FileAccess.file_exists(DEFAULT_VRM_PATH))
 		print("  - User data dir: ", OS.get_user_data_dir())
@@ -100,7 +100,7 @@ func _ready() -> void:
 		call_deferred("_load_vrm_model", DEFAULT_VRM_PATH)
 	else:
 		print("WARNING: No default VRM model found at: ", DEFAULT_VRM_PATH)
-		if OS.get_name() == "Android":
+		if platform_name == "Android":
 			print("Android: The VRM file may not have been included in the APK export.")
 			print("Android: Check export_presets.cfg include_filter setting.")
 		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
