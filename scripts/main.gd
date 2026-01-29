@@ -19,12 +19,10 @@ var _updating_sliders_from_transform := false  # Prevent infinite loops
 @onready var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
 @onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
-@onready var mediapipe_receiver: Node = $MediaPipeReceiver
-@onready var openseeface_receiver: Node = $OpenSeeFaceReceiver
+@onready var gdmp_tracking: Node = $GDMPTracking
 @onready var vmc_receiver: Node = $VMCReceiver
 @onready var vmc_sender: Node = $VMCSender
 @onready var android_tracking: Node = $AndroidTracking
-@onready var python_manager: Node = $PythonManager
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
 @onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
@@ -110,19 +108,14 @@ func _ready() -> void:
 		push_error("WebcamTracker node not found!")
 	
 	# Connect MediaPipe receiver for real face tracking
-	if mediapipe_receiver:
-		mediapipe_receiver.tracking_data_received.connect(_on_mediapipe_data_received)
-		print("Main: Connected to MediaPipe receiver")
-		print("Main: Run 'python tools/mediapipe_bridge.py' for real face tracking")
+	if gdmp_tracking:
+		gdmp_tracking.tracking_data_received.connect(_on_gdmp_data_received)
+		print("Main: Connected to GDMP native tracking")
+		if not gdmp_tracking.is_gdmp_available():
+			print("Main: GDMP not installed - download from https://github.com/j20001970/GDMP/releases")
+			print("Main: Using simulated tracking until GDMP is installed")
 	else:
-		push_warning("MediaPipeReceiver node not found - only simulated tracking available")
-	
-	# Connect OpenSeeFace receiver
-	if openseeface_receiver:
-		openseeface_receiver.tracking_data_received.connect(_on_openseeface_data_received)
-		print("Main: Connected to OpenSeeFace receiver (port 11573)")
-	else:
-		push_warning("OpenSeeFaceReceiver node not found")
+		push_warning("GDMPTracking node not found")
 	
 	# Connect VMC receiver
 	if vmc_receiver:
@@ -240,25 +233,11 @@ func _load_and_apply_settings() -> void:
 					webcam_collapse_button.text = "▲" if not webcam_hud_visible else "▼"
 			print("Applied UI settings: webcam_hud_visible=", webcam_hud_visible)
 		
-		# Apply tracking settings and auto-start Python scripts
-		if config.has_section("tracking") and python_manager:
-			var auto_start_mediapipe = config.get_value("tracking", "auto_start_mediapipe", false)
-			var auto_start_openseeface = config.get_value("tracking", "auto_start_openseeface", false)
-			
-			if auto_start_mediapipe:
-				print("Auto-starting MediaPipe...")
-				python_manager.start_script(python_manager.PythonScript.MEDIAPIPE)
-			
-			if auto_start_openseeface:
-				print("Auto-starting OpenSeeFace...")
-				# Start OpenSeeFace with default args
-				python_manager.start_script(python_manager.PythonScript.OPENSEEFACE, 
-					["--ip", "127.0.0.1", "--port", "11573"])
-			
-			print("Applied tracking settings: mediapipe=", auto_start_mediapipe, " openseeface=", auto_start_openseeface)
-				if webcam_collapse_button:
-					webcam_collapse_button.text = "▲" if not webcam_hud_visible else "▼"
-			print("Applied UI settings: webcam_hud_visible=", webcam_hud_visible)
+		# Tracking settings - GDMP and VMC work automatically, no Python needed
+		if config.has_section("tracking"):
+			var use_gdmp = config.get_value("tracking", "use_gdmp", true)
+			var use_vmc = config.get_value("tracking", "use_vmc", true)
+			print("Applied tracking settings: gdmp=", use_gdmp, " vmc=", use_vmc)
 
 func _get_last_model_path() -> String:
 	"""Get the last loaded model path from settings, or default"""
@@ -441,16 +420,10 @@ func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
 		
 		webcam_status_label.text = status_text
 
-func _on_mediapipe_data_received(data: Dictionary) -> void:
-	"""Handle real MediaPipe tracking data from UDP receiver"""
+func _on_gdmp_data_received(data: Dictionary) -> void:
+	"""Handle GDMP native tracking data"""
 	if webcam_tracker:
-		# Pass real tracking data to webcam tracker
-		webcam_tracker.update_from_mediapipe(data)
-
-func _on_openseeface_data_received(data: Dictionary) -> void:
-	"""Handle OpenSeeFace tracking data from UDP receiver"""
-	if webcam_tracker:
-		# Pass OpenSeeFace tracking data to webcam tracker
+		# Pass GDMP tracking data to webcam tracker
 		webcam_tracker.update_from_mediapipe(data)
 
 func _on_vmc_data_received(data: Dictionary) -> void:
