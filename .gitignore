@@ -50,3 +50,7 @@ Thumbs.db
 # Temporary files
 /tmp/
 *.tmp
+
+# GDMP binaries (CI downloads these, we only vendor source)
+addons/GDMP/libs/
+addons/GDMP/models/
