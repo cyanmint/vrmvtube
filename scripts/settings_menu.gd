@@ -227,7 +227,11 @@ func _populate_cameras() -> void:
 		camera_option.add_item("No cameras detected", 0)
 		camera_option.disabled = true
 		if camera_info_label:
-			camera_info_label.text = "Desktop webcam access is limited in Godot 4.x\nSimulated tracking is used instead"
+			var platform = OS.get_name()
+			if platform in ["Web", "HTML5"]:
+				camera_info_label.text = "Web platform: CameraServer not supported\nRequires JavaScript bridge for camera access"
+			else:
+				camera_info_label.text = "No cameras detected\nMake sure a webcam is connected and accessible"
 
 func _setup_about_text() -> void:
 	"""Setup about tab content"""
@@ -461,17 +465,20 @@ func _update_camera_preview() -> void:
 		preview_placeholder.visible = true
 		
 		# Update placeholder text based on platform and GDMP status
-		if platform in ["Android", "iOS", "Web", "HTML5"]:
+		if platform in ["Android", "iOS"]:
 			# Check if GDMP is actually available and initialized
 			if gdmp_tracking and gdmp_tracking.has_method("is_gdmp_available"):
 				if gdmp_tracking.is_gdmp_available():
-					preview_placeholder.text = "Waiting for camera...\n\nIf camera permission was granted,\ncheck console logs for errors."
+					preview_placeholder.text = "Waiting for camera...\n\nIf permission was granted,\ncheck console logs for errors."
 				else:
 					preview_placeholder.text = "GDMP not available.\n\nCheck if GDMP plugin is enabled\nin Project Settings."
 			else:
 				preview_placeholder.text = "Camera will appear when\nface tracking is active.\n\nGrant camera permission to enable."
+		elif platform in ["Web", "HTML5"]:
+			preview_placeholder.text = "Web platform:\nCameraServer not supported.\n\nRequires JavaScript bridge\nfor camera access."
 		else:
-			preview_placeholder.text = "No camera feed available\n\nDesktop webcam access is limited in Godot 4.x\nCamera works on Android/Web platforms"
+			# Desktop platforms
+			preview_placeholder.text = "No camera feed available\n\nCheck if webcam is connected\nand accessible to Godot"
 
 func _save_settings() -> void:
 	"""Save settings to config file"""

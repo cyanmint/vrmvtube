@@ -305,14 +305,60 @@ func _initialize_camera() -> void:
 		camera_started.emit()
 		return
 	
-	# Desktop platforms - CameraServer has limited support
-	# CameraServer has limited support on desktop platforms in Godot 4.x
-	# It works on: Android, iOS, Web
-	# It does NOT work reliably on: Windows, macOS, Linux, X11
+	# Desktop platforms - CameraServer IS supported in Godot 4.4+
+	# CameraServer works on: Windows, Linux, macOS (as of Godot 4.4+)
+	# It does NOT work on: Web (requires JavaScript bridge)
 	if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
-		push_warning("GDMPTracking: CameraServer not supported on desktop platform: ", platform)
-		push_warning("GDMPTracking: Webcam preview disabled on desktop. Use GDMP for face tracking without preview.")
-		push_warning("GDMPTracking: For webcam support on desktop, consider using external tools or GDMP native camera access.")
+		print("GDMPTracking: Using CameraServer for ", platform)
+		
+		# Enable camera monitoring
+		var camera_server = CameraServer
+		camera_server.set_monitoring_feeds(true)
+		print("GDMPTracking: Camera monitoring enabled")
+		
+		# Wait for feeds to be detected
+		await get_tree().process_frame
+		await get_tree().process_frame
+		
+		var feed_count = camera_server.get_feed_count()
+		print("GDMPTracking: Detected ", feed_count, " camera feed(s)")
+		
+		if feed_count > 0:
+			# Get the first camera feed (usually the default webcam)
+			camera_feed = camera_server.get_feed(camera_index)
+			
+			if camera_feed:
+				print("GDMPTracking: Using camera: ", camera_feed.get_name())
+				
+				# Activate the feed
+				camera_feed.set_active(true)
+				print("GDMPTracking: Camera feed activated")
+				
+				# Create camera texture
+				camera_texture = CameraTexture.new()
+				camera_texture.camera_feed_id = camera_feed.get_id()
+				camera_texture.camera_is_active = true
+				print("GDMPTracking: Camera texture created")
+				
+				print("GDMPTracking: ✅ CameraServer camera started successfully!")
+				camera_started.emit()
+			else:
+				push_warning("GDMPTracking: Failed to get camera feed at index ", camera_index)
+				camera_failed.emit("Camera feed not available")
+		else:
+			push_warning("GDMPTracking: No camera feeds detected on desktop")
+			push_warning("GDMPTracking: Make sure a webcam is connected and accessible")
+			camera_failed.emit("No cameras detected")
+		
+		return
+	
+	# Web platform - CameraServer NOT supported
+	if platform in ["Web", "HTML5"]:
+		push_warning("GDMPTracking: Web platform detected")
+		push_warning("GDMPTracking: CameraServer is not supported on Web")
+		push_warning("GDMPTracking: Web camera requires JavaScript bridge implementation")
+		push_warning("GDMPTracking: Falling back to simulated tracking")
+		camera_failed.emit("Web platform not supported by CameraServer")
 		return
 
 func _on_permission_result(granted: bool) -> void:
