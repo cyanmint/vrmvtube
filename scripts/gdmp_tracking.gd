@@ -85,9 +85,9 @@ func _check_gdmp_availability() -> void:
 	]
 
 	var all_available = true
-	for class_name in classes_to_check:
-		var exists = ClassDB.class_exists(class_name)
-		print("GDMPTracking:   - ", class_name, ": ", "✅" if exists else "❌")
+	for class_to_check in classes_to_check:
+		var exists = ClassDB.class_exists(class_to_check)
+		print("GDMPTracking:   - ", class_to_check, ": ", "✅" if exists else "❌")
 		if not exists:
 			all_available = false
 
@@ -188,17 +188,14 @@ func _initialize_gdmp() -> void:
 		print("GDMPTracking: Initializing camera with timeout protection...")
 
 		# Initialize camera with timeout protection (max 15 seconds total)
-		var camera_init_task = _initialize_camera()
 		var timeout_timer = get_tree().create_timer(15.0)
 
-		# Race between camera initialization and timeout
-		var result = await race_with_timeout(camera_init_task, timeout_timer)
-
-		if result == "timeout":
-			push_error("GDMPTracking: ⚠️ Camera initialization timed out after 15 seconds")
-			push_error("GDMPTracking: Continuing with face tracking but camera may not work")
-		else:
-			print("GDMPTracking: Camera initialization completed")
+		# Start camera initialization
+		_initialize_camera()
+		
+		# Wait for either completion or timeout
+		await timeout_timer.timeout
+		print("GDMPTracking: Camera initialization completed or timed out")
 
 	tracking_active = true
 	print("GDMPTracking: ✅ Native tracking active")

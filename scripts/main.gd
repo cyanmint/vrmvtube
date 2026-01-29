@@ -158,9 +158,9 @@ func _load_settings() -> void:
 
 	# Apply graphics settings
 	if config.has_section("graphics"):
-		var resolution_scale := config.get_value("graphics", "resolution_scale", 1.0)
-		var msaa := config.get_value("graphics", "msaa", 0)
-		var vsync := config.get_value("graphics", "vsync", true)
+		var resolution_scale: float = config.get_value("graphics", "resolution_scale", 1.0)
+		var msaa: int = config.get_value("graphics", "msaa", 0)
+		var vsync: bool = config.get_value("graphics", "vsync", true)
 
 		get_viewport().scaling_3d_scale = resolution_scale
 		get_viewport().msaa_3d = msaa
@@ -201,7 +201,7 @@ func _load_initial_model() -> void:
 	var model_path := DEFAULT_VRM_PATH
 
 	if config.load("user://vrmvtube_settings.cfg") == OK and config.has_section("model"):
-		var saved_path := config.get_value("model", "path", DEFAULT_VRM_PATH)
+		var saved_path: String = config.get_value("model", "path", DEFAULT_VRM_PATH)
 		if FileAccess.file_exists(saved_path):
 			model_path = saved_path
 
