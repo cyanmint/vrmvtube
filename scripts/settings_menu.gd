@@ -44,6 +44,9 @@ signal settings_saved(settings: Dictionary)
 var original_settings := {}
 const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 
+# Reference to GDMP tracking for camera preview
+var gdmp_tracking: Node = null
+
 # UI References
 @onready var tab_container: TabContainer = $MarginContainer/VBoxContainer/TabContainer
 @onready var save_button: Button = $MarginContainer/VBoxContainer/ButtonPanel/SaveButton
@@ -64,6 +67,8 @@ const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 # Camera Tab
 @onready var camera_option: OptionButton = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/CameraOption
 @onready var camera_info_label: Label = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/InfoLabel
+@onready var camera_preview: TextureRect = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/PreviewContainer/CameraPreview
+@onready var preview_placeholder: Label = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/PreviewContainer/PreviewPlaceholder
 
 # Graphics Tab
 @onready var resolution_scale_slider: HSlider = $MarginContainer/VBoxContainer/TabContainer/Graphics/VBoxContainer/ResolutionScale/Slider
@@ -76,6 +81,13 @@ const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 @onready var about_text: RichTextLabel = $MarginContainer/VBoxContainer/TabContainer/About/ScrollContainer/AboutText
 
 func _ready() -> void:
+	# Get reference to GDMP tracking node from main scene
+	var main_scene = get_tree().root.get_node_or_null("Main")
+	if main_scene:
+		gdmp_tracking = main_scene.get_node_or_null("GDMPTracking")
+		if gdmp_tracking:
+			print("Settings: Found GDMP tracking node for camera preview")
+	
 	# Load settings from file
 	_load_settings()
 	
@@ -325,6 +337,9 @@ func _on_camera_selected(index: int) -> void:
 	current_settings.camera.selected_index = index
 	if camera_option and index >= 0 and index < camera_option.item_count:
 		current_settings.camera.device_name = camera_option.get_item_text(index)
+	
+	# Update camera preview with new selection
+	_update_camera_preview()
 
 func _on_resolution_scale_changed(value: float) -> void:
 	"""Handle resolution scale change"""
@@ -395,6 +410,51 @@ func _load_settings() -> void:
 	
 	print("Settings: Loaded from ", CONFIG_PATH)
 
+func _process(_delta: float) -> void:
+	"""Update camera preview if window is visible"""
+	if visible:
+		_update_camera_preview()
+
+func _update_camera_preview() -> void:
+	"""Update the camera preview texture"""
+	if not camera_preview or not preview_placeholder:
+		return
+	
+	# Try to get camera texture from GDMP tracking
+	var camera_texture: CameraTexture = null
+	if gdmp_tracking and gdmp_tracking.has_method("get_camera_texture"):
+		camera_texture = gdmp_tracking.get_camera_texture()
+	
+	# Also try CameraServer for desktop/web platforms
+	if not camera_texture:
+		var camera_server = CameraServer
+		if camera_server.get_feed_count() > 0:
+			var selected_index = current_settings.camera.selected_index
+			if selected_index >= 0 and selected_index < camera_server.get_feed_count():
+				var feed = camera_server.get_feed(selected_index)
+				if feed and feed.is_active():
+					var cam_tex = CameraTexture.new()
+					cam_tex.camera_feed_id = feed.get_id()
+					cam_tex.camera_is_active = true
+					camera_texture = cam_tex
+	
+	# Update preview
+	if camera_texture:
+		camera_preview.texture = camera_texture
+		camera_preview.visible = true
+		preview_placeholder.visible = false
+	else:
+		camera_preview.texture = null
+		camera_preview.visible = false
+		preview_placeholder.visible = true
+		
+		# Update placeholder text based on platform
+		var platform = OS.get_name()
+		if platform in ["Android", "iOS", "Web", "HTML5"]:
+			preview_placeholder.text = "Camera preview will appear when\nface tracking is active.\n\nGrant camera permission to enable."
+		else:
+			preview_placeholder.text = "No camera feed available\n\nDesktop webcam access is limited in Godot 4.x\nCamera works on Android/Web platforms"
+
 func _save_settings() -> void:
 	"""Save settings to config file"""
 	var config := ConfigFile.new()
@@ -439,4 +499,8 @@ func show_settings() -> void:
 	# Reload original settings when opening
 	original_settings = current_settings.duplicate(true)
 	_setup_ui()
+	
+	# Update camera preview immediately
+	_update_camera_preview()
+	
 	popup_centered()
