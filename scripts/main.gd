@@ -4,14 +4,15 @@ extends Control
 
 # Preload custom classes
 const Settings = preload("res://scripts/settings.gd")
-const HandTrackingManager = preload("res://scripts/hand_tracking_manager.gd")
-const FaceTrackingManager = preload("res://scripts/face_tracking_manager.gd")
+# Load tracking managers conditionally to avoid MediaPipe dependency issues
+# const HandTrackingManager = preload("res://scripts/hand_tracking_manager.gd")
+# const FaceTrackingManager = preload("res://scripts/face_tracking_manager.gd")
 const ControlPanel = preload("res://scripts/control_panel.gd")
 
 # References
 var settings: Settings
-var hand_tracking_manager: HandTrackingManager
-var face_tracking_manager: FaceTrackingManager
+var hand_tracking_manager # : HandTrackingManager
+var face_tracking_manager # : FaceTrackingManager
 var camera_3d: Camera3D
 var vrm_model_node: Node3D
 var viewport: SubViewport
@@ -80,15 +81,25 @@ func setup_viewport() -> void:
 				control_panel.set_model_node(vrm_model_node)
 
 func setup_tracking_managers() -> void:
-	# Create hand tracking manager
-	hand_tracking_manager = HandTrackingManager.new()
-	add_child(hand_tracking_manager)
-	hand_tracking_manager.tracking_error.connect(_on_tracking_error)
+	# Create hand tracking manager (if GDMP is available)
+	if ClassDB.class_exists("MediaPipeHandLandmarker"):
+		var HandTrackingManager = load("res://scripts/hand_tracking_manager.gd")
+		if HandTrackingManager:
+			hand_tracking_manager = HandTrackingManager.new()
+			add_child(hand_tracking_manager)
+			hand_tracking_manager.connect("tracking_error", _on_tracking_error)
+	else:
+		print("[Main] MediaPipe not available, hand tracking disabled")
 	
-	# Create face tracking manager
-	face_tracking_manager = FaceTrackingManager.new()
-	add_child(face_tracking_manager)
-	face_tracking_manager.tracking_error.connect(_on_tracking_error)
+	# Create face tracking manager (if GDMP is available)
+	if ClassDB.class_exists("MediaPipeFaceLandmarker"):
+		var FaceTrackingManager = load("res://scripts/face_tracking_manager.gd")
+		if FaceTrackingManager:
+			face_tracking_manager = FaceTrackingManager.new()
+			add_child(face_tracking_manager)
+			face_tracking_manager.connect("tracking_error", _on_tracking_error)
+	else:
+		print("[Main] MediaPipe not available, face tracking disabled")
 
 func connect_face_tracking_signals() -> void:
 	# Connect face tracking signals after initialization
@@ -176,14 +187,14 @@ func _on_start_tracking_button_pressed():
 		control_panel.populate_camera_list()
 	
 	# Start hand tracking
-	if hand_tracking_manager:
+	if hand_tracking_manager and hand_tracking_manager.has_method("start_tracking"):
 		if hand_tracking_manager.start_tracking():
 			update_status("Hand tracking started")
 		else:
 			update_status("Failed to start hand tracking")
 	
 	# Start face tracking
-	if face_tracking_manager:
+	if face_tracking_manager and face_tracking_manager.has_method("start_tracking"):
 		if face_tracking_manager.start_tracking():
 			update_status("Face tracking started")
 
