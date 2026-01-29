@@ -38,3 +38,6 @@ addons/GDMP/lib/
 /tmp/
 *.tmp
 *.log
+android/build/.gradle/
+android/build/build/
+android/build/libs/
