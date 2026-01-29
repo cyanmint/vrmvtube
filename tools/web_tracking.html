@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>VRMVTube MediaPipe Web Bridge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        #videoContainer {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #webcam {
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1); /* Mirror for selfie view */
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #status {
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .stat {
+            margin: 5px 0;
+        }
+        .active {
+            color: #4CAF50;
+        }
+        .inactive {
+            color: #f44336;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 VRMVTube Web Face Tracking</h1>
+        
+        <div class="controls">
+            <button id="startBtn" onclick="startTracking()">Start Tracking</button>
+            <button id="stopBtn" onclick="stopTracking()" disabled>Stop Tracking</button>
+        </div>
+
+        <div id="videoContainer">
+            <video id="webcam" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div id="status">
+            <div class="stat">Status: <span id="statusText" class="inactive">Not Started</span></div>
+            <div class="stat">FPS: <span id="fps">0</span></div>
+            <div class="stat">Face Detected: <span id="faceDetected">No</span></div>
+            <div class="stat">Blink L/R: <span id="blinkValues">0.00 / 0.00</span></div>
+            <div class="stat">Mouth Open: <span id="mouthValue">0.00</span></div>
+            <div class="stat">Packets Sent: <span id="packetCount">0</span></div>
+        </div>
+
+        <div style="background: #333; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Start Tracking" and allow webcam access</li>
+                <li>Make sure VRMVTube is running (Web build)</li>
+                <li>Your avatar will mirror your expressions!</li>
+            </ol>
+            <p><strong>Note:</strong> This runs entirely in your browser - no data is sent to any server.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+    <script>
+        let faceMesh;
+        let camera;
+        let isTracking = false;
+        let frameCount = 0;
+        let startTime = Date.now();
+        let packetCount = 0;
+
+        const webcamElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        // Godot communication (for Web exports)
+        function sendToGodot(data) {
+            // For Godot Web export, use JavaScript interface
+            if (typeof godot !== 'undefined' && godot.emit_signal) {
+                godot.emit_signal('mediapipe_data', JSON.stringify(data));
+            } else {
+                // Fallback: Try to call Godot function directly
+                try {
+                    if (typeof Module !== 'undefined' && Module.ccall) {
+                        Module.ccall('receive_mediapipe_data', null, ['string'], [JSON.stringify(data)]);
+                    }
+                } catch (e) {
+                    console.log('Godot not available, data:', data);
+                }
+            }
+            packetCount++;
+            document.getElementById('packetCount').textContent = packetCount;
+        }
+
+        // Calculate Eye Aspect Ratio for blink detection
+        function calculateEAR(landmarks, eyeIndices) {
+            const points = eyeIndices.map(i => landmarks[i]);
+            
+            // Vertical distances
+            const v1 = distance(points[1], points[5]);
+            const v2 = distance(points[2], points[4]);
+            
+            // Horizontal distance
+            const h = distance(points[0], points[3]);
+            
+            return (v1 + v2) / (2.0 * h);
+        }
+
+        function distance(p1, p2) {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function calculateBlink(landmarks, eye) {
+            const leftEyeIndices = [33, 160, 158, 133, 153, 144];
+            const rightEyeIndices = [362, 385, 387, 263, 373, 380];
+            
+            const indices = eye === 'left' ? leftEyeIndices : rightEyeIndices;
+            const ear = calculateEAR(landmarks, indices);
+            
+            // Normalize to 0-1 (0 = open, 1 = closed)
+            const blink = 1.0 - ((ear - 0.10) / (0.25 - 0.10));
+            return Math.max(0, Math.min(1, blink));
+        }
+
+        function calculateMouthOpen(landmarks) {
+            const upperLip = landmarks[13];
+            const lowerLip = landmarks[14];
+            
+            const mouthHeight = Math.abs(upperLip.y - lowerLip.y);
+            const mouthOpen = (mouthHeight - 0.01) / (0.08 - 0.01);
+            
+            return Math.max(0, Math.min(1, mouthOpen));
+        }
+
+        function calculateHeadRotation(landmarks) {
+            const noseTip = landmarks[1];
+            const chin = landmarks[152];
+            const leftEye = landmarks[33];
+            const rightEye = landmarks[263];
+            
+            const eyeCenterX = (leftEye.x + rightEye.x) / 2;
+            const eyeCenterY = (leftEye.y + rightEye.y) / 2;
+            
+            const yaw = (noseTip.x - eyeCenterX) * 2.0;
+            const pitch = (noseTip.y - eyeCenterY) * 2.0;
+            const roll = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
+            
+            return { x: pitch, y: yaw, z: roll };
+        }
+
+        function onResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                const landmarks = results.multiFaceLandmarks[0];
+                
+                // Calculate tracking values
+                const blinkLeft = calculateBlink(landmarks, 'left');
+                const blinkRight = calculateBlink(landmarks, 'right');
+                const mouthOpen = calculateMouthOpen(landmarks);
+                const headRotation = calculateHeadRotation(landmarks);
+                
+                // Update UI
+                document.getElementById('faceDetected').textContent = 'Yes';
+                document.getElementById('blinkValues').textContent = 
+                    `${blinkLeft.toFixed(2)} / ${blinkRight.toFixed(2)}`;
+                document.getElementById('mouthValue').textContent = mouthOpen.toFixed(2);
+                
+                // Build tracking data
+                const trackingData = {
+                    blink_left: blinkLeft,
+                    blink_right: blinkRight,
+                    mouth_open: mouthOpen,
+                    smile: 0.0,
+                    head_rotation: headRotation,
+                    head_position: { x: 0, y: 0, z: 0 },
+                    tracking_quality: 1.0,
+                    timestamp: Date.now() / 1000.0
+                };
+                
+                // Send to Godot
+                sendToGodot(trackingData);
+                
+                // Draw landmarks
+                drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION, {color: '#C0C0C070', lineWidth: 1});
+                drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 1});
+            } else {
+                document.getElementById('faceDetected').textContent = 'No';
+            }
+            
+            canvasCtx.restore();
+            
+            // Update FPS
+            frameCount++;
+            const elapsed = (Date.now() - startTime) / 1000;
+            if (elapsed > 0) {
+                const fps = frameCount / elapsed;
+                document.getElementById('fps').textContent = fps.toFixed(1);
+            }
+        }
+
+        async function startTracking() {
+            if (isTracking) return;
+            
+            try {
+                document.getElementById('statusText').textContent = 'Initializing...';
+                document.getElementById('statusText').className = 'inactive';
+                
+                // Initialize MediaPipe Face Mesh
+                faceMesh = new FaceMesh({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+                    }
+                });
+                
+                faceMesh.setOptions({
+                    maxNumFaces: 1,
+                    refineLandmarks: true,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+                
+                faceMesh.onResults(onResults);
+                
+                // Start camera
+                camera = new Camera(webcamElement, {
+                    onFrame: async () => {
+                        await faceMesh.send({image: webcamElement});
+                    },
+                    width: 640,
+                    height: 480
+                });
+                
+                await camera.start();
+                
+                isTracking = true;
+                frameCount = 0;
+                startTime = Date.now();
+                
+                document.getElementById('statusText').textContent = 'Tracking Active';
+                document.getElementById('statusText').className = 'active';
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                console.log('Face tracking started');
+            } catch (error) {
+                console.error('Error starting tracking:', error);
+                alert('Failed to start tracking: ' + error.message);
+                document.getElementById('statusText').textContent = 'Error';
+                document.getElementById('statusText').className = 'inactive';
+            }
+        }
+
+        function stopTracking() {
+            if (!isTracking) return;
+            
+            if (camera) {
+                camera.stop();
+            }
+            
+            isTracking = false;
+            
+            document.getElementById('statusText').textContent = 'Stopped';
+            document.getElementById('statusText').className = 'inactive';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('faceDetected').textContent = 'No';
+            
+            console.log('Face tracking stopped');
+        }
+
+        // Helper functions for drawing
+        function drawConnectors(ctx, landmarks, connections, style) {
+            ctx.strokeStyle = style.color;
+            ctx.lineWidth = style.lineWidth;
+            
+            connections.forEach(connection => {
+                const start = landmarks[connection[0]];
+                const end = landmarks[connection[1]];
+                
+                ctx.beginPath();
+                ctx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
+                ctx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
+                ctx.stroke();
+            });
+        }
+
+        function drawLandmarks(ctx, landmarks, style) {
+            ctx.fillStyle = style.color;
+            
+            landmarks.forEach(landmark => {
+                ctx.beginPath();
+                ctx.arc(
+                    landmark.x * canvasElement.width,
+                    landmark.y * canvasElement.height,
+                    style.radius,
+                    0,
+                    2 * Math.PI
+                );
+                ctx.fill();
+            });
+        }
+
+        // MediaPipe Face Mesh tesselation connections
+        const FACEMESH_TESSELATION = [
+            [127, 34], [34, 139], [139, 127], [11, 0], [0, 37], [37, 11],
+            // ... (simplified for brevity, full mesh would have all connections)
+        ];
+
+        // Set canvas size to match video
+        webcamElement.addEventListener('loadedmetadata', () => {
+            canvasElement.width = webcamElement.videoWidth;
+            canvasElement.height = webcamElement.videoHeight;
+        });
+
+        console.log('VRMVTube Web Face Tracking loaded');
+    </script>
+</body>
+</html>
