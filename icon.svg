@@ -1,1 +1,37 @@
-<svg height="128" width="128" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="124" height="124" rx="14" fill="#363d52" stroke="#212532" stroke-width="4"/><g transform="scale(.101) translate(122 122)"><g fill="#fff"><path d="M105 673v33q407 354 814 0v-33z"/><path fill="#478cbf" d="m105 673 152 14q12 1 15 14l4 67 132 10 8-61q2-11 15-15h162q13 4 15 15l8 61 132-10 4-67q3-13 15-14l152-14V427q30-39 56-81-35-59-83-108-43 20-82 47-40-37-88-64 7-51 8-102-59-28-123-42-26 43-46 89-49-7-98 0-20-46-46-89-64 14-123 42 1 51 8 102-48 27-88 64-39-27-82-47-48 49-83 108 26 42 56 81zm0 33v39c0 276 813 276 813 0v-39l-134 12-5 69q-2 10-14 13l-162 11q-12 0-16-11l-10-65H447l-10 65q-4 11-16 11l-162-11q-12-3-14-13l-5-69z"/><path d="M483 600c3 34 55 34 58 0v-86c-3-34-55-34-58 0z"/><circle cx="725" cy="526" r="90"/><circle cx="299" cy="526" r="90"/></g><g fill="#414042"><circle cx="307" cy="532" r="60"/><circle cx="717" cy="532" r="60"/></g></g></svg>
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#00D4AA" stroke="#00A080" stroke-width="3"/>
+  
+  <!-- VRM character silhouette -->
+  <g fill="#FFFFFF">
+    <!-- Head -->
+    <circle cx="64" cy="45" r="18"/>
+    
+    <!-- Body -->
+    <path d="M 46 63 Q 46 75 50 85 L 50 95 L 56 95 L 56 85 Q 56 75 64 75 Q 72 75 72 85 L 72 95 L 78 95 L 78 85 Q 82 75 82 63 Z"/>
+    
+    <!-- Arms -->
+    <ellipse cx="40" cy="75" rx="6" ry="15" transform="rotate(-20 40 75)"/>
+    <ellipse cx="88" cy="75" rx="6" ry="15" transform="rotate(20 88 75)"/>
+    
+    <!-- Eyes -->
+    <circle cx="58" cy="42" r="3" fill="#00A080"/>
+    <circle cx="70" cy="42" r="3" fill="#00A080"/>
+    
+    <!-- Smile -->
+    <path d="M 56 50 Q 64 54 72 50" fill="none" stroke="#00A080" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  
+  <!-- VRM badge -->
+  <g transform="translate(85, 95)">
+    <rect x="-18" y="-12" width="36" height="24" rx="4" fill="#FF6B9D" stroke="#CC5680" stroke-width="2"/>
+    <text x="0" y="2" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">VRM</text>
+  </g>
+  
+  <!-- Camera/streaming icon in corner -->
+  <g transform="translate(15, 15)">
+    <circle cx="0" cy="0" r="12" fill="#FF4444" opacity="0.9"/>
+    <circle cx="0" cy="0" r="6" fill="#FFFFFF"/>
+    <circle cx="2" cy="-2" r="2" fill="#FF4444"/>
+  </g>
+</svg>

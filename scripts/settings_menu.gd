@@ -27,6 +27,12 @@ signal settings_saved(settings: Dictionary)
 	"camera": {
 		"selected_index": 0,
 		"device_name": ""
+	},
+	"graphics": {
+		"resolution_scale": 1.0,  # 0.5 to 2.0
+		"msaa": 0,  # 0=Disabled, 1=2x, 2=4x, 3=8x
+		"shadow_quality": 1,  # 0=Low, 1=Medium, 2=High
+		"vsync": true
 	}
 }
 
@@ -53,6 +59,13 @@ const CONFIG_PATH := "user://vrmvtube_settings.cfg"
 # Camera Tab
 @onready var camera_option: OptionButton = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/CameraOption
 @onready var camera_info_label: Label = $MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer/InfoLabel
+
+# Graphics Tab
+@onready var resolution_scale_slider: HSlider = $MarginContainer/VBoxContainer/TabContainer/Graphics/VBoxContainer/ResolutionScale/Slider
+@onready var resolution_scale_label: Label = $MarginContainer/VBoxContainer/TabContainer/Graphics/VBoxContainer/ResolutionScale/ValueLabel
+@onready var msaa_option: OptionButton = $MarginContainer/VBoxContainer/TabContainer/Graphics/VBoxContainer/MSAA/OptionButton
+@onready var shadow_quality_option: OptionButton = $MarginContainer/VBoxContainer/TabContainer/Graphics/VBoxContainer/ShadowQuality/OptionButton
+@onready var vsync_check: CheckBox = $MarginContainer/VBoxContainer/TabContainer/Graphics/VBoxContainer/VSync/CheckBox
 
 # About Tab
 @onready var about_text: RichTextLabel = $MarginContainer/VBoxContainer/TabContainer/About/ScrollContainer/AboutText
@@ -106,6 +119,30 @@ func _setup_ui() -> void:
 	# Camera tab
 	_populate_cameras()
 	
+	# Graphics tab
+	if resolution_scale_slider:
+		resolution_scale_slider.value = current_settings.graphics.resolution_scale
+		if resolution_scale_label:
+			resolution_scale_label.text = str(int(current_settings.graphics.resolution_scale * 100)) + "%"
+	
+	if msaa_option:
+		msaa_option.clear()
+		msaa_option.add_item("Disabled", 0)
+		msaa_option.add_item("2x MSAA", 1)
+		msaa_option.add_item("4x MSAA", 2)
+		msaa_option.add_item("8x MSAA", 3)
+		msaa_option.selected = current_settings.graphics.msaa
+	
+	if shadow_quality_option:
+		shadow_quality_option.clear()
+		shadow_quality_option.add_item("Low", 0)
+		shadow_quality_option.add_item("Medium", 1)
+		shadow_quality_option.add_item("High", 2)
+		shadow_quality_option.selected = current_settings.graphics.shadow_quality
+	
+	if vsync_check:
+		vsync_check.button_pressed = current_settings.graphics.vsync
+	
 	# About tab
 	_setup_about_text()
 
@@ -134,6 +171,15 @@ func _connect_signals() -> void:
 	
 	if camera_option:
 		camera_option.item_selected.connect(_on_camera_selected)
+	
+	if resolution_scale_slider:
+		resolution_scale_slider.value_changed.connect(_on_resolution_scale_changed)
+	if msaa_option:
+		msaa_option.item_selected.connect(_on_msaa_changed)
+	if shadow_quality_option:
+		shadow_quality_option.item_selected.connect(_on_shadow_quality_changed)
+	if vsync_check:
+		vsync_check.toggled.connect(_on_vsync_toggled)
 
 func _populate_cameras() -> void:
 	"""Populate camera dropdown with available cameras"""
@@ -275,6 +321,24 @@ func _on_camera_selected(index: int) -> void:
 	if camera_option and index >= 0 and index < camera_option.item_count:
 		current_settings.camera.device_name = camera_option.get_item_text(index)
 
+func _on_resolution_scale_changed(value: float) -> void:
+	"""Handle resolution scale change"""
+	current_settings.graphics.resolution_scale = value
+	if resolution_scale_label:
+		resolution_scale_label.text = str(int(value * 100)) + "%"
+
+func _on_msaa_changed(index: int) -> void:
+	"""Handle MSAA change"""
+	current_settings.graphics.msaa = index
+
+func _on_shadow_quality_changed(index: int) -> void:
+	"""Handle shadow quality change"""
+	current_settings.graphics.shadow_quality = index
+
+func _on_vsync_toggled(pressed: bool) -> void:
+	"""Handle VSync toggle"""
+	current_settings.graphics.vsync = pressed
+
 # Settings persistence
 func _load_settings() -> void:
 	"""Load settings from config file"""
@@ -311,6 +375,13 @@ func _load_settings() -> void:
 		current_settings.camera.selected_index = config.get_value("camera", "selected_index", 0)
 		current_settings.camera.device_name = config.get_value("camera", "device_name", "")
 	
+	# Load graphics settings
+	if config.has_section("graphics"):
+		current_settings.graphics.resolution_scale = config.get_value("graphics", "resolution_scale", 1.0)
+		current_settings.graphics.msaa = config.get_value("graphics", "msaa", 0)
+		current_settings.graphics.shadow_quality = config.get_value("graphics", "shadow_quality", 1)
+		current_settings.graphics.vsync = config.get_value("graphics", "vsync", true)
+	
 	print("Settings: Loaded from ", CONFIG_PATH)
 
 func _save_settings() -> void:
@@ -334,6 +405,12 @@ func _save_settings() -> void:
 	# Save camera settings
 	config.set_value("camera", "selected_index", current_settings.camera.selected_index)
 	config.set_value("camera", "device_name", current_settings.camera.device_name)
+	
+	# Save graphics settings
+	config.set_value("graphics", "resolution_scale", current_settings.graphics.resolution_scale)
+	config.set_value("graphics", "msaa", current_settings.graphics.msaa)
+	config.set_value("graphics", "shadow_quality", current_settings.graphics.shadow_quality)
+	config.set_value("graphics", "vsync", current_settings.graphics.vsync)
 	
 	var err := config.save(CONFIG_PATH)
 	if err == OK:

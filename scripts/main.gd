@@ -14,33 +14,65 @@ const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
 
 var current_vrm_instance: Node = null
 var sidebar_collapsed := false
+var _updating_sliders_from_transform := false  # Prevent infinite loops
 
-@onready var info_label: Label = $UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer/InfoLabel
-@onready var platform_info: Label = $UI/Control/RightPanel/BottomPanel/MarginContainer/VBoxContainer/PlatformInfo
+@onready var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
+@onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
 @onready var webcam_tracker: Node = $WebcamTracker
 @onready var face_rigging: Node = $FaceRigging
 @onready var model_container: Node3D = $ModelContainer
-@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
-@onready var webcam_status_label: Label = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/StatusLabel
-@onready var webcam_preview_panel: PanelContainer = $UI/Control/RightPanel/WebcamPreviewPanel
-@onready var webcam_collapse_button: Button = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var webcam_content: VBoxContainer = $UI/Control/RightPanel/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer
-@onready var buttons_panel: PanelContainer = $UI/Control/RightPanel/ButtonsPanel
-@onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ModelControlsPanel
-@onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/BottomPanel
-@onready var position_y_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYSlider
-@onready var position_y_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/PositionYContainer/PositionYValue
-@onready var scale_slider: HSlider = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleSlider
-@onready var scale_value: Label = $UI/Control/RightPanel/ModelControlsPanel/MarginContainer/VBoxContainer/ScaleContainer/ScaleValue
+@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
+@onready var webcam_status_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/StatusLabel
+@onready var webcam_preview_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel
+@onready var webcam_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var webcam_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var buttons_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel
+@onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel
+@onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel
+@onready var position_x_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXSlider
+@onready var position_x_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXValue
+@onready var position_y_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYSlider
+@onready var position_y_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYValue
+@onready var position_z_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZSlider
+@onready var position_z_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZValue
+@onready var rotation_x_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXSlider
+@onready var rotation_x_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXValue
+@onready var rotation_y_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYSlider
+@onready var rotation_y_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYValue
+@onready var rotation_z_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZSlider
+@onready var rotation_z_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZValue
 @onready var settings_menu: Window = $SettingsMenu
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var right_panel: VBoxContainer = $UI/Control/RightPanel
 @onready var sidebar_collapse_button: Button = $UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer/SidebarCollapseButton
 @onready var sidebar_collapse_tab: Button = $UI/Control/SidebarCollapseTab
-@onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/MetadataPanel
-@onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
-@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel
+@onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
+@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var title_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel
+@onready var title_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var title_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var buttons_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var buttons_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var model_controls_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var model_controls_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var bottom_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+@onready var bottom_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer
+@onready var camera_controller: Camera3D = $Camera3D
+@onready var camera_mode_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/CameraModeButton
+
+func _input(event: InputEvent) -> void:
+	# Keyboard hotkeys
+	if event is InputEventKey and event.pressed and not event.echo:
+		# C for configuration (settings)
+		if event.keycode == KEY_C:
+			_on_settings_button_pressed()
+			get_viewport().set_input_as_handled()
+		# L for loading VRM
+		elif event.keycode == KEY_L:
+			_on_load_model_button_pressed()
+			get_viewport().set_input_as_handled()
 
 func _ready() -> void:
 	print("VRMVTube started")
@@ -71,10 +103,30 @@ func _ready() -> void:
 		push_error("WebcamTracker node not found!")
 	
 	# Connect model control sliders
+	if position_x_slider:
+		position_x_slider.value_changed.connect(_on_position_x_changed)
+	if position_x_value:
+		position_x_value.text_submitted.connect(_on_position_x_input)
 	if position_y_slider:
 		position_y_slider.value_changed.connect(_on_position_y_changed)
-	if scale_slider:
-		scale_slider.value_changed.connect(_on_scale_changed)
+	if position_y_value:
+		position_y_value.text_submitted.connect(_on_position_y_input)
+	if position_z_slider:
+		position_z_slider.value_changed.connect(_on_position_z_changed)
+	if position_z_value:
+		position_z_value.text_submitted.connect(_on_position_z_input)
+	if rotation_x_slider:
+		rotation_x_slider.value_changed.connect(_on_rotation_x_changed)
+	if rotation_x_value:
+		rotation_x_value.text_submitted.connect(_on_rotation_x_input)
+	if rotation_y_slider:
+		rotation_y_slider.value_changed.connect(_on_rotation_y_changed)
+	if rotation_y_value:
+		rotation_y_value.text_submitted.connect(_on_rotation_y_input)
+	if rotation_z_slider:
+		rotation_z_slider.value_changed.connect(_on_rotation_z_changed)
+	if rotation_z_value:
+		rotation_z_value.text_submitted.connect(_on_rotation_z_input)
 	
 	# Connect collapse buttons
 	if webcam_collapse_button:
@@ -86,16 +138,185 @@ func _ready() -> void:
 	if metadata_collapse_button:
 		metadata_collapse_button.pressed.connect(_on_metadata_collapse_pressed)
 	
-	# Load default VRM model - use call_deferred to ensure scene is ready
-	if FileAccess.file_exists(DEFAULT_VRM_PATH):
-		print("Loading default VRM model...")
-		call_deferred("_load_vrm_model", DEFAULT_VRM_PATH)
+	# Connect camera mode signal and set model container reference
+	if camera_controller:
+		camera_controller.mode_changed.connect(_on_camera_mode_changed)
+		camera_controller.model_container = model_container
+		camera_controller.model_transform_changed.connect(_on_model_transform_changed)
+		print("Camera controller set up with model container")
+	if camera_mode_button:
+		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
+	
+	# Load saved settings and apply
+	_load_and_apply_settings()
+	
+	# Load last used model or default VRM model
+	var model_to_load := _get_last_model_path()
+	print("Checking for VRM model at: ", model_to_load)
+	
+	# Android-specific: Check if file exists and log platform info
+	if platform_name == "Android":
+		print("Android platform detected - VRM file check")
+		print("  - File exists: ", FileAccess.file_exists(model_to_load))
+		print("  - User data dir: ", OS.get_user_data_dir())
+	
+	if FileAccess.file_exists(model_to_load):
+		print("VRM model found! Loading...")
+		call_deferred("_load_vrm_model", model_to_load)
 	else:
-		print("No default VRM model found at: ", DEFAULT_VRM_PATH)
+		print("WARNING: No VRM model found at: ", model_to_load)
+		if platform_name == "Android":
+			print("Android: The VRM file may not have been included in the APK export.")
+			print("Android: Check export_presets.cfg include_filter setting.")
 		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
 		# Set info label to show instructions
 		if info_label:
-			info_label.text = "No model loaded.\nUse 'Load VRM Model' button\nDrag to rotate | Shift+Drag to pan | Scroll to zoom"
+			info_label.text = "No model loaded.\nUse 'Load VRM Model' button or press L\nDrag=rotate | R=mode | Move: WSAD=XY QE=Z | Rotate: WSAD=XY QE=Z"
+
+func _load_and_apply_settings() -> void:
+	"""Load settings from file and apply graphics settings"""
+	var config := ConfigFile.new()
+	var err := config.load("user://vrmvtube_settings.cfg")
+	
+	if err == OK:
+		# Apply graphics settings
+		if config.has_section("graphics"):
+			var resolution_scale = config.get_value("graphics", "resolution_scale", 1.0)
+			get_viewport().scaling_3d_scale = resolution_scale
+			
+			var msaa = config.get_value("graphics", "msaa", 0)
+			get_viewport().msaa_3d = msaa
+			
+			var vsync_enabled = config.get_value("graphics", "vsync", true)
+			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_enabled else DisplayServer.VSYNC_DISABLED)
+			
+			print("Applied graphics settings: resolution_scale=", resolution_scale, " msaa=", msaa, " vsync=", vsync_enabled)
+
+func _get_last_model_path() -> String:
+	"""Get the last loaded model path from settings, or default"""
+	var config := ConfigFile.new()
+	var err := config.load("user://vrmvtube_settings.cfg")
+	
+	if err == OK and config.has_section("model"):
+		var last_path = config.get_value("model", "path", DEFAULT_VRM_PATH)
+		# Check if the last path exists, otherwise fall back to default
+		if FileAccess.file_exists(last_path):
+			return last_path
+	
+	return DEFAULT_VRM_PATH
+
+func _load_model_transform() -> void:
+	"""Load and apply saved model transform"""
+	var config := ConfigFile.new()
+	var err := config.load("user://vrmvtube_settings.cfg")
+	
+	if err == OK and config.has_section("model") and camera_controller:
+		var pos = Vector3(
+			config.get_value("model", "position_x", 0.0),
+			config.get_value("model", "position_y", -0.5),
+			config.get_value("model", "position_z", 0.0)
+		)
+		var rot = Vector3(
+			config.get_value("model", "rotation_x", 0.0),
+			config.get_value("model", "rotation_y", 0.0),
+			config.get_value("model", "rotation_z", 0.0)
+		)
+		# Scale is always 1.0, ignore saved value
+		
+		camera_controller.set_model_transform(pos, rot, 1.0)
+		print("Loaded model transform: pos=", pos, " rot=", rot, " scale=1.0")
+		
+		# Update sliders to match loaded values
+		if position_x_slider:
+			position_x_slider.value = pos.x
+		if position_y_slider:
+			position_y_slider.value = pos.y
+		if position_z_slider:
+			position_z_slider.value = pos.z
+		if rotation_x_slider:
+			rotation_x_slider.value = rad_to_deg(rot.x)
+		if rotation_y_slider:
+			rotation_y_slider.value = rad_to_deg(rot.y)
+		if rotation_z_slider:
+			rotation_z_slider.value = rad_to_deg(rot.z)
+	elif camera_controller:
+		# Use defaults if no saved transform
+		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.0)
+		print("Using default model transform")
+
+func _save_last_model(path: String) -> void:
+	"""Save the last loaded model path and transform"""
+	var config := ConfigFile.new()
+	config.load("user://vrmvtube_settings.cfg")  # Load existing settings
+	config.set_value("model", "path", path)
+	
+	# Save current model transform if camera controller has it
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		config.set_value("model", "position_x", transform_data.position.x)
+		config.set_value("model", "position_y", transform_data.position.y)
+		config.set_value("model", "position_z", transform_data.position.z)
+		config.set_value("model", "rotation_x", transform_data.rotation.x)
+		config.set_value("model", "rotation_y", transform_data.rotation.y)
+		config.set_value("model", "rotation_z", transform_data.rotation.z)
+		# Don't save scale - it's always 1.0
+	
+	config.save("user://vrmvtube_settings.cfg")
+	print("Saved last model path and transform")
+
+func _on_model_transform_changed(position: Vector3, rotation: Vector3, scale_factor: float) -> void:
+	"""Auto-save model transform when it changes AND update sliders"""
+	# Update sliders to reflect current model transform
+	_updating_sliders_from_transform = true
+	
+	if position_x_slider:
+		position_x_slider.value = position.x
+	if position_x_value:
+		position_x_value.text = "%.2f" % position.x
+	
+	if position_y_slider:
+		position_y_slider.value = position.y
+	if position_y_value:
+		position_y_value.text = "%.2f" % position.y
+	
+	if position_z_slider:
+		position_z_slider.value = position.z
+	if position_z_value:
+		position_z_value.text = "%.2f" % position.z
+	
+	if rotation_x_slider:
+		rotation_x_slider.value = rad_to_deg(rotation.x)
+	if rotation_x_value:
+		rotation_x_value.text = str(int(rad_to_deg(rotation.x))) + "°"
+	
+	if rotation_y_slider:
+		rotation_y_slider.value = rad_to_deg(rotation.y)
+	if rotation_y_value:
+		rotation_y_value.text = str(int(rad_to_deg(rotation.y))) + "°"
+	
+	if rotation_z_slider:
+		rotation_z_slider.value = rad_to_deg(rotation.z)
+	if rotation_z_value:
+		rotation_z_value.text = str(int(rad_to_deg(rotation.z))) + "°"
+	
+	_updating_sliders_from_transform = false
+	
+	# Auto-save
+	_save_last_model(_get_last_model_path())
+
+func _on_camera_mode_changed(is_move_mode: bool) -> void:
+	"""Update UI when camera mode changes"""
+	if camera_mode_button:
+		camera_mode_button.text = "Mode: MOVE (R)" if is_move_mode else "Mode: ROTATE (R)"
+	
+	# Update info label with current mode
+	var mode_text = "MOVE" if is_move_mode else "ROTATE"
+	print("Control mode changed to: ", mode_text)
+
+func _on_camera_mode_button_pressed() -> void:
+	"""Toggle camera mode when button is pressed"""
+	if camera_controller:
+		camera_controller.toggle_mode()
 
 func _on_webcam_available(available: bool) -> void:
 	"""Handle webcam availability status"""
@@ -182,22 +403,27 @@ func _load_vrm_model(path: String) -> void:
 		current_vrm_instance = loaded_scene
 		model_container.add_child(current_vrm_instance)
 		
-		# Position the model in the container - centered and scaled appropriately
+		# DON'T set position/scale here - let camera controller handle it
+		# This prevents overriding saved transforms
 		if current_vrm_instance is Node3D:
-			current_vrm_instance.position = Vector3(0, -0.5, 0)  # Lower position for better centering
-			# Scale larger for better visibility (1.5x default)
-			current_vrm_instance.scale = Vector3(1.5, 1.5, 1.5)
+			# Reset to origin - camera controller will apply saved transform
+			current_vrm_instance.position = Vector3.ZERO
+			current_vrm_instance.rotation = Vector3.ZERO
+			current_vrm_instance.scale = Vector3.ONE
+		
+		# Load and apply saved model transform
+		_load_model_transform()
 		
 		# IMPORTANT: Ensure materials and textures are preserved
 		# Wait for the scene tree to fully process the node
 		await get_tree().process_frame
 		await get_tree().process_frame  # Extra frame wait for material loading
 		
-		# Force material update on all meshes
-		print("Updating VRM materials...")
+		# Check materials but DON'T duplicate - just verify
+		print("Checking VRM materials...")
 		_update_vrm_materials(current_vrm_instance)
 		
-		# Wait one more frame after material update
+		# Wait one more frame after material check
 		await get_tree().process_frame
 		
 		# Connect model to face rigging
@@ -208,7 +434,10 @@ func _load_vrm_model(path: String) -> void:
 		_update_metadata_display(current_vrm_instance)
 		
 		print("VRM model loaded successfully")
-		info_label.text = "VRM model loaded: " + path.get_file() + "\nControls: Drag to rotate | Shift+Drag to pan | Scroll to zoom"
+		info_label.text = "VRM model loaded: " + path.get_file() + "\nDrag=rotate | R=mode | Move: WSAD=XY QE/scroll=Z | Rotate: WSAD=XY QE/scroll=Z"
+		
+		# Save last loaded model
+		_save_last_model(path)
 		
 		# Show model controls and metadata
 		if model_controls_panel:
@@ -221,87 +450,152 @@ func _load_vrm_model(path: String) -> void:
 		info_label.text = "Error: " + error_msg
 
 func _on_reset_pose_button_pressed() -> void:
-	"""Reset model to default position and scale"""
-	if current_vrm_instance and current_vrm_instance is Node3D:
-		current_vrm_instance.position = Vector3(0, -0.5, 0)
-		current_vrm_instance.scale = Vector3(1.5, 1.5, 1.5)
-		current_vrm_instance.rotation = Vector3(0, 0, 0)
+	"""Reset model to default position, rotation, and scale"""
+	if camera_controller:
+		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.0)
 		
-		# Reset sliders to match default values
+		# Reset all sliders to match default values
+		if position_x_slider:
+			position_x_slider.value = 0.0
 		if position_y_slider:
 			position_y_slider.value = -0.5
-		if scale_slider:
-			scale_slider.value = 1.5
+		if position_z_slider:
+			position_z_slider.value = 0.0
+		if rotation_x_slider:
+			rotation_x_slider.value = 0.0
+		if rotation_y_slider:
+			rotation_y_slider.value = 0.0
+		if rotation_z_slider:
+			rotation_z_slider.value = 0.0
+
+func _on_position_x_changed(value: float) -> void:
+	"""Update model X position via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.position.x = value
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if position_x_value:
+		position_x_value.text = "%.2f" % value
 
 func _on_position_y_changed(value: float) -> void:
-	"""Update model Y position"""
-	if current_vrm_instance and current_vrm_instance is Node3D:
-		var new_pos: Vector3 = current_vrm_instance.position
-		new_pos.y = value
-		current_vrm_instance.position = new_pos
+	"""Update model Y position via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.position.y = value
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
 	if position_y_value:
 		position_y_value.text = "%.2f" % value
 
-func _on_scale_changed(value: float) -> void:
-	"""Update model scale"""
-	if current_vrm_instance and current_vrm_instance is Node3D:
-		current_vrm_instance.scale = Vector3(value, value, value)
-	if scale_value:
-		scale_value.text = "%.2f" % value
+func _on_position_z_changed(value: float) -> void:
+	"""Update model Z position via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.position.z = value
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if position_z_value:
+		position_z_value.text = "%.2f" % value
+
+func _on_rotation_x_changed(value: float) -> void:
+	"""Update model X rotation via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.rotation.x = deg_to_rad(value)
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if rotation_x_value:
+		rotation_x_value.text = str(int(value)) + "°"
+
+func _on_rotation_y_changed(value: float) -> void:
+	"""Update model Y rotation via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.rotation.y = deg_to_rad(value)
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if rotation_y_value:
+		rotation_y_value.text = str(int(value)) + "°"
+
+func _on_rotation_z_changed(value: float) -> void:
+	"""Update model Z rotation via camera controller"""
+	if _updating_sliders_from_transform:
+		return  # Prevent feedback loop
+	if camera_controller:
+		var transform_data = camera_controller.get_model_transform()
+		transform_data.rotation.z = deg_to_rad(value)
+		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
+	if rotation_z_value:
+		rotation_z_value.text = str(int(value)) + "°"
+
+# LineEdit input handlers
+func _on_position_x_input(text: String) -> void:
+	"""Handle direct input for X position"""
+	var value = text.to_float()
+	if position_x_slider:
+		position_x_slider.value = clamp(value, position_x_slider.min_value, position_x_slider.max_value)
+
+func _on_position_y_input(text: String) -> void:
+	"""Handle direct input for Y position"""
+	var value = text.to_float()
+	if position_y_slider:
+		position_y_slider.value = clamp(value, position_y_slider.min_value, position_y_slider.max_value)
+
+func _on_position_z_input(text: String) -> void:
+	"""Handle direct input for Z position"""
+	var value = text.to_float()
+	if position_z_slider:
+		position_z_slider.value = clamp(value, position_z_slider.min_value, position_z_slider.max_value)
+
+func _on_rotation_x_input(text: String) -> void:
+	"""Handle direct input for X rotation"""
+	var value = text.replace("°", "").to_float()
+	if rotation_x_slider:
+		rotation_x_slider.value = clamp(value, rotation_x_slider.min_value, rotation_x_slider.max_value)
+
+func _on_rotation_y_input(text: String) -> void:
+	"""Handle direct input for Y rotation"""
+	var value = text.replace("°", "").to_float()
+	if rotation_y_slider:
+		rotation_y_slider.value = clamp(value, rotation_y_slider.min_value, rotation_y_slider.max_value)
+
+func _on_rotation_z_input(text: String) -> void:
+	"""Handle direct input for Z rotation"""
+	var value = text.replace("°", "").to_float()
+	if rotation_z_slider:
+		rotation_z_slider.value = clamp(value, rotation_z_slider.min_value, rotation_z_slider.max_value)
 
 func _update_vrm_materials(node: Node) -> void:
-	"""Recursively update materials on VRM model to ensure textures and shaders load properly"""
+	"""Recursively update materials on VRM model - DO NOT duplicate to prevent white flash"""
 	if node is MeshInstance3D:
 		var mesh_instance := node as MeshInstance3D
 		if mesh_instance.mesh:
-			print("Updating materials for mesh: ", node.name)
-			# Force material update on all surfaces
+			print("Checking materials for mesh: ", node.name)
+			# DON'T duplicate materials - this causes the white flash!
+			# Just ensure the materials are properly visible
 			for i in range(mesh_instance.mesh.get_surface_count()):
 				var material := mesh_instance.mesh.surface_get_material(i)
 				if material:
-					# Strategy 1: Duplicate the material to force a refresh
-					# This ensures shader and textures are properly loaded
-					var duplicated_material := material.duplicate(true)  # Deep duplicate
-					
-					# Strategy 2: Force visibility and transparency settings
-					if duplicated_material is StandardMaterial3D:
-						# For standard materials, ensure flags are set correctly
-						var std_mat := duplicated_material as StandardMaterial3D
-						std_mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
-						std_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-						std_mat.vertex_color_use_as_albedo = false
-						# Ensure albedo is visible
-						if std_mat.albedo_color.a < 1.0:
+					# Only modify transparency/visibility if needed, without duplicating
+					if material is StandardMaterial3D:
+						var std_mat := material as StandardMaterial3D
+						# Only fix if actually transparent
+						if std_mat.albedo_color.a < 0.99:
 							std_mat.albedo_color.a = 1.0
-					elif duplicated_material is ShaderMaterial:
-						# For shader materials (like MToon), force parameter refresh
-						var shader_mat := duplicated_material as ShaderMaterial
-						if shader_mat.shader:
-							print("  - Shader material found: ", shader_mat.shader.resource_path if shader_mat.shader.resource_path else "inline shader")
-							
-							# For MToon shader, ensure alpha/transparency is set correctly
-							# Check for common transparency parameters
-							var param_names := ["_alpha", "alpha", "_Alpha", "transparency", "_Cutoff"]
-							for param in param_names:
-								if shader_mat.get_shader_parameter(param) != null:
-									var current_val = shader_mat.get_shader_parameter(param)
-									# If alpha/transparency exists, ensure it's visible
-									if current_val is float and current_val < 0.9:
-										shader_mat.set_shader_parameter(param, 1.0)
-										print("  - Set ", param, " to 1.0 (was ", current_val, ")")
-							
-							# Force shader refresh
-							var current_shader := shader_mat.shader
-							shader_mat.shader = null
-							shader_mat.shader = current_shader
+							print("  - Fixed transparency on surface ", i)
+					elif material is ShaderMaterial:
+						# For MToon shader, only check critical transparency params
+						var shader_mat := material as ShaderMaterial
+						# Don't reset shader or duplicate - just leave it as loaded
+						print("  - Shader material on surface ", i, " - keeping as-is")
 					
-					# Strategy 3: Apply the duplicated material as override
-					mesh_instance.set_surface_override_material(i, duplicated_material)
-					
-					# Strategy 4: Also set it on the mesh directly as fallback
-					mesh_instance.mesh.surface_set_material(i, duplicated_material)
-					
-					print("  - Surface ", i, " material updated: ", material.get_class())
+					print("  - Surface ", i, " material: ", material.get_class())
 	
 	# Recursively process children
 	for child in node.get_children():
@@ -361,7 +655,26 @@ func _on_settings_applied(settings: Dictionary) -> void:
 	if settings.has("background"):
 		_apply_background_settings(settings.background)
 	
+	# Apply graphics settings
+	if settings.has("graphics"):
+		_apply_graphics_settings(settings.graphics)
+	
 	# Camera settings are handled by webcam_tracker
+
+func _apply_graphics_settings(graphics_settings: Dictionary) -> void:
+	"""Apply graphics quality settings"""
+	if graphics_settings.has("resolution_scale"):
+		get_viewport().scaling_3d_scale = graphics_settings.resolution_scale
+		print("Applied resolution scale: ", graphics_settings.resolution_scale)
+	
+	if graphics_settings.has("msaa"):
+		get_viewport().msaa_3d = graphics_settings.msaa
+		print("Applied MSAA: ", graphics_settings.msaa)
+	
+	if graphics_settings.has("vsync"):
+		var mode = DisplayServer.VSYNC_ENABLED if graphics_settings.vsync else DisplayServer.VSYNC_DISABLED
+		DisplayServer.window_set_vsync_mode(mode)
+		print("Applied VSync: ", graphics_settings.vsync)
 
 func _apply_background_settings(bg_settings: Dictionary) -> void:
 	"""Apply background color/type settings"""
@@ -419,6 +732,34 @@ func _on_metadata_collapse_pressed() -> void:
 		if metadata_collapse_button:
 			metadata_collapse_button.text = "▲" if not metadata_content.visible else "▼"
 
+func _on_title_collapse_pressed() -> void:
+	"""Toggle title panel collapse"""
+	if title_content:
+		title_content.visible = not title_content.visible
+		if title_collapse_button:
+			title_collapse_button.text = "▲" if not title_content.visible else "▼"
+
+func _on_buttons_collapse_pressed() -> void:
+	"""Toggle buttons panel collapse"""
+	if buttons_content:
+		buttons_content.visible = not buttons_content.visible
+		if buttons_collapse_button:
+			buttons_collapse_button.text = "▲" if not buttons_content.visible else "▼"
+
+func _on_model_controls_collapse_pressed() -> void:
+	"""Toggle model controls panel collapse"""
+	if model_controls_content:
+		model_controls_content.visible = not model_controls_content.visible
+		if model_controls_collapse_button:
+			model_controls_collapse_button.text = "▲" if not model_controls_content.visible else "▼"
+
+func _on_bottom_collapse_pressed() -> void:
+	"""Toggle bottom panel collapse"""
+	if bottom_content:
+		bottom_content.visible = not bottom_content.visible
+		if bottom_collapse_button:
+			bottom_collapse_button.text = "▲" if not bottom_content.visible else "▼"
+
 func _update_metadata_display(vrm_node: Node) -> void:
 	"""Extract and display VRM metadata"""
 	if not metadata_label:
@@ -445,15 +786,31 @@ func _update_metadata_display(vrm_node: Node) -> void:
 	var metadata_text := ""
 	
 	if vrm_meta:
+		# Debug logging to see actual metadata structure
+		print("VRM metadata found. Type: ", vrm_meta.get_class())
+		print("VRM spec_version: ", vrm_meta.get("spec_version", "unknown"))
+		
 		metadata_text += "[b]VRM Metadata[/b]\n\n"
 		
-		# Basic info
-		if vrm_meta.get("title"):
-			metadata_text += "[b]Title:[/b] " + str(vrm_meta.title) + "\n"
+		# Basic info - handle both VRM 0.x and 1.0
+		# VRM 1.0 uses "name" in the JSON, but vrm_meta.gd maps it to "title"
+		var title_value = vrm_meta.get("title", "")
+		if title_value == "" or title_value == null:
+			# Fallback: try alternate fields
+			title_value = vrm_meta.get("name", "")
+		if title_value != "" and title_value != null:
+			metadata_text += "[b]Title:[/b] " + str(title_value) + "\n"
+			
 		if vrm_meta.get("version"):
 			metadata_text += "[b]Version:[/b] " + str(vrm_meta.version) + "\n"
-		if vrm_meta.get("authors") and vrm_meta.authors.size() > 0:
-			metadata_text += "[b]Author:[/b] " + ", ".join(vrm_meta.authors) + "\n"
+			
+		# Authors - VRM 1.0 uses PackedStringArray
+		if vrm_meta.get("authors"):
+			var authors = vrm_meta.authors
+			if authors is PackedStringArray and authors.size() > 0:
+				metadata_text += "[b]Author(s):[/b] " + ", ".join(authors) + "\n"
+			elif authors is String and authors != "":
+				metadata_text += "[b]Author:[/b] " + str(authors) + "\n"
 		elif vrm_meta.get("author"):
 			metadata_text += "[b]Author:[/b] " + str(vrm_meta.author) + "\n"
 		
