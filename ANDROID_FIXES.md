@@ -7,23 +7,41 @@ This document describes the Android-specific issues that were identified and fix
 ### Issue 1: App Not Starting in Portrait Orientation
 
 **Problem:**
-The app was configured for portrait orientation in `project.godot`, but the Android export preset had a conflicting setting that caused it to start in landscape mode instead.
+The app was configured for portrait orientation but was still starting in landscape mode on Android devices.
 
 **Root Cause:**
-In `export_presets.cfg`, the Android preset had `screen/orientation=6`, which corresponds to `SCREEN_ORIENTATION_SENSOR_LANDSCAPE` in Android. This conflicted with the project's portrait orientation setting.
+The `project.godot` file had `window/handheld/orientation="portrait"` (a STRING value), but Godot's Android export requires an INTEGER value for this setting. The string value was likely being misinterpreted or defaulting to 0 (landscape).
+
+**CRITICAL FINDING:**  
+After analyzing the Godot engine source code, I discovered that Android exports use the PROJECT SETTING `display/window/handheld/orientation`, NOT the export preset's `screen/orientation` value!
+
+From `platform/android/export/export_plugin.cpp`:
+```cpp
+const int screen_orientation =
+    _get_android_orientation_value(DisplayServer::ScreenOrientation(
+        int(get_project_setting(p_preset, "display/window/handheld/orientation"))
+    ));
+```
 
 **Fix:**
-Changed `screen/orientation=6` to `screen/orientation=1` in the Android export preset.
+Changed `window/handheld/orientation="portrait"` to `window/handheld/orientation=1` in project.godot.
 
 **Technical Details:**
-According to Godot 4 documentation and Android's ActivityInfo constants:
-- `0` = SCREEN_ORIENTATION_UNSPECIFIED (system default, typically landscape)
-- `1` = **SCREEN_ORIENTATION_PORTRAIT** (forces portrait mode)
-- `6` = SCREEN_ORIENTATION_SENSOR_LANDSCAPE (auto-rotates in landscape)
-- `7` = SCREEN_ORIENTATION_SENSOR_PORTRAIT (auto-rotates in portrait)
+According to Godot 4 engine source code and Android's ActivityInfo constants:
+- `0` = SCREEN_LANDSCAPE / SCREEN_ORIENTATION_UNSPECIFIED (system default, typically landscape)
+- `1` = **SCREEN_PORTRAIT** (forces portrait mode) ✅
+- `2` = SCREEN_REVERSE_LANDSCAPE
+- `3` = SCREEN_REVERSE_PORTRAIT
+- `4` = SCREEN_SENSOR_LANDSCAPE
+- `5` = SCREEN_SENSOR_PORTRAIT
+- `6` = SCREEN_SENSOR (allows all rotations)
+- `7` = SCREEN_FULL_SENSOR
+
+**IMPORTANT:** The project.godot setting MUST use an integer value, not a string like "portrait".
 
 **Files Modified:**
-- `export_presets.cfg` (line 181)
+- `project.godot` (line 26) - Changed from STRING to INTEGER value
+- `export_presets.cfg` (line 181) - Also changed for consistency (though Android doesn't use this value)
 
 **Reference:**
 - [Godot Android Export Documentation](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html)
@@ -156,10 +174,17 @@ If the VRM model still doesn't load after these fixes:
 
 If the app still starts in landscape after the fix:
 
-1. Verify you're using the newly built APK (not an old cached version)
-2. Uninstall the old app completely before installing the new one
-3. Check that `project.godot` has `window/handheld/orientation="portrait"`
-4. Verify the export preset is correctly set to `screen/orientation=1`
+1. **CRITICAL: Check project.godot uses INTEGER, not STRING**
+   - WRONG: `window/handheld/orientation="portrait"`
+   - RIGHT: `window/handheld/orientation=1`
+   
+2. Verify you're using the newly built APK (not an old cached version)
+
+3. Uninstall the old app completely before installing the new one
+
+4. The export preset's `screen/orientation` value is NOT used by Android exports in Godot - the project.godot setting takes precedence
+
+5. If using Godot Editor, check that the Project Settings → Display → Window → Handheld → Orientation is set to the correct integer value
 
 ## Conclusion
 
