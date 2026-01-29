@@ -147,6 +147,43 @@ You can get VRM models from:
 
 See `.github/workflows/` for automated CI/CD build configurations.
 
+## Architecture
+
+VRMVTube is built as a simple combination of two core technologies:
+
+### Core Components
+
+1. **godot-vrm** ([V-Sekai/godot-vrm](https://github.com/V-Sekai/godot-vrm))
+   - Handles VRM model loading and rendering
+   - Supports both VRM 0.x and VRM 1.0 formats
+   - Provides blend shape and bone animation APIs
+
+2. **GDMP** ([j20001970/GDMP](https://github.com/j20001970/GDMP))
+   - Google MediaPipe integration for Godot
+   - Provides 468-point face mesh tracking
+   - 52 ARKit-compatible blend shapes
+   - Native cross-platform support
+
+### Code Structure
+
+The codebase is organized into focused, modular scripts:
+
+```
+scripts/
+├── main.gd              # Core app logic (432 lines)
+├── gdmp_tracking.gd     # MediaPipe face tracking integration (728 lines)
+├── face_rigging.gd      # Maps tracking data to VRM blend shapes (173 lines)
+├── camera_controller.gd # Camera and model transform controls (264 lines)
+├── ui_controller.gd     # UI management and interactions (308 lines)
+└── settings_menu.gd     # Settings dialog (552 lines)
+```
+
+**Design Philosophy:**
+- **Simple and focused**: Each script has a single, clear responsibility
+- **Modular**: Easy to understand, modify, and extend
+- **Minimal dependencies**: Core functionality requires only godot-vrm + GDMP
+- **Inspired by VRigUnity**: Clean, straightforward VTubing app design
+
 ## Credits and Licenses
 
 This project incorporates code and assets from various sources. We are grateful to the following projects and their contributors:
@@ -158,6 +195,12 @@ This project incorporates code and assets from various sources. We are grateful 
   - Copyright (c) 2020-2021 V-Sekai Contributors
   - Copyright (c) 2020 VRM Consortium
   - Used for VRM model parsing and import/export functionality
+  
+- **[GDMP](https://github.com/j20001970/GDMP)** by j20001970
+  - License: MIT License  
+  - Google MediaPipe integration for Godot
+  - Provides real-time face tracking with 468 landmarks
+  - Supports Android, iOS, Web, and desktop platforms
   
 - **MToon Shader**
   - License: MIT License
