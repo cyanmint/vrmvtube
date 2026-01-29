@@ -133,7 +133,7 @@ func _ready() -> void:
 		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
 		# Set info label to show instructions
 		if info_label:
-			info_label.text = "No model loaded.\nUse 'Load VRM Model' button or press L\nDrag to rotate/pan | Q/E to zoom | R to switch mode"
+			info_label.text = "No model loaded.\nUse 'Load VRM Model' button or press L\nDrag=rotate | R=mode | Move: WSAD=XY QE=Z | Rotate: WSAD=XY QE=Z"
 
 func _load_and_apply_settings() -> void:
 	"""Load settings from file and apply graphics settings"""
@@ -216,19 +216,19 @@ func _on_model_transform_changed(position: Vector3, rotation: Vector3, scale_fac
 	"""Auto-save model transform when it changes"""
 	_save_last_model(_get_last_model_path())
 
-func _on_camera_mode_changed(is_pan_mode: bool) -> void:
+func _on_camera_mode_changed(is_move_mode: bool) -> void:
 	"""Update UI when camera mode changes"""
 	if camera_mode_button:
-		camera_mode_button.text = "Mode: PAN (R)" if is_pan_mode else "Mode: ROTATE (R)"
+		camera_mode_button.text = "Mode: MOVE (R)" if is_move_mode else "Mode: ROTATE (R)"
 	
 	# Update info label with current mode
-	var mode_text = "PAN" if is_pan_mode else "ROTATE"
-	print("Camera mode changed to: ", mode_text)
+	var mode_text = "MOVE" if is_move_mode else "ROTATE"
+	print("Control mode changed to: ", mode_text)
 
 func _on_camera_mode_button_pressed() -> void:
 	"""Toggle camera mode when button is pressed"""
 	if camera_controller:
-		camera_controller.toggle_pan_mode()
+		camera_controller.toggle_mode()
 
 func _on_webcam_available(available: bool) -> void:
 	"""Handle webcam availability status"""
@@ -346,7 +346,7 @@ func _load_vrm_model(path: String) -> void:
 		_update_metadata_display(current_vrm_instance)
 		
 		print("VRM model loaded successfully")
-		info_label.text = "VRM model loaded: " + path.get_file() + "\nDrag to rotate/pan | Q/E zoom | R mode | WASD move | C config | L load"
+		info_label.text = "VRM model loaded: " + path.get_file() + "\nDrag=rotate | R=mode | Move: WSAD=XY QE/scroll=Z | Rotate: WSAD=XY QE/scroll=Z"
 		
 		# Save last loaded model
 		_save_last_model(path)

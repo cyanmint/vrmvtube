@@ -3,30 +3,27 @@ extends Camera3D
 ## Camera controller for VRMVTube
 ## 
 ## Camera is FIXED at position (0, 1.5, 3) looking at origin
-## All pan/rotate/zoom controls transform the MODEL, not the camera
+## All controls transform the MODEL, not the camera
 ##
-## Controls:
-## - Mouse drag to rotate model (or pan in pan mode)
-## - Scroll/Q/E to scale model (zoom)
-## - WASD for model rotation/position based on mode
-## - R to toggle pan/rotate mode
-## - Pinch to scale (mobile)
+## MOVE MODE (R to toggle):
+## - Drag or WASD: Move X/Y
+## - Q/E/Scroll/Pinch: Move Z
+##
+## ROTATE MODE (R to toggle):
+## - Drag or WASD: Rotate X/Y
+## - Q/E/Scroll/Pinch: Rotate Z
 ##
 ## Created by: GitHub Copilot
 
-signal mode_changed(is_pan_mode: bool)
+signal mode_changed(is_move_mode: bool)
 signal model_transform_changed(position: Vector3, rotation: Vector3, scale_factor: float)
 
 @export var rotation_speed: float = 0.3
-@export var pan_speed: float = 0.01
-@export var scale_speed: float = 0.5
-@export var keyboard_speed: float = 2.0
-@export var min_scale: float = 0.5
-@export var max_scale: float = 3.0
+@export var position_speed: float = 1.0
+@export var rotate_axis_speed: float = 1.0
 
-var _is_rotating: bool = false
-var _is_panning: bool = false
-var _is_pan_mode: bool = false  # Toggle between rotate and pan modes
+var _is_dragging: bool = false
+var _is_move_mode: bool = true  # true = MOVE mode, false = ROTATE mode
 var _last_mouse_position: Vector2 = Vector2.ZERO
 
 # Model transform (these are applied to the model, not camera)
@@ -52,14 +49,14 @@ func set_model_container(container: Node3D) -> void:
 	model_container = container
 	_apply_model_transform()
 
-func toggle_pan_mode() -> void:
-	"""Toggle between pan and rotate modes"""
-	_is_pan_mode = not _is_pan_mode
-	mode_changed.emit(_is_pan_mode)
-	print("Camera mode: ", "PAN" if _is_pan_mode else "ROTATE")
+func toggle_mode() -> void:
+	"""Toggle between MOVE and ROTATE modes"""
+	_is_move_mode = not _is_move_mode
+	mode_changed.emit(_is_move_mode)
+	print("Control mode: ", "MOVE" if _is_move_mode else "ROTATE")
 
-func get_is_pan_mode() -> bool:
-	return _is_pan_mode
+func get_is_move_mode() -> bool:
+	return _is_move_mode
 
 func set_model_transform(pos: Vector3, rot: Vector3, scale_val: float) -> void:
 	"""Set model transform from saved data"""
@@ -80,7 +77,7 @@ func _input(event: InputEvent) -> void:
 	# Keyboard hotkeys
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
-			toggle_pan_mode()
+			toggle_mode()
 			get_viewport().set_input_as_handled()
 			return
 	
@@ -88,46 +85,51 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
-				# Use mode toggle instead of shift key
-				if _is_pan_mode:
-					_is_panning = true
-				else:
-					_is_rotating = true
+				_is_dragging = true
 				_last_mouse_position = event.position
 			else:
-				_is_rotating = false
-				_is_panning = false
+				_is_dragging = false
 		
-		# Mouse wheel for scale (zoom)
+		# Mouse wheel for Z axis control
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_model_scale = clamp(_model_scale + scale_speed * 0.1, min_scale, max_scale)
+			if _is_move_mode:
+				# MOVE mode: scroll controls Z position
+				_model_position.z += 0.1
+			else:
+				# ROTATE mode: scroll controls Z rotation (roll)
+				_model_rotation.z += 0.1
 			_apply_model_transform()
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_model_scale = clamp(_model_scale - scale_speed * 0.1, min_scale, max_scale)
+			if _is_move_mode:
+				# MOVE mode: scroll controls Z position
+				_model_position.z -= 0.1
+			else:
+				# ROTATE mode: scroll controls Z rotation (roll)
+				_model_rotation.z -= 0.1
 			_apply_model_transform()
 	
-	# Mouse motion
+	# Mouse motion - behavior depends on mode
 	elif event is InputEventMouseMotion:
-		if _is_rotating:
+		if _is_dragging:
 			var delta: Vector2 = event.position - _last_mouse_position
-			# Rotate model around Y axis (horizontal) and X axis (vertical)
-			_model_rotation.y -= delta.x * rotation_speed * 0.01
-			_model_rotation.x -= delta.y * rotation_speed * 0.01
-			# Clamp vertical rotation
-			_model_rotation.x = clamp(_model_rotation.x, -PI/2, PI/2)
-			_last_mouse_position = event.position
-			_apply_model_transform()
-		elif _is_panning:
-			var delta: Vector2 = event.position - _last_mouse_position
-			# Pan model in screen space
-			var right: Vector3 = global_transform.basis.x
-			var up: Vector3 = global_transform.basis.y
-			_model_position -= right * delta.x * pan_speed
-			_model_position += up * delta.y * pan_speed
+			
+			if _is_move_mode:
+				# MOVE mode: drag moves X/Y position
+				var right: Vector3 = global_transform.basis.x
+				var up: Vector3 = global_transform.basis.y
+				_model_position -= right * delta.x * position_speed * 0.01
+				_model_position += up * delta.y * position_speed * 0.01
+			else:
+				# ROTATE mode: drag rotates X/Y
+				_model_rotation.y -= delta.x * rotation_speed * 0.01
+				_model_rotation.x -= delta.y * rotation_speed * 0.01
+				# Clamp vertical rotation
+				_model_rotation.x = clamp(_model_rotation.x, -PI/2, PI/2)
+			
 			_last_mouse_position = event.position
 			_apply_model_transform()
 	
-	# Touch/pinch support for mobile
+	# Touch support for mobile
 	elif event is InputEventScreenTouch:
 		if event.pressed:
 			_touch_points[event.index] = event.position
@@ -138,69 +140,97 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag:
 		_touch_points[event.index] = event.position
 		
-		# Two-finger pinch for scale
+		# Two-finger pinch for Z axis control
 		if _touch_points.size() == 2:
 			var touch_positions = _touch_points.values()
 			var current_distance = touch_positions[0].distance_to(touch_positions[1])
 			
 			if _last_pinch_distance > 0:
 				var delta_distance = current_distance - _last_pinch_distance
-				_model_scale = clamp(_model_scale + delta_distance * 0.001, min_scale, max_scale)
+				if _is_move_mode:
+					# MOVE mode: pinch controls Z position
+					_model_position.z += delta_distance * 0.01
+				else:
+					# ROTATE mode: pinch controls Z rotation (roll)
+					_model_rotation.z += delta_distance * 0.01
 				_apply_model_transform()
 			
 			_last_pinch_distance = current_distance
-		# Single finger drag
+		# Single finger drag - depends on mode
 		elif _touch_points.size() == 1:
 			var delta = event.relative
-			if _is_pan_mode:
-				# Pan mode
+			
+			if _is_move_mode:
+				# MOVE mode: drag moves X/Y position
 				var right: Vector3 = global_transform.basis.x
 				var up: Vector3 = global_transform.basis.y
-				_model_position -= right * delta.x * pan_speed
-				_model_position += up * delta.y * pan_speed
+				_model_position -= right * delta.x * position_speed * 0.01
+				_model_position += up * delta.y * position_speed * 0.01
 			else:
-				# Rotate mode
+				# ROTATE mode: drag rotates X/Y
 				_model_rotation.y -= delta.x * rotation_speed * 0.01
 				_model_rotation.x -= delta.y * rotation_speed * 0.01
 				_model_rotation.x = clamp(_model_rotation.x, -PI/2, PI/2)
+			
 			_apply_model_transform()
 
 func _process(delta: float) -> void:
-	# Keyboard controls for scale (Q/E)
-	if Input.is_key_pressed(KEY_Q):
-		_model_scale = clamp(_model_scale - scale_speed * delta, min_scale, max_scale)
-		_apply_model_transform()
-	elif Input.is_key_pressed(KEY_E):
-		_model_scale = clamp(_model_scale + scale_speed * delta, min_scale, max_scale)
-		_apply_model_transform()
+	var speed = delta
 	
-	# WASD controls for pan/rotate based on mode
-	var input_vector := Vector2.ZERO
-	if Input.is_key_pressed(KEY_W):
-		input_vector.y -= 1
-	if Input.is_key_pressed(KEY_S):
-		input_vector.y += 1
-	if Input.is_key_pressed(KEY_A):
-		input_vector.x -= 1
-	if Input.is_key_pressed(KEY_D):
-		input_vector.x += 1
-	
-	if input_vector.length() > 0:
-		input_vector = input_vector.normalized()
+	if _is_move_mode:
+		# MOVE MODE
+		# W/S = Y position (up/down)
+		# A/D = X position (left/right)  
+		# Q/E = Z position (forward/back)
 		
-		if _is_pan_mode:
-			# Pan mode - WASD moves the model
-			var right: Vector3 = global_transform.basis.x
-			var up: Vector3 = global_transform.basis.y
-			_model_position += right * input_vector.x * keyboard_speed * delta * 0.1
-			_model_position -= up * input_vector.y * keyboard_speed * delta * 0.1
-		else:
-			# Rotate mode - WASD rotates the model
-			_model_rotation.y += input_vector.x * keyboard_speed * delta
-			_model_rotation.x += input_vector.y * keyboard_speed * delta
+		if Input.is_key_pressed(KEY_W):
+			_model_position.y += position_speed * speed
+			_apply_model_transform()
+		if Input.is_key_pressed(KEY_S):
+			_model_position.y -= position_speed * speed
+			_apply_model_transform()
+		
+		if Input.is_key_pressed(KEY_A):
+			_model_position.x -= position_speed * speed
+			_apply_model_transform()
+		if Input.is_key_pressed(KEY_D):
+			_model_position.x += position_speed * speed
+			_apply_model_transform()
+		
+		if Input.is_key_pressed(KEY_Q):
+			_model_position.z += position_speed * speed
+			_apply_model_transform()
+		if Input.is_key_pressed(KEY_E):
+			_model_position.z -= position_speed * speed
+			_apply_model_transform()
+	else:
+		# ROTATE MODE
+		# W/S = X rotation (pitch - tilt forward/back)
+		# A/D = Y rotation (yaw - turn left/right)
+		# Q/E = Z rotation (roll - lean left/right)
+		
+		if Input.is_key_pressed(KEY_W):
+			_model_rotation.x += rotate_axis_speed * speed
 			_model_rotation.x = clamp(_model_rotation.x, -PI/2, PI/2)
+			_apply_model_transform()
+		if Input.is_key_pressed(KEY_S):
+			_model_rotation.x -= rotate_axis_speed * speed
+			_model_rotation.x = clamp(_model_rotation.x, -PI/2, PI/2)
+			_apply_model_transform()
 		
-		_apply_model_transform()
+		if Input.is_key_pressed(KEY_A):
+			_model_rotation.y += rotate_axis_speed * speed
+			_apply_model_transform()
+		if Input.is_key_pressed(KEY_D):
+			_model_rotation.y -= rotate_axis_speed * speed
+			_apply_model_transform()
+		
+		if Input.is_key_pressed(KEY_Q):
+			_model_rotation.z += rotate_axis_speed * speed
+			_apply_model_transform()
+		if Input.is_key_pressed(KEY_E):
+			_model_rotation.z -= rotate_axis_speed * speed
+			_apply_model_transform()
 
 func _apply_model_transform() -> void:
 	"""Apply current transform to model container"""

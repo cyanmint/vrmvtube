@@ -180,7 +180,7 @@ text = "Mode: ROTATE (R)"
 [node name="InfoLabel" type="Label" parent="UI/Control/RightPanel/ButtonsPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Loading...
-Drag to rotate/pan | Q/E zoom | R mode | WASD move | C config | L load"
+Drag=rotate | R=mode | Move: WSAD=XY QE/scroll=Z | Rotate: WSAD=XY QE/scroll=Z"
 horizontal_alignment = 1
 autowrap_mode = 3
 
