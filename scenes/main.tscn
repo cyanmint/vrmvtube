@@ -1,0 +1,83 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7ikvxvyqwykp"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "VRMVTube"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="InfoLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "VTuber Application with VRM and MediaPipe Support
+Powered by Godot Engine 4.6"
+horizontal_alignment = 1
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonsContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="LoadVRMButton" type="Button" parent="VBoxContainer/ButtonsContainer"]
+layout_mode = 2
+text = "Load VRM Model"
+
+[node name="StartTrackingButton" type="Button" parent="VBoxContainer/ButtonsContainer"]
+layout_mode = 2
+text = "Start Tracking"
+
+[node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Status: Ready"
+horizontal_alignment = 1
+
+[node name="ViewportContainer" type="SubViewportContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SubViewport" type="SubViewport" parent="VBoxContainer/ViewportContainer"]
+handle_input_locally = false
+size = Vector2i(1240, 526)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="VBoxContainer/ViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 3)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="VBoxContainer/ViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 5, 0)
+shadow_enabled = true
+
+[node name="VRMModel" type="Node3D" parent="VBoxContainer/ViewportContainer/SubViewport"]
+
+[connection signal="pressed" from="VBoxContainer/ButtonsContainer/LoadVRMButton" to="." method="_on_load_vrm_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/ButtonsContainer/StartTrackingButton" to="." method="_on_start_tracking_button_pressed"]
