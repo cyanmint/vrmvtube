@@ -41,3 +41,8 @@ addons/GDMP/lib/
 android/build/.gradle/
 android/build/build/
 android/build/libs/
+
+# Android build artifacts
+android/build/libs/
+android/build/build/
+android/build/.gradle/
