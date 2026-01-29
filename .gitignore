@@ -41,4 +41,5 @@ addons/GDMP/lib/
 
 # Android build artifacts - entire build directory is generated
 android/build/
+android/.build_version
 libs/
