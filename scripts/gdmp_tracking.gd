@@ -102,19 +102,30 @@ func _initialize_gdmp() -> void:
 		return
 	
 	# Set model path - verify it exists first
+	# On Android, GDMP may need the actual file system path, not res://
 	var model_path = "res://addons/GDMP/models/face_landmarker.task"
+	var actual_path = model_path
+	
+	# On Android, convert res:// to actual file path
+	if platform in ["Android"]:
+		# Godot exports res:// files to the APK, but GDMP needs direct file access
+		# ProjectSettings.globalize_path converts res:// to actual path
+		actual_path = ProjectSettings.globalize_path(model_path)
+		print("GDMPTracking: Android detected - using globalized path: ", actual_path)
 	
 	# Check if model file exists
 	if not FileAccess.file_exists(model_path):
 		push_error("GDMPTracking: Model file not found at: ", model_path)
 		push_error("GDMPTracking: GDMP face_landmarker.task must be included in the build!")
 		push_error("GDMPTracking: Check if the file is being excluded by export settings.")
+		push_error("GDMPTracking: The file should be downloaded by CI/CD during build.")
 		gdmp_available = false
 		_start_simulated_tracking()
 		return
 	
 	print("GDMPTracking: Model file found at: ", model_path)
-	base_options.model_asset_path = model_path
+	print("GDMPTracking: Using path for GDMP: ", actual_path)
+	base_options.model_asset_path = actual_path
 	
 	# Initialize with live stream mode for real-time tracking
 	# Parameters: base_options, running_mode, num_faces, min_face_detection_conf, min_face_presence_conf, min_tracking_conf, output_blendshapes, output_matrices
