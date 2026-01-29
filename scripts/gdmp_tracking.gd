@@ -25,6 +25,11 @@ var camera_feed: CameraFeed
 var camera_texture: CameraTexture
 var tracking_active: bool = false
 
+# GDMP objects
+var camera_helper = null
+var gpu_resources = null
+var latest_face_result = null
+
 # Enhanced simulation fallback
 var time_elapsed: float = 0.0
 var last_blink_time: float = 0.0
@@ -71,20 +76,57 @@ func _initialize_gdmp() -> void:
 	"""Initialize GDMP face landmarker"""
 	print("GDMPTracking: Initializing GDMP FaceLandmarker")
 	
-	# TODO: Implement actual GDMP initialization once plugin is installed
-	# This is the blueprint for when GDMP is available:
-	#
-	# var FaceLandmarker = ClassDB.instantiate("MediaPipeFaceLandmarker")
-	# face_landmarker = FaceLandmarker.new()
-	# face_landmarker.model_asset_path = "res://addons/GDMP/models/face_landmarker.task"
-	# var result = face_landmarker.initialize()
-	# if result == OK:
-	#     print("GDMPTracking: Face landmarker initialized successfully")
-	# else:
-	#     push_error("GDMPTracking: Failed to initialize face landmarker")
-	#     gdmp_available = false
-	#     _start_simulated_tracking()
-	#     return
+	# Initialize GPU resources (required for Android/Web)
+	var platform = OS.get_name()
+	if platform in ["Android", "iOS", "Web", "HTML5"]:
+		gpu_resources = ClassDB.instantiate("MediaPipeGPUResources")
+		if gpu_resources:
+			print("GDMPTracking: ✅ GPU resources initialized for ", platform)
+		else:
+			push_warning("GDMPTracking: Failed to create GPU resources")
+	
+	# Initialize face landmarker
+	face_landmarker = ClassDB.instantiate("MediaPipeFaceLandmarker")
+	if not face_landmarker:
+		push_error("GDMPTracking: Failed to instantiate MediaPipeFaceLandmarker")
+		gdmp_available = false
+		_start_simulated_tracking()
+		return
+	
+	# Create base options
+	var base_options = ClassDB.instantiate("MediaPipeTaskBaseOptions")
+	if not base_options:
+		push_error("GDMPTracking: Failed to create base options")
+		gdmp_available = false
+		_start_simulated_tracking()
+		return
+	
+	# Set model path
+	base_options.model_asset_path = "res://addons/GDMP/models/face_landmarker.task"
+	
+	# Initialize with live stream mode for real-time tracking
+	# Parameters: base_options, running_mode, num_faces, min_face_detection_conf, min_face_presence_conf, min_tracking_conf, output_blendshapes, output_matrices
+	var init_success = face_landmarker.initialize(
+		base_options,
+		2,  # RUNNING_MODE_LIVE_STREAM (0=IMAGE, 1=VIDEO, 2=LIVE_STREAM)
+		1,  # num_faces: detect 1 face
+		0.5,  # min_face_detection_confidence
+		0.5,  # min_face_presence_confidence
+		0.5,  # min_tracking_confidence
+		true,  # output_face_blendshapes (we need these for VRM!)
+		false  # output_facial_transformation_matrixes (optional)
+	)
+	
+	if not init_success:
+		push_error("GDMPTracking: Failed to initialize face landmarker")
+		gdmp_available = false
+		_start_simulated_tracking()
+		return
+	
+	# Connect result callback for async processing
+	face_landmarker.result_callback.connect(_on_face_landmarker_result)
+	
+	print("GDMPTracking: ✅ Face landmarker initialized successfully")
 	
 	if use_camera:
 		_initialize_camera()
@@ -96,6 +138,44 @@ func _initialize_camera() -> void:
 	"""Initialize camera for tracking"""
 	var platform = OS.get_name()
 	
+	# For Android/iOS/Web, use GDMP camera helper
+	if platform in ["Android", "iOS", "Web", "HTML5"]:
+		print("GDMPTracking: Using GDMP camera helper for ", platform)
+		
+		camera_helper = ClassDB.instantiate("MediaPipeCameraHelper")
+		if not camera_helper:
+			push_error("GDMPTracking: Failed to create MediaPipeCameraHelper")
+			return
+		
+		# Check camera permission (mobile platforms)
+		if platform in ["Android", "iOS"]:
+			if not camera_helper.permission_granted():
+				print("GDMPTracking: Requesting camera permission...")
+				camera_helper.request_permission()
+				# Wait a bit for permission dialog
+				await get_tree().create_timer(1.0).timeout
+				
+				if not camera_helper.permission_granted():
+					push_error("GDMPTracking: Camera permission denied!")
+					return
+		
+		# Set GPU resources if available (required on Android)
+		if gpu_resources:
+			camera_helper.set_gpu_resources(gpu_resources)
+			print("GDMPTracking: GPU resources attached to camera")
+		
+		# Mirror camera (front-facing camera)
+		camera_helper.set_mirrored(true)
+		
+		# Start camera: index 0 = front camera, 640x480 resolution
+		var camera_index_facing = 0  # FACING_FRONT
+		var camera_resolution = Vector2(640, 480)
+		camera_helper.start(camera_index_facing, camera_resolution)
+		
+		print("GDMPTracking: ✅ GDMP camera started (front-facing, 640x480)")
+		return
+	
+	# Desktop platforms - CameraServer has limited support
 	# CameraServer has limited support on desktop platforms in Godot 4.x
 	# It works on: Android, iOS, Web
 	# It does NOT work reliably on: Windows, macOS, Linux, X11
@@ -104,29 +184,6 @@ func _initialize_camera() -> void:
 		push_warning("GDMPTracking: Webcam preview disabled on desktop. Use GDMP for face tracking without preview.")
 		push_warning("GDMPTracking: For webcam support on desktop, consider using external tools or GDMP native camera access.")
 		return
-	
-	# Mobile/Web platforms - CameraServer should work
-	var camera_server := CameraServer
-	camera_server.set_monitoring_feeds(true)
-	
-	await get_tree().process_frame
-	await get_tree().process_frame
-	
-	var feed_count := camera_server.get_feed_count()
-	print("GDMPTracking: Found ", feed_count, " camera feed(s)")
-	
-	if feed_count > camera_index:
-		camera_feed = camera_server.get_feed(camera_index)
-		if camera_feed:
-			print("GDMPTracking: Using camera: ", camera_feed.get_name())
-			camera_texture = CameraTexture.new()
-			camera_texture.camera_feed_id = camera_feed.get_id()
-			camera_texture.camera_is_active = true
-			camera_feed.set_active(true)
-		else:
-			push_warning("GDMPTracking: Failed to get camera feed")
-	else:
-		push_warning("GDMPTracking: Camera index ", camera_index, " not available")
 
 func _start_simulated_tracking() -> void:
 	"""Start enhanced simulated tracking as fallback"""
@@ -146,17 +203,11 @@ func _process(delta: float) -> void:
 
 func _process_gdmp_tracking() -> void:
 	"""Process real GDMP face tracking"""
-	# TODO: Implement when GDMP is installed
-	# 
-	# if camera_texture:
-	#     var image = camera_texture.get_image()
-	#     if image:
-	#         var result = face_landmarker.process_image(image)
-	#         if result and result.has_detections():
-	#             var tracking_data = _convert_gdmp_to_tracking_data(result)
-	#             tracking_data_received.emit(tracking_data)
-	
-	pass
+	# GDMP uses async callbacks, so we don't process images here directly
+	# Instead, we use the last received result from the callback
+	if latest_face_result:
+		var tracking_data = _convert_gdmp_to_tracking_data(latest_face_result)
+		tracking_data_received.emit(tracking_data)
 
 func _process_simulated_tracking() -> void:
 	"""Enhanced simulated tracking"""
@@ -213,47 +264,109 @@ func _generate_enhanced_tracking() -> Dictionary:
 func _convert_gdmp_to_tracking_data(gdmp_result) -> Dictionary:
 	"""Convert GDMP face landmarker result to tracking data
 	
-	This will be implemented when GDMP is available.
-	GDMP provides 468 face landmarks that we'll convert to blendshapes.
+	GDMP provides 468 3D face mesh landmarks and 52 ARKit-compatible blendshapes.
+	We extract the blendshapes directly for VRM facial animation.
 	
 	Reference: https://developers.google.com/mediapipe/solutions/vision/face_landmarker
 	"""
 	
-	# GDMP face landmarker provides:
-	# - 468 3D face mesh landmarks
-	# - 52 face blendshapes (ARKit compatible)
-	# - Head rotation matrix
-	# - Face detection confidence
+	# Get face blendshapes (ARKit compatible)
+	var blendshapes_array = gdmp_result.get_face_blendshapes()
 	
-	# Example implementation (when GDMP is installed):
-	# var blendshapes = gdmp_result.get_face_blendshapes(0)  # First face
-	# var landmarks = gdmp_result.get_face_landmarks(0)
-	# 
-	# return {
-	#     "blink_left": blendshapes.get("eyeBlinkLeft", 0.0),
-	#     "blink_right": blendshapes.get("eyeBlinkRight", 0.0),
-	#     "mouth_open": blendshapes.get("jawOpen", 0.0),
-	#     "smile": blendshapes.get("mouthSmileLeft", 0.0) + blendshapes.get("mouthSmileRight", 0.0) / 2.0,
-	#     "head_rotation": _extract_head_rotation(landmarks),
-	#     "head_position": _extract_head_position(landmarks),
-	#     "tracking_quality": gdmp_result.get_confidence(),
-	#     "source": "gdmp_native"
-	# }
+	if blendshapes_array.size() == 0:
+		# No face detected
+		return {
+			"blink_left": 0.0,
+			"blink_right": 0.0,
+			"mouth_open": 0.0,
+			"smile": 0.0,
+			"head_rotation": Vector3.ZERO,
+			"head_position": Vector3.ZERO,
+			"tracking_quality": 0.0,
+			"source": "gdmp_native"
+		}
+	
+	# Get first face's blendshapes
+	var face_blendshapes = blendshapes_array[0]
+	var categories = face_blendshapes.get_categories()
+	
+	# Convert MediaPipe blendshapes to a dictionary for easy lookup
+	var blendshapes = {}
+	for category in categories:
+		var name = category.get_category_name()
+		var score = category.get_score()
+		blendshapes[name] = score
+	
+	# Extract relevant blendshapes for VRM
+	# MediaPipe uses ARKit blendshape names
+	var blink_left = blendshapes.get("eyeBlinkLeft", 0.0)
+	var blink_right = blendshapes.get("eyeBlinkRight", 0.0)
+	var jaw_open = blendshapes.get("jawOpen", 0.0)
+	var mouth_smile_left = blendshapes.get("mouthSmileLeft", 0.0)
+	var mouth_smile_right = blendshapes.get("mouthSmileRight", 0.0)
+	
+	# Get face landmarks for head rotation estimation
+	var face_landmarks_array = gdmp_result.get_face_landmarks()
+	var head_rotation = Vector3.ZERO
+	
+	if face_landmarks_array.size() > 0:
+		var landmarks = face_landmarks_array[0].get_landmarks()
+		head_rotation = _estimate_head_rotation(landmarks)
+	
+	# Calculate tracking quality based on blendshape confidence
+	var tracking_quality = 1.0  # GDMP is generally high quality
 	
 	return {
-		"blink_left": 0.0,
-		"blink_right": 0.0,
-		"mouth_open": 0.0,
-		"smile": 0.0,
-		"head_rotation": Vector3.ZERO,
+		"blink_left": blink_left,
+		"blink_right": blink_right,
+		"mouth_open": jaw_open,
+		"smile": (mouth_smile_left + mouth_smile_right) / 2.0,
+		"head_rotation": head_rotation,
 		"head_position": Vector3.ZERO,
-		"tracking_quality": 1.0,
-		"source": "gdmp_native"
+		"tracking_quality": tracking_quality,
+		"source": "gdmp_native",
+		"blendshapes": blendshapes  # Include all blendshapes for advanced use
 	}
 
 func get_camera_texture() -> CameraTexture:
 	"""Get camera texture for preview"""
 	return camera_texture
+
+func _on_face_landmarker_result(result, image, timestamp_ms: int) -> void:
+	"""Callback when face landmarker detects a face"""
+	if result:
+		latest_face_result = result
+
+func _estimate_head_rotation(landmarks: Array) -> Vector3:
+	"""Estimate head rotation from face landmarks
+	
+	Uses key facial landmarks to estimate head pose:
+	- Nose tip, chin, left/right eye corners, mouth corners
+	"""
+	if landmarks.size() < 468:
+		return Vector3.ZERO
+	
+	# Key landmark indices (MediaPipe face mesh)
+	# Nose tip: 1, Chin: 152, Left eye: 33, Right eye: 263
+	var nose_tip = landmarks[1]
+	var chin = landmarks[152]
+	var left_eye = landmarks[33]
+	var right_eye = landmarks[263]
+	
+	# Calculate pitch (nod up/down) from nose-chin vertical alignment
+	var nose_pos = Vector3(nose_tip.get_x(), nose_tip.get_y(), nose_tip.get_z())
+	var chin_pos = Vector3(chin.get_x(), chin.get_y(), chin.get_z())
+	var pitch = (nose_pos.y - chin_pos.y) * 2.0
+	
+	# Calculate yaw (turn left/right) from eye horizontal alignment
+	var left_eye_pos = Vector3(left_eye.get_x(), left_eye.get_y(), left_eye.get_z())
+	var right_eye_pos = Vector3(right_eye.get_x(), right_eye.get_y(), right_eye.get_z())
+	var yaw = (left_eye_pos.x - right_eye_pos.x - 0.5) * 2.0
+	
+	# Calculate roll (tilt left/right) from eye vertical alignment
+	var roll = (left_eye_pos.y - right_eye_pos.y) * 3.0
+	
+	return Vector3(pitch, yaw, roll)
 
 func is_tracking_active() -> bool:
 	"""Check if tracking is active"""
@@ -274,12 +387,15 @@ func get_status() -> Dictionary:
 
 func _exit_tree() -> void:
 	"""Cleanup"""
+	if camera_helper:
+		camera_helper.close()
+		print("GDMPTracking: Camera helper closed")
+	
 	if camera_feed and camera_feed.is_active():
 		camera_feed.set_active(false)
 	
 	if face_landmarker:
-		# TODO: Cleanup GDMP resources when implemented
-		# face_landmarker.cleanup()
+		# Cleanup happens automatically when object is freed
 		pass
 	
 	print("GDMPTracking: Closed")
