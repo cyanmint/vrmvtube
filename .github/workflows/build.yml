@@ -27,25 +27,25 @@ jobs:
         run: |
           echo "Setting up GDMP for Windows..."
           
-          # Download Windows binaries
-          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-windows-x86_64-${GDMP_VERSION}.zip
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure
-          unzip -q GDMP-windows-x86_64-${GDMP_VERSION}.zip
+          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
+          unzip -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
           wget -q -O addons/GDMP/models/face_landmarker.task \
             https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
           
-          echo "✓ GDMP Windows binaries installed"
+          echo "✓ GDMP binaries installed (all platforms)"
           echo "✓ MediaPipe model downloaded"
           
           # Show structure
           echo "GDMP addon structure:"
           ls -la addons/GDMP/ || true
-          echo "GDMP libraries:"
-          find addons/GDMP/libs -type f 2>/dev/null | head -5 || echo "No libs found yet"
+          echo "GDMP Windows libraries:"
+          ls -lh addons/GDMP/libs/x86_64/GDMP.windows.dll 2>/dev/null || echo "Windows DLL not found"
       
       - name: Install Dependencies
         run: |
@@ -98,19 +98,21 @@ jobs:
         run: |
           echo "Setting up GDMP for Linux..."
           
-          # Download Linux binaries
-          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-linux-x86_64-${GDMP_VERSION}.zip
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure
-          unzip -q GDMP-linux-x86_64-${GDMP_VERSION}.zip
+          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
+          unzip -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
           wget -q -O addons/GDMP/models/face_landmarker.task \
             https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
           
-          echo "✓ GDMP Linux binaries installed"
+          echo "✓ GDMP binaries installed (all platforms)"
           echo "✓ MediaPipe model downloaded"
+          echo "Linux library:"
+          ls -lh addons/GDMP/libs/x86_64/libGDMP.linux.so 2>/dev/null || echo "Linux .so not found"
       
       - name: Install Dependencies
         run: |
@@ -163,19 +165,21 @@ jobs:
         run: |
           echo "Setting up GDMP for macOS..."
           
-          # Download macOS binaries (universal)
-          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-macos-universal-${GDMP_VERSION}.zip
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure
-          unzip -q GDMP-macos-universal-${GDMP_VERSION}.zip
+          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
+          unzip -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
           wget -q -O addons/GDMP/models/face_landmarker.task \
             https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
           
-          echo "✓ GDMP macOS binaries installed"
+          echo "✓ GDMP binaries installed (all platforms)"
           echo "✓ MediaPipe model downloaded"
+          echo "macOS libraries:"
+          ls -lh addons/GDMP/libs/*/libGDMP.macos.dylib 2>/dev/null || echo "macOS dylibs not found"
       
       - name: Install Dependencies
         run: |
@@ -228,19 +232,21 @@ jobs:
         run: |
           echo "Setting up GDMP for Web..."
           
-          # Download Web binaries
-          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-web-${GDMP_VERSION}.zip
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure
-          unzip -q GDMP-web-${GDMP_VERSION}.zip
+          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
+          unzip -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
           wget -q -O addons/GDMP/models/face_landmarker.task \
             https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
           
-          echo "✓ GDMP Web binaries installed"
+          echo "✓ GDMP binaries installed (all platforms)"
           echo "✓ MediaPipe model downloaded"
+          echo "Web WASM:"
+          ls -lh addons/GDMP/libs/GDMP.web.wasm 2>/dev/null || echo "Web WASM not found"
       
       - name: Install Dependencies
         run: |
@@ -293,19 +299,22 @@ jobs:
         run: |
           echo "Setting up GDMP for Android..."
           
-          # Download Android binaries (arm64-v8a)
-          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-android-arm64-v8a-${GDMP_VERSION}.zip
+          # Download unified GDMP release (contains all platforms)
+          wget -q https://github.com/j20001970/GDMP/releases/download/${GDMP_VERSION}/GDMP-${GDMP_VERSION}.zip
           
-          # Extract to current directory - it creates addons/GDMP/ structure
-          unzip -q GDMP-android-arm64-v8a-${GDMP_VERSION}.zip
+          # Extract to current directory - it creates addons/GDMP/ structure with all platforms
+          unzip -q GDMP-${GDMP_VERSION}.zip
           
           # Download MediaPipe face landmarker model
           mkdir -p addons/GDMP/models
           wget -q -O addons/GDMP/models/face_landmarker.task \
             https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
           
-          echo "✓ GDMP Android binaries installed"
+          echo "✓ GDMP binaries installed (all platforms)"
           echo "✓ MediaPipe model downloaded"
+          echo "Android libraries:"
+          ls -lh addons/GDMP/libs/arm64/libGDMP.android.so 2>/dev/null || echo "Android ARM64 .so not found"
+          ls -lh addons/GDMP/libs/x86_64/libGDMP.android.so 2>/dev/null || echo "Android x86_64 .so not found"
       
       - name: Setup Java
         uses: actions/setup-java@v4
