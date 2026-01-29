@@ -63,12 +63,35 @@ func _ready() -> void:
 
 func _check_gdmp_availability() -> void:
 	"""Check if GDMP plugin is available"""
-	# Check if GDMP classes are available
-	if ClassDB.class_exists("MediaPipeImage"):
+	print("GDMPTracking: Checking GDMP availability...")
+	print("GDMPTracking: Platform: ", OS.get_name())
+	
+	# List some key GDMP classes to check
+	var classes_to_check = [
+		"MediaPipeImage",
+		"MediaPipeFaceLandmarker", 
+		"MediaPipeCameraHelper",
+		"MediaPipeGPUResources",
+		"MediaPipeTaskBaseOptions"
+	]
+	
+	var all_available = true
+	for class_name in classes_to_check:
+		var exists = ClassDB.class_exists(class_name)
+		print("GDMPTracking:   - ", class_name, ": ", "✅" if exists else "❌")
+		if not exists:
+			all_available = false
+	
+	if all_available:
 		gdmp_available = true
-		print("GDMPTracking: ✅ GDMP plugin detected!")
+		print("GDMPTracking: ✅ GDMP plugin fully available!")
 	else:
 		gdmp_available = false
+		print("GDMPTracking: ❌ GDMP plugin NOT available - some classes missing")
+		print("GDMPTracking: This usually means:")
+		print("GDMPTracking:   1. GDMP binaries not included in export")
+		print("GDMPTracking:   2. Plugin not enabled in Project Settings")
+		print("GDMPTracking:   3. Wrong GDMP version or platform architecture")
 	
 	gdmp_available_changed.emit(gdmp_available)
 
