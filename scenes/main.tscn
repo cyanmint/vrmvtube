@@ -61,23 +61,35 @@ layout_mode = 2
 text = "Status: Ready"
 horizontal_alignment = 1
 
-[node name="ViewportContainer" type="SubViewportContainer" parent="VBoxContainer"]
+[node name="ContentContainer" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="SubViewport" type="SubViewport" parent="VBoxContainer/ViewportContainer"]
+[node name="ViewportContainer" type="SubViewportContainer" parent="VBoxContainer/ContentContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SubViewport" type="SubViewport" parent="VBoxContainer/ContentContainer/ViewportContainer"]
 handle_input_locally = false
-size = Vector2i(1240, 526)
+size = Vector2i(827, 526)
 render_target_update_mode = 4
 
-[node name="Camera3D" type="Camera3D" parent="VBoxContainer/ViewportContainer/SubViewport"]
+[node name="Camera3D" type="Camera3D" parent="VBoxContainer/ContentContainer/ViewportContainer/SubViewport"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 3)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="VBoxContainer/ViewportContainer/SubViewport"]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="VBoxContainer/ContentContainer/ViewportContainer/SubViewport"]
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 5, 0)
 shadow_enabled = true
 
-[node name="VRMModel" type="Node3D" parent="VBoxContainer/ViewportContainer/SubViewport"]
+[node name="VRMModel" type="Node3D" parent="VBoxContainer/ContentContainer/ViewportContainer/SubViewport"]
+
+[node name="CameraPreview" type="TextureRect" parent="VBoxContainer/ContentContainer"]
+custom_minimum_size = Vector2(320, 240)
+layout_mode = 2
+size_flags_horizontal = 0
+expand_mode = 1
+stretch_mode = 5
 
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/LoadVRMButton" to="." method="_on_load_vrm_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/StartTrackingButton" to="." method="_on_start_tracking_button_pressed"]
