@@ -168,6 +168,9 @@ func _setup_ui() -> void:
 
 func _connect_signals() -> void:
 	"""Connect UI signals"""
+	# Window close button (X button)
+	close_requested.connect(_on_close_requested)
+	
 	if save_button:
 		save_button.pressed.connect(_on_save_pressed)
 	if cancel_button:
@@ -286,6 +289,11 @@ AI-generated content is neither subject to copyright nor covered by warranty.
 	about_text.text = about_content
 
 # Signal handlers
+func _on_close_requested() -> void:
+	"""Handle window close button (X)"""
+	# Treat close button same as Cancel - discard changes
+	_on_cancel_pressed()
+
 func _on_save_pressed() -> void:
 	"""Save settings to file and apply"""
 	_save_settings()
