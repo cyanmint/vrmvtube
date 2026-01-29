@@ -69,14 +69,17 @@ func _on_vrm_file_selected(path: String) -> void:
 		current_vrm_model.queue_free()
 		current_vrm_model = null
 	
-	# For now, just show a placeholder message
-	# Actual VRM loading will be implemented with the VRM plugin
-	_update_status("VRM loading not yet fully implemented")
-	
-	# TODO: Implement actual VRM loading using godot-vrm
-	# This will require using GLTFDocument and VRM extensions
-	
-	start_tracking_button.disabled = false
+	# Load VRM model
+	# VRM files are automatically imported by godot-vrm plugin as .scn files
+	var loaded_scene = load(path)
+	if loaded_scene and loaded_scene is PackedScene:
+		current_vrm_model = loaded_scene.instantiate()
+		vrm_model_node.add_child(current_vrm_model)
+		_update_status("VRM model loaded successfully!")
+		start_tracking_button.disabled = false
+	else:
+		_update_status("Failed to load VRM model")
+		push_error("Could not load VRM from: " + path)
 
 func _on_start_tracking_button_pressed() -> void:
 	tracking_active = not tracking_active
