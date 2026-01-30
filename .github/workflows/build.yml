@@ -14,7 +14,7 @@ env:
   GODOT_VERSION: "4.6-stable"
   EXPORT_NAME: vrmvtube
   GDMP_REPO: "j20001970/GDMP"
-  GDMP_REF: "main"
+  GDMP_REF: "master"
 
 jobs:
   # ============================================================================
