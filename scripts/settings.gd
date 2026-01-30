@@ -16,8 +16,8 @@ var default_settings := {
 	},
 	"camera": {
 		"index": 0,
-		"position": {"x": 0.0, "y": 1.0, "z": 3.0},
-		"rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+		"position": {"x": 0.0, "y": 1.2, "z": 1.0},
+		"rotation": {"x": -10.0, "y": 0.0, "z": 0.0},
 		"fov": 75.0
 	},
 	"tracking": {
