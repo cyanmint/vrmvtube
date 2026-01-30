@@ -50,6 +50,20 @@ shadow_enabled = true
 
 [node name="VRMModel" type="Node3D" parent="ViewportContainer/SubViewport"]
 
+[node name="ShowHUDButton" type="Button" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 50.0
+grow_horizontal = 0
+text = "Show HUD ▶"
+tooltip_text = "Show HUD Panel"
+
 [node name="HUDOverlay" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 1
@@ -335,6 +349,7 @@ layout_mode = 2
 text = "Status: Ready"
 autowrap_mode = 2
 
+[connection signal="pressed" from="ShowHUDButton" to="." method="_on_show_hud_button_pressed"]
 [connection signal="pressed" from="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/ModelSection/LoadVRMButton" to="." method="_on_load_vrm_button_pressed"]
 [connection signal="pressed" from="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection/StartTrackingButton" to="." method="_on_start_tracking_button_pressed"]
 [connection signal="pressed" from="HUDOverlay/VBoxContainer/Header/CollapseButton" to="." method="_on_collapse_button_pressed"]

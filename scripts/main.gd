@@ -22,6 +22,7 @@ var status_label: Label
 var control_panel: ControlPanel
 var settings_hud: PanelContainer
 var collapse_button: Button
+var show_hud_button: Button
 var settings_scroll_container: ScrollContainer
 var is_settings_collapsed := false
 
@@ -71,6 +72,7 @@ func setup_ui_references() -> void:
 	camera_preview = get_node_or_null("HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection/CameraPreview")
 	settings_hud = get_node_or_null("HUDOverlay")
 	collapse_button = get_node_or_null("HUDOverlay/VBoxContainer/Header/CollapseButton")
+	show_hud_button = get_node_or_null("ShowHUDButton")
 	settings_scroll_container = get_node_or_null("HUDOverlay/VBoxContainer/ScrollContainer")
 	control_panel = get_node_or_null("HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel")
 	
@@ -243,26 +245,29 @@ func _on_start_tracking_button_pressed():
 
 func _on_collapse_button_pressed():
 	# Toggle HUD panel collapse/expand
+	# When collapsed, completely hide the HUD and show the "Show HUD" button
 	is_settings_collapsed = !is_settings_collapsed
 	
 	if is_settings_collapsed:
-		# Collapse: hide scroll container, change button text, adjust offset
-		if settings_scroll_container:
-			settings_scroll_container.visible = false
-		if collapse_button:
-			collapse_button.text = "▶"
+		# Collapse: hide entire HUD overlay, show reopen button
 		if settings_hud:
-			settings_hud.custom_minimum_size = Vector2(50, 0)
-			settings_hud.offset_left = -50.0  # Adjust offset for collapsed state
+			settings_hud.visible = false
+		if show_hud_button:
+			show_hud_button.visible = true
 	else:
-		# Expand: show scroll container, change button text, adjust offset
-		if settings_scroll_container:
-			settings_scroll_container.visible = true
-		if collapse_button:
-			collapse_button.text = "◀"
+		# Expand: show HUD overlay, hide reopen button
 		if settings_hud:
-			settings_hud.custom_minimum_size = Vector2(400, 0)
-			settings_hud.offset_left = -400.0  # Adjust offset for expanded state
+			settings_hud.visible = true
+		if show_hud_button:
+			show_hud_button.visible = false
+
+func _on_show_hud_button_pressed():
+	# Reopen the HUD when the "Show HUD" button is clicked
+	is_settings_collapsed = false
+	if settings_hud:
+		settings_hud.visible = true
+	if show_hud_button:
+		show_hud_button.visible = false
 
 func _on_tracking_error(error_message: String) -> void:
 	update_status("Tracking error: " + error_message)
