@@ -20,7 +20,10 @@ var viewport_container: SubViewportContainer
 var camera_preview: TextureRect
 var status_label: Label
 var control_panel: ControlPanel
-var settings_popup: Window
+var settings_hud: PanelContainer
+var collapse_button: Button
+var settings_scroll_container: ScrollContainer
+var is_settings_collapsed := false
 
 # Control mode
 enum ControlMode {
@@ -66,8 +69,10 @@ func setup_ui_references() -> void:
 	status_label = get_node_or_null("VBoxContainer/StatusLabel")
 	viewport_container = get_node_or_null("VBoxContainer/ContentContainer/ViewportContainer")
 	camera_preview = get_node_or_null("VBoxContainer/ContentContainer/CameraPreview")
-	settings_popup = get_node_or_null("SettingsPopup")
-	control_panel = get_node_or_null("SettingsPopup/ScrollContainer/ControlPanel")
+	settings_hud = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD")
+	collapse_button = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/Header/CollapseButton")
+	settings_scroll_container = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer")
+	control_panel = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel")
 	
 	if control_panel:
 		control_panel.mode_changed.connect(_on_mode_changed)
@@ -228,18 +233,26 @@ func _on_start_tracking_button_pressed():
 		if face_tracking_manager.start_tracking():
 			update_status("Face tracking started")
 
-func _on_settings_button_pressed():
-	# Toggle settings popup
-	if settings_popup:
-		settings_popup.visible = !settings_popup.visible
-		if settings_popup.visible:
-			# Center the popup
-			var window_size = get_viewport().get_visible_rect().size
-			var popup_size = settings_popup.size
-			settings_popup.position = Vector2i(
-				int((window_size.x - popup_size.x) / 2),
-				int((window_size.y - popup_size.y) / 2)
-			)
+func _on_collapse_button_pressed():
+	# Toggle settings panel collapse/expand
+	is_settings_collapsed = !is_settings_collapsed
+	
+	if is_settings_collapsed:
+		# Collapse: hide scroll container, change button text
+		if settings_scroll_container:
+			settings_scroll_container.visible = false
+		if collapse_button:
+			collapse_button.text = "▶"
+		if settings_hud:
+			settings_hud.custom_minimum_size = Vector2(50, 0)
+	else:
+		# Expand: show scroll container, change button text
+		if settings_scroll_container:
+			settings_scroll_container.visible = true
+		if collapse_button:
+			collapse_button.text = "◀"
+		if settings_hud:
+			settings_hud.custom_minimum_size = Vector2(350, 0)
 
 func _on_tracking_error(error_message: String) -> void:
 	update_status("Tracking error: " + error_message)

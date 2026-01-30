@@ -54,10 +54,6 @@ text = "Load VRM Model"
 layout_mode = 2
 text = "Start Tracking"
 
-[node name="SettingsButton" type="Button" parent="VBoxContainer/ButtonsContainer"]
-layout_mode = 2
-text = "Settings"
-
 [node name="HSeparator3" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
 
@@ -98,63 +94,73 @@ size_flags_horizontal = 0
 expand_mode = 1
 stretch_mode = 5
 
-[node name="SettingsPopup" type="Window" parent="."]
-title = "Settings"
-initial_position = 2
-size = Vector2i(600, 350)
-min_size = Vector2i(400, 250)
-max_size = Vector2i(900, 600)
-visible = false
+[node name="SettingsHUD" type="PanelContainer" parent="VBoxContainer/ContentContainer"]
+custom_minimum_size = Vector2(350, 0)
+layout_mode = 2
+size_flags_vertical = 3
 
-[node name="ScrollContainer" type="ScrollContainer" parent="SettingsPopup"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD"]
+layout_mode = 2
 
-[node name="ControlPanel" type="PanelContainer" parent="SettingsPopup/ScrollContainer"]
+[node name="Header" type="HBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Settings"
+theme_override_font_sizes/font_size = 18
+
+[node name="CollapseButton" type="Button" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/Header"]
+layout_mode = 2
+text = "◀"
+tooltip_text = "Collapse/Expand Settings Panel"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ControlPanel" type="PanelContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("2_control")
 
-[node name="MarginContainer" type="MarginContainer" parent="SettingsPopup/ScrollContainer/ControlPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="HBoxContainer" type="HBoxContainer" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer"]
+[node name="VBoxLayoutContainer" type="VBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 10
 
-[node name="ModeButton" type="Button" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(120, 0)
+[node name="ModeButton" type="Button" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer"]
 layout_mode = 2
 text = "Mode: Move"
 
-[node name="CameraPanel" type="VBoxContainer" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer"]
+[node name="CameraPanel" type="VBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CameraLabel" type="Label" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+[node name="CameraLabel" type="Label" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 text = "Camera Controls"
 horizontal_alignment = 1
 
-[node name="CameraSelector" type="OptionButton" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+[node name="CameraSelector" type="OptionButton" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 
-[node name="CameraPosition" type="HBoxContainer" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+[node name="CameraPosition" type="HBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+[node name="Label" type="Label" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Position:"
 
-[node name="PosX" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+[node name="PosX" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -162,7 +168,7 @@ max_value = 100.0
 step = 0.1
 prefix = "X:"
 
-[node name="PosY" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+[node name="PosY" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -171,7 +177,7 @@ step = 0.1
 value = 1.0
 prefix = "Y:"
 
-[node name="PosZ" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraPosition"]
+[node name="PosZ" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -180,15 +186,15 @@ step = 0.1
 value = 3.0
 prefix = "Z:"
 
-[node name="CameraRotation" type="HBoxContainer" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel"]
+[node name="CameraRotation" type="HBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+[node name="Label" type="Label" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Rotation:"
 
-[node name="RotX" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+[node name="RotX" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -197,7 +203,7 @@ step = 1.0
 prefix = "X:"
 suffix = "°"
 
-[node name="RotY" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+[node name="RotY" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -206,7 +212,7 @@ step = 1.0
 prefix = "Y:"
 suffix = "°"
 
-[node name="RotZ" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/CameraPanel/CameraRotation"]
+[node name="RotZ" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -215,24 +221,24 @@ step = 1.0
 prefix = "Z:"
 suffix = "°"
 
-[node name="ModelPanel" type="VBoxContainer" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer"]
+[node name="ModelPanel" type="VBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ModelLabel" type="Label" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel"]
+[node name="ModelLabel" type="Label" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
 layout_mode = 2
 text = "Model Transform"
 horizontal_alignment = 1
 
-[node name="ModelPosition" type="HBoxContainer" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel"]
+[node name="ModelPosition" type="HBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+[node name="Label" type="Label" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Position:"
 
-[node name="PosX" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+[node name="PosX" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -240,7 +246,7 @@ max_value = 100.0
 step = 0.1
 prefix = "X:"
 
-[node name="PosY" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+[node name="PosY" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -248,7 +254,7 @@ max_value = 100.0
 step = 0.1
 prefix = "Y:"
 
-[node name="PosZ" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelPosition"]
+[node name="PosZ" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -256,15 +262,15 @@ max_value = 100.0
 step = 0.1
 prefix = "Z:"
 
-[node name="ModelRotation" type="HBoxContainer" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel"]
+[node name="ModelRotation" type="HBoxContainer" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+[node name="Label" type="Label" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Rotation:"
 
-[node name="RotX" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+[node name="RotX" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -273,7 +279,7 @@ step = 1.0
 prefix = "X:"
 suffix = "°"
 
-[node name="RotY" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+[node name="RotY" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -282,7 +288,7 @@ step = 1.0
 prefix = "Y:"
 suffix = "°"
 
-[node name="RotZ" type="SpinBox" parent="SettingsPopup/ScrollContainer/ControlPanel/MarginContainer/HBoxContainer/ModelPanel/ModelRotation"]
+[node name="RotZ" type="SpinBox" parent="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -293,4 +299,4 @@ suffix = "°"
 
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/LoadVRMButton" to="." method="_on_load_vrm_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/ButtonsContainer/StartTrackingButton" to="." method="_on_start_tracking_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/ButtonsContainer/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/Header/CollapseButton" to="." method="_on_collapse_button_pressed"]
