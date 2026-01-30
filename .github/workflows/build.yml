@@ -5,9 +5,9 @@ name: Build VRMVTube (Simple)
 
 on:
   push:
-    branches: [ default, develop, 'copilot/**' ]
+    branches: [ default ]
   pull_request:
-    branches: [ default, develop ]
+    branches: [ default ]
   workflow_dispatch:
 
 env:
