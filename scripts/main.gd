@@ -406,6 +406,21 @@ func _input(event: InputEvent) -> void:
 	if not is_over_viewport:
 		return
 	
+	# Check if mouse is over HUD overlay - if so, don't handle camera/model input
+	# This prevents dragging on the HUD from also dragging the camera/model
+	if settings_hud and settings_hud.visible:
+		var hud_rect := settings_hud.get_global_rect()
+		if hud_rect.has_point(mouse_pos):
+			# Mouse is over HUD - let HUD controls handle input
+			return
+	
+	# Also check if mouse is over the show HUD button
+	if show_hud_button and show_hud_button.visible:
+		var button_rect := show_hud_button.get_global_rect()
+		if button_rect.has_point(mouse_pos):
+			# Mouse is over button - let button handle input
+			return
+	
 	# Handle mouse dragging
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
