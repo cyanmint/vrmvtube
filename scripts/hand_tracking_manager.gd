@@ -66,13 +66,14 @@ func initialize() -> bool:
 	
 	# Create base options
 	var base_options := MediaPipeTaskBaseOptions.new()
-	base_options.delegate = MediaPipeTaskBaseOptions.Delegate.CPU
+	# Note: delegate property removed in GDMP 0.6+ (uses CPU by default)
 	base_options.model_asset_buffer = model_buffer
 	
 	# Create hand landmarker
 	hand_landmarker = MediaPipeHandLandmarker.new()
 	var running_mode = MediaPipeTask.RunningMode.LIVE_STREAM
-	hand_landmarker.initialize(base_options, running_mode)
+	# Parameters: base_options, running_mode, num_hands, min_hand_detection_confidence, min_hand_presence_confidence, min_tracking_confidence
+	hand_landmarker.initialize(base_options, running_mode, 2, 0.5, 0.5, 0.5)
 	hand_landmarker.result_callback.connect(_on_hand_result)
 	
 	print("[HandTracking] Hand landmarker initialized successfully")

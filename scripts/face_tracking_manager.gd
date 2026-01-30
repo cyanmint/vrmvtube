@@ -99,7 +99,7 @@ func initialize() -> bool:
 	
 	# Create base options
 	var base_options := MediaPipeTaskBaseOptions.new()
-	base_options.delegate = MediaPipeTaskBaseOptions.Delegate.CPU
+	# Note: delegate property removed in GDMP 0.6+ (uses CPU by default)
 	base_options.model_asset_buffer = model_buffer
 	
 	# Create face landmarker
