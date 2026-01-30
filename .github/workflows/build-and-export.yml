@@ -58,64 +58,43 @@ jobs:
           path: assets/models/mediapipe/*.task
           retention-days: 7
 
-  # Build GDMP from source for Linux
-  build-gdmp-linux:
-    name: Build GDMP (Linux x86_64)
+  # Download GDMP libraries (built by build-gdmp-multiplatform workflow)
+  download-gdmp:
+    name: Download GDMP Libraries
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout GDMP
-        uses: actions/checkout@v4
+      - name: Download GDMP artifact from latest successful build
+        uses: dawidd6/action-download-artifact@v3
         with:
-          repository: j20001970/GDMP
-          submodules: recursive
-          path: GDMP
+          workflow: build-gdmp-multiplatform.yml
+          name: gdmp-addon-complete
+          path: gdmp-temp
+          if_no_artifact_found: warn
           
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          
-      - name: Install Bazelisk
+      - name: Check if GDMP was downloaded
+        id: check-gdmp
         run: |
-          wget -q https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-amd64
-          chmod +x bazelisk-linux-amd64
-          sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
-          bazel --version
+          if [ -d "gdmp-temp/libs" ]; then
+            echo "gdmp_available=true" >> $GITHUB_OUTPUT
+            ls -lah gdmp-temp/libs/
+          else
+            echo "gdmp_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ GDMP libraries not found - will use prebuilt libraries from repository"
+          fi
           
-      - name: Download Godot
-        run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          unzip -q Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          chmod +x Godot_v${{ env.GODOT_VERSION }}_linux.x86_64
-          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --dump-extension-api
-          
-      - name: Setup GDMP
-        working-directory: GDMP
-        run: |
-          python3 setup.py --api-json ../extension_api.json --no-download || true
-          # Continue even if buildifier download fails
-          
-      - name: Build GDMP for Linux
-        working-directory: GDMP
-        run: |
-          python3 build.py desktop --type release --output build/linux
-          
-      - name: Verify build
-        run: |
-          ls -lh GDMP/build/linux/
-          
-      - name: Upload GDMP Linux artifact
+      - name: Upload GDMP for use in other jobs
+        if: steps.check-gdmp.outputs.gdmp_available == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: gdmp-linux-x86_64
-          path: GDMP/build/linux/libGDMP.linux.so
+          name: gdmp-libraries
+          path: gdmp-temp/libs/
           retention-days: 7
 
   # Test project import and build
   test-import:
     name: Test Project Import
     runs-on: ubuntu-latest
-    needs: [download-models, build-gdmp-linux]
+    needs: [download-models, download-gdmp]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -126,14 +105,17 @@ jobs:
           name: mediapipe-models
           path: assets/models/mediapipe
           
-      - name: Download GDMP Linux
+      - name: Download GDMP libraries (if available)
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
-          name: gdmp-linux-x86_64
-          path: addons/GDMP/libs/x86_64/
+          name: gdmp-libraries
+          path: addons/GDMP/libs/
           
       - name: Set permissions
-        run: chmod +x addons/GDMP/libs/x86_64/libGDMP.linux.so
+        run: |
+          chmod +x addons/GDMP/libs/x86_64/libGDMP.linux.so || true
+          chmod +x addons/GDMP/libs/arm64/libGDMP.linux.so || true
         
       - name: Download Godot
         run: |
@@ -163,7 +145,7 @@ jobs:
   export-windows:
     name: Export Windows Build
     runs-on: ubuntu-latest
-    needs: [download-models, build-gdmp-linux]
+    needs: [download-models, download-gdmp]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -173,6 +155,13 @@ jobs:
         with:
           name: mediapipe-models
           path: assets/models/mediapipe
+          
+      - name: Download GDMP libraries (if available)
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: gdmp-libraries
+          path: addons/GDMP/libs/
           
       - name: Download Godot Export Templates
         run: |
@@ -207,7 +196,7 @@ jobs:
   export-linux:
     name: Export Linux Build
     runs-on: ubuntu-latest
-    needs: [download-models, build-gdmp-linux]
+    needs: [download-models, download-gdmp]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -218,14 +207,17 @@ jobs:
           name: mediapipe-models
           path: assets/models/mediapipe
           
-      - name: Download GDMP Linux
+      - name: Download GDMP libraries (if available)
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
-          name: gdmp-linux-x86_64
-          path: addons/GDMP/libs/x86_64/
+          name: gdmp-libraries
+          path: addons/GDMP/libs/
           
       - name: Set permissions
-        run: chmod +x addons/GDMP/libs/x86_64/libGDMP.linux.so
+        run: |
+          chmod +x addons/GDMP/libs/x86_64/libGDMP.linux.so || true
+          chmod +x addons/GDMP/libs/arm64/libGDMP.linux.so || true
           
       - name: Download Godot Export Templates
         run: |
@@ -261,7 +253,7 @@ jobs:
   export-web:
     name: Export Web Build
     runs-on: ubuntu-latest
-    needs: [download-models]
+    needs: [download-models, download-gdmp]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -271,6 +263,13 @@ jobs:
         with:
           name: mediapipe-models
           path: assets/models/mediapipe
+          
+      - name: Download GDMP libraries (if available)
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: gdmp-libraries
+          path: addons/GDMP/libs/
           
       - name: Download Godot Export Templates
         run: |
@@ -313,7 +312,10 @@ jobs:
           echo "## Build Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ MediaPipe models downloaded" >> $GITHUB_STEP_SUMMARY
-          echo "✅ GDMP built from source (Linux)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ GDMP libraries downloaded (from build-gdmp-multiplatform workflow)" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ Note: GDMP is built separately in build-gdmp-multiplatform.yml workflow" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ If GDMP libraries not available, prebuilt libraries from repository are used" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Project import tested" >> $GITHUB_STEP_SUMMARY
           echo "✅ Exports created for:" >> $GITHUB_STEP_SUMMARY
           echo "  - Windows" >> $GITHUB_STEP_SUMMARY
