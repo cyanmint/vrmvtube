@@ -66,13 +66,13 @@ func _ready():
 	setup_tracking_managers()
 
 func setup_ui_references() -> void:
-	status_label = get_node_or_null("VBoxContainer/StatusLabel")
-	viewport_container = get_node_or_null("VBoxContainer/ContentContainer/ViewportContainer")
-	camera_preview = get_node_or_null("VBoxContainer/ContentContainer/CameraPreview")
-	settings_hud = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD")
-	collapse_button = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/Header/CollapseButton")
-	settings_scroll_container = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer")
-	control_panel = get_node_or_null("VBoxContainer/ContentContainer/SettingsHUD/VBoxContainer/ScrollContainer/ControlPanel")
+	status_label = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/StatusSection/StatusLabel")
+	viewport_container = get_node_or_null("ContentContainer/ViewportContainer")
+	camera_preview = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection/CameraPreview")
+	settings_hud = get_node_or_null("ContentContainer/HUDOverlay")
+	collapse_button = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/Header/CollapseButton")
+	settings_scroll_container = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer")
+	control_panel = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel")
 	
 	if control_panel:
 		control_panel.mode_changed.connect(_on_mode_changed)
@@ -85,6 +85,14 @@ func setup_viewport() -> void:
 		if viewport:
 			camera_3d = viewport.get_node_or_null("Camera3D")
 			vrm_model_node = viewport.get_node_or_null("VRMModel")
+			
+			# Set up green screen background (chroma key green)
+			var world_env = viewport.get_node_or_null("WorldEnvironment")
+			if world_env:
+				var environment = Environment.new()
+				environment.background_mode = Environment.BG_COLOR
+				environment.background_color = Color(0.0, 1.0, 0.0)  # Pure green #00FF00
+				world_env.environment = environment
 			
 			# Update viewport size to match container on initial setup
 			_update_viewport_size()
@@ -234,7 +242,7 @@ func _on_start_tracking_button_pressed():
 			update_status("Face tracking started")
 
 func _on_collapse_button_pressed():
-	# Toggle settings panel collapse/expand
+	# Toggle HUD panel collapse/expand
 	is_settings_collapsed = !is_settings_collapsed
 	
 	if is_settings_collapsed:
@@ -252,7 +260,7 @@ func _on_collapse_button_pressed():
 		if collapse_button:
 			collapse_button.text = "◀"
 		if settings_hud:
-			settings_hud.custom_minimum_size = Vector2(350, 0)
+			settings_hud.custom_minimum_size = Vector2(400, 0)
 
 func _on_tracking_error(error_message: String) -> void:
 	update_status("Tracking error: " + error_message)
