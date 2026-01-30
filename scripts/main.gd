@@ -48,6 +48,9 @@ func _ready():
 	# Setup 3D viewport
 	setup_viewport()
 	
+	# Connect to window resize signal to update viewport
+	get_tree().root.size_changed.connect(_on_window_size_changed)
+	
 	# Load default model if auto-load is enabled
 	if settings.should_auto_load_model():
 		var default_path := settings.get_model_default_path()
@@ -78,9 +81,26 @@ func setup_viewport() -> void:
 			camera_3d = viewport.get_node_or_null("Camera3D")
 			vrm_model_node = viewport.get_node_or_null("VRMModel")
 			
+			# Update viewport size to match container on initial setup
+			_update_viewport_size()
+			
 			if control_panel:
 				control_panel.set_camera_node(camera_3d)
 				control_panel.set_model_node(vrm_model_node)
+
+func _on_window_size_changed() -> void:
+	# Update SubViewport size when window is resized
+	# This ensures the viewport properly adapts to portrait/landscape changes
+	_update_viewport_size()
+
+func _update_viewport_size() -> void:
+	# Update the SubViewport to match the container size
+	# This is necessary for proper aspect ratio handling in portrait/landscape modes
+	if viewport_container and viewport:
+		var container_size = viewport_container.size
+		if container_size.x > 0 and container_size.y > 0:
+			viewport.size = Vector2i(int(container_size.x), int(container_size.y))
+			print("[Main] Viewport resized to: ", viewport.size)
 
 func setup_tracking_managers() -> void:
 	# Create hand tracking manager (if GDMP is available)
