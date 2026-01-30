@@ -66,13 +66,13 @@ func _ready():
 	setup_tracking_managers()
 
 func setup_ui_references() -> void:
-	status_label = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/StatusSection/StatusLabel")
-	viewport_container = get_node_or_null("ContentContainer/ViewportContainer")
-	camera_preview = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection/CameraPreview")
-	settings_hud = get_node_or_null("ContentContainer/HUDOverlay")
-	collapse_button = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/Header/CollapseButton")
-	settings_scroll_container = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer")
-	control_panel = get_node_or_null("ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel")
+	status_label = get_node_or_null("HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/StatusSection/StatusLabel")
+	viewport_container = get_node_or_null("ViewportContainer")
+	camera_preview = get_node_or_null("HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection/CameraPreview")
+	settings_hud = get_node_or_null("HUDOverlay")
+	collapse_button = get_node_or_null("HUDOverlay/VBoxContainer/Header/CollapseButton")
+	settings_scroll_container = get_node_or_null("HUDOverlay/VBoxContainer/ScrollContainer")
+	control_panel = get_node_or_null("HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel")
 	
 	if control_panel:
 		control_panel.mode_changed.connect(_on_mode_changed)
@@ -246,21 +246,23 @@ func _on_collapse_button_pressed():
 	is_settings_collapsed = !is_settings_collapsed
 	
 	if is_settings_collapsed:
-		# Collapse: hide scroll container, change button text
+		# Collapse: hide scroll container, change button text, adjust offset
 		if settings_scroll_container:
 			settings_scroll_container.visible = false
 		if collapse_button:
 			collapse_button.text = "▶"
 		if settings_hud:
 			settings_hud.custom_minimum_size = Vector2(50, 0)
+			settings_hud.offset_left = -50.0  # Adjust offset for collapsed state
 	else:
-		# Expand: show scroll container, change button text
+		# Expand: show scroll container, change button text, adjust offset
 		if settings_scroll_container:
 			settings_scroll_container.visible = true
 		if collapse_button:
 			collapse_button.text = "◀"
 		if settings_hud:
 			settings_hud.custom_minimum_size = Vector2(400, 0)
+			settings_hud.offset_left = -400.0  # Adjust offset for expanded state
 
 func _on_tracking_error(error_message: String) -> void:
 	update_status("Tracking error: " + error_message)

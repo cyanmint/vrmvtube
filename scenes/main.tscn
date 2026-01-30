@@ -24,166 +24,168 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_main")
 
-[node name="ContentContainer" type="HBoxContainer" parent="."]
+[node name="ViewportContainer" type="SubViewportContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="ViewportContainer" type="SubViewportContainer" parent="ContentContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
 stretch = true
 stretch_shrink = 1
 
-[node name="SubViewport" type="SubViewport" parent="ContentContainer/ViewportContainer"]
+[node name="SubViewport" type="SubViewport" parent="ViewportContainer"]
 handle_input_locally = false
 size = Vector2i(827, 526)
 render_target_update_mode = 4
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="ContentContainer/ViewportContainer/SubViewport"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="ViewportContainer/SubViewport"]
 
-[node name="Camera3D" type="Camera3D" parent="ContentContainer/ViewportContainer/SubViewport"]
+[node name="Camera3D" type="Camera3D" parent="ViewportContainer/SubViewport"]
 transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 0, 1.2, 1)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="ContentContainer/ViewportContainer/SubViewport"]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="ViewportContainer/SubViewport"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0)
 shadow_enabled = true
 
-[node name="VRMModel" type="Node3D" parent="ContentContainer/ViewportContainer/SubViewport"]
+[node name="VRMModel" type="Node3D" parent="ViewportContainer/SubViewport"]
 
-[node name="HUDOverlay" type="PanelContainer" parent="ContentContainer"]
+[node name="HUDOverlay" type="PanelContainer" parent="."]
 custom_minimum_size = Vector2(400, 0)
-layout_mode = 2
-size_flags_vertical = 3
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -400.0
+grow_horizontal = 0
+grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ContentContainer/HUDOverlay"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HUDOverlay"]
 layout_mode = 2
 
-[node name="Header" type="HBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer"]
+[node name="Header" type="HBoxContainer" parent="HUDOverlay/VBoxContainer"]
 layout_mode = 2
 
-[node name="TitleLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/Header"]
+[node name="TitleLabel" type="Label" parent="HUDOverlay/VBoxContainer/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "VRMVTube"
 theme_override_font_sizes/font_size = 24
 
-[node name="CollapseButton" type="Button" parent="ContentContainer/HUDOverlay/VBoxContainer/Header"]
+[node name="CollapseButton" type="Button" parent="HUDOverlay/VBoxContainer/Header"]
 layout_mode = 2
 text = "◀"
 tooltip_text = "Collapse/Expand HUD Panel"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="ContentContainer/HUDOverlay/VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="HUDOverlay/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ContentVBox" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer"]
+[node name="ContentVBox" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 15
 
-[node name="InfoSection" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="InfoSection" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="InfoLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/InfoSection"]
+[node name="InfoLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/InfoSection"]
 layout_mode = 2
 text = "VTuber Application with VRM and MediaPipe Support
 Powered by Godot Engine 4.6"
 autowrap_mode = 2
 
-[node name="HSeparator1" type="HSeparator" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="HSeparator1" type="HSeparator" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="ModelSection" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="ModelSection" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="ModelLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/ModelSection"]
+[node name="ModelLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/ModelSection"]
 layout_mode = 2
 text = "Model Management"
 theme_override_font_sizes/font_size = 18
 
-[node name="LoadVRMButton" type="Button" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/ModelSection"]
+[node name="LoadVRMButton" type="Button" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/ModelSection"]
 layout_mode = 2
 text = "Load VRM Model"
 
-[node name="HSeparator2" type="HSeparator" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="HSeparator2" type="HSeparator" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="TrackingSection" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="TrackingSection" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="TrackingLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection"]
+[node name="TrackingLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection"]
 layout_mode = 2
 text = "Tracking Controls"
 theme_override_font_sizes/font_size = 18
 
-[node name="StartTrackingButton" type="Button" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection"]
+[node name="StartTrackingButton" type="Button" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection"]
 layout_mode = 2
 text = "Start Tracking"
 
-[node name="CameraPreview" type="TextureRect" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection"]
+[node name="CameraPreview" type="TextureRect" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection"]
 custom_minimum_size = Vector2(320, 240)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="HSeparator3" type="HSeparator" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="HSeparator3" type="HSeparator" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="SettingsSection" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="SettingsSection" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="SettingsLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection"]
+[node name="SettingsLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection"]
 layout_mode = 2
 text = "Settings"
 theme_override_font_sizes/font_size = 18
 
-[node name="ControlPanel" type="PanelContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection"]
+[node name="ControlPanel" type="PanelContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection"]
 layout_mode = 2
 size_flags_horizontal = 3
 script = ExtResource("2_control")
 
-[node name="MarginContainer" type="MarginContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="VBoxLayoutContainer" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer"]
+[node name="VBoxLayoutContainer" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="ModeButton" type="Button" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer"]
+[node name="ModeButton" type="Button" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer"]
 layout_mode = 2
 text = "Mode: Move"
 
-[node name="CameraPanel" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer"]
+[node name="CameraPanel" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CameraLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
+[node name="CameraLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 text = "Camera Controls"
 horizontal_alignment = 1
 
-[node name="CameraSelector" type="OptionButton" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
+[node name="CameraSelector" type="OptionButton" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 
-[node name="CameraPosition" type="HBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
+[node name="CameraPosition" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Position:"
 
-[node name="PosX" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
+[node name="PosX" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -191,7 +193,7 @@ max_value = 100.0
 step = 0.1
 prefix = "X:"
 
-[node name="PosY" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
+[node name="PosY" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -200,7 +202,7 @@ step = 0.1
 value = 1.2
 prefix = "Y:"
 
-[node name="PosZ" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
+[node name="PosZ" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -209,15 +211,15 @@ step = 0.1
 value = 1.0
 prefix = "Z:"
 
-[node name="CameraRotation" type="HBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
+[node name="CameraRotation" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Rotation:"
 
-[node name="RotX" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
+[node name="RotX" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -227,7 +229,7 @@ value = -10.0
 prefix = "X:"
 suffix = "°"
 
-[node name="RotY" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
+[node name="RotY" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -236,7 +238,7 @@ step = 1.0
 prefix = "Y:"
 suffix = "°"
 
-[node name="RotZ" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
+[node name="RotZ" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/CameraPanel/CameraRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -245,24 +247,24 @@ step = 1.0
 prefix = "Z:"
 suffix = "°"
 
-[node name="ModelPanel" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer"]
+[node name="ModelPanel" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ModelLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
+[node name="ModelLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
 layout_mode = 2
 text = "Model Transform"
 horizontal_alignment = 1
 
-[node name="ModelPosition" type="HBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
+[node name="ModelPosition" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Position:"
 
-[node name="PosX" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
+[node name="PosX" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -270,7 +272,7 @@ max_value = 100.0
 step = 0.1
 prefix = "X:"
 
-[node name="PosY" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
+[node name="PosY" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -278,7 +280,7 @@ max_value = 100.0
 step = 0.1
 prefix = "Y:"
 
-[node name="PosZ" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
+[node name="PosZ" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelPosition"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -100.0
@@ -286,15 +288,15 @@ max_value = 100.0
 step = 0.1
 prefix = "Z:"
 
-[node name="ModelRotation" type="HBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
+[node name="ModelRotation" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 text = "Rotation:"
 
-[node name="RotX" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
+[node name="RotX" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -303,7 +305,7 @@ step = 1.0
 prefix = "X:"
 suffix = "°"
 
-[node name="RotY" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
+[node name="RotY" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -312,7 +314,7 @@ step = 1.0
 prefix = "Y:"
 suffix = "°"
 
-[node name="RotZ" type="SpinBox" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
+[node name="RotZ" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/ModelPanel/ModelRotation"]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = -180.0
@@ -322,17 +324,17 @@ prefix = "Z:"
 suffix = "°"
 
 
-[node name="StatusSection" type="VBoxContainer" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
+[node name="StatusSection" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 
-[node name="HSeparator4" type="HSeparator" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/StatusSection"]
+[node name="HSeparator4" type="HSeparator" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/StatusSection"]
 layout_mode = 2
 
-[node name="StatusLabel" type="Label" parent="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/StatusSection"]
+[node name="StatusLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/StatusSection"]
 layout_mode = 2
 text = "Status: Ready"
 autowrap_mode = 2
 
-[connection signal="pressed" from="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/ModelSection/LoadVRMButton" to="." method="_on_load_vrm_button_pressed"]
-[connection signal="pressed" from="ContentContainer/HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection/StartTrackingButton" to="." method="_on_start_tracking_button_pressed"]
-[connection signal="pressed" from="ContentContainer/HUDOverlay/VBoxContainer/Header/CollapseButton" to="." method="_on_collapse_button_pressed"]
+[connection signal="pressed" from="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/ModelSection/LoadVRMButton" to="." method="_on_load_vrm_button_pressed"]
+[connection signal="pressed" from="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/TrackingSection/StartTrackingButton" to="." method="_on_start_tracking_button_pressed"]
+[connection signal="pressed" from="HUDOverlay/VBoxContainer/Header/CollapseButton" to="." method="_on_collapse_button_pressed"]
