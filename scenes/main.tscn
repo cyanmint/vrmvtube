@@ -338,6 +338,92 @@ prefix = "Z:"
 suffix = "°"
 
 
+[node name="VideoPanel" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VideoLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+text = "Video Quality"
+horizontal_alignment = 1
+
+[node name="ResolutionBox" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel/ResolutionBox"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "Resolution:"
+
+[node name="ResolutionSelector" type="OptionButton" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="QualityBox" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel/QualityBox"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "Quality:"
+
+[node name="QualitySelector" type="OptionButton" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RenderScaleBox" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+
+[node name="RenderScaleLabel" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel/RenderScaleBox"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Render Scale (DPI): 1.0x"
+
+[node name="RenderScaleSlider" type="HSlider" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel/RenderScaleBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.5
+max_value = 2.0
+step = 0.1
+value = 1.0
+
+[node name="MSAABox" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel/MSAABox"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "MSAA:"
+
+[node name="MSAASelector" type="OptionButton" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FXAACheckbox" type="CheckBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+text = "FXAA (Fast Anti-Aliasing)"
+
+[node name="VSyncCheckbox" type="CheckBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+button_pressed = true
+text = "V-Sync"
+
+[node name="FPSBox" type="HBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel/FPSBox"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "Max FPS:"
+
+[node name="FPSSpinBox" type="SpinBox" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox/SettingsSection/ControlPanel/MarginContainer/VBoxLayoutContainer/VideoPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 30.0
+max_value = 240.0
+step = 10.0
+value = 60.0
+
 [node name="StatusSection" type="VBoxContainer" parent="HUDOverlay/VBoxContainer/ScrollContainer/ContentVBox"]
 layout_mode = 2
 

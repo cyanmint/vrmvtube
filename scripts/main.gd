@@ -80,6 +80,7 @@ func setup_ui_references() -> void:
 		control_panel.mode_changed.connect(_on_mode_changed)
 		control_panel.camera_transform_changed.connect(_on_camera_transform_changed)
 		control_panel.model_transform_changed.connect(_on_model_transform_changed)
+		control_panel.video_settings_changed.connect(_on_video_settings_changed)
 
 func setup_viewport() -> void:
 	if viewport_container:
@@ -481,6 +482,73 @@ func _input(event: InputEvent) -> void:
 				
 				if control_panel:
 					control_panel.update_camera_ui()
+
+func _on_video_settings_changed() -> void:
+	# Apply video quality settings when changed
+	if not control_panel or not viewport:
+		return
+	
+	# Get settings from control panel
+	var resolution := control_panel.get_resolution()
+	var quality := control_panel.get_quality()
+	var render_scale := control_panel.get_render_scale()
+	var msaa := control_panel.get_msaa()
+	var fxaa := control_panel.get_fxaa()
+	var vsync := control_panel.get_vsync()
+	var max_fps := control_panel.get_max_fps()
+	
+	# Apply resolution
+	if viewport:
+		viewport.size = resolution
+		print("[Main] Viewport resolution set to: ", resolution)
+	
+	# Apply render scale (3D scaling)
+	if viewport:
+		var scale_3d: float = clamp(render_scale, 0.5, 2.0)
+		viewport.scaling_3d_scale = scale_3d
+		print("[Main] 3D render scale set to: ", scale_3d)
+	
+	# Apply MSAA
+	if viewport:
+		match msaa:
+			"disabled":
+				viewport.msaa_3d = Viewport.MSAA_DISABLED
+			"2x":
+				viewport.msaa_3d = Viewport.MSAA_2X
+			"4x":
+				viewport.msaa_3d = Viewport.MSAA_4X
+			"8x":
+				viewport.msaa_3d = Viewport.MSAA_8X
+		print("[Main] MSAA set to: ", msaa)
+	
+	# Apply FXAA
+	if viewport:
+		viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if fxaa else Viewport.SCREEN_SPACE_AA_DISABLED
+		print("[Main] FXAA set to: ", fxaa)
+	
+	# Apply VSync
+	if vsync:
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
+	else:
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	print("[Main] VSync set to: ", vsync)
+	
+	# Apply max FPS
+	Engine.max_fps = max_fps
+	print("[Main] Max FPS set to: ", max_fps)
+	
+	# Save settings
+	if settings:
+		settings.set_video_resolution(resolution.x, resolution.y)
+		settings.set_video_quality(quality)
+		settings.set_render_scale(render_scale)
+		settings.set_msaa(msaa)
+		settings.set_fxaa(fxaa)
+		settings.set_vsync(vsync)
+		settings.set_max_fps(max_fps)
+		settings.save_settings()
+	
+	update_status("Video quality settings applied")
 
 func _exit_tree() -> void:
 	# Save settings on exit

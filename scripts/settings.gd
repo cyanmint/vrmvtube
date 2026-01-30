@@ -23,6 +23,16 @@ var default_settings := {
 	"tracking": {
 		"hand_tracking": true,
 		"face_tracking": true
+	},
+	"video": {
+		"resolution_width": 1280,
+		"resolution_height": 720,
+		"quality": "high",  # low, medium, high, ultra
+		"render_scale": 1.0,  # 0.5 to 2.0 (DPI scaling)
+		"msaa": "disabled",  # disabled, 2x, 4x, 8x
+		"fxaa": false,
+		"vsync": true,
+		"max_fps": 60
 	}
 }
 
@@ -132,3 +142,50 @@ func set_model_rotation(rot: Vector3) -> void:
 
 func set_camera_index(index: int) -> void:
 	set_setting("camera/index", index)
+
+# Video quality settings
+func get_video_resolution_width() -> int:
+	return get_setting("video/resolution_width", 1280)
+
+func get_video_resolution_height() -> int:
+	return get_setting("video/resolution_height", 720)
+
+func set_video_resolution(width: int, height: int) -> void:
+	set_setting("video/resolution_width", width)
+	set_setting("video/resolution_height", height)
+
+func get_video_quality() -> String:
+	return get_setting("video/quality", "high")
+
+func set_video_quality(quality: String) -> void:
+	set_setting("video/quality", quality)
+
+func get_render_scale() -> float:
+	return get_setting("video/render_scale", 1.0)
+
+func set_render_scale(scale: float) -> void:
+	set_setting("video/render_scale", scale)
+
+func get_msaa() -> String:
+	return get_setting("video/msaa", "disabled")
+
+func set_msaa(msaa: String) -> void:
+	set_setting("video/msaa", msaa)
+
+func get_fxaa() -> bool:
+	return get_setting("video/fxaa", false)
+
+func set_fxaa(enabled: bool) -> void:
+	set_setting("video/fxaa", enabled)
+
+func get_vsync() -> bool:
+	return get_setting("video/vsync", true)
+
+func set_vsync(enabled: bool) -> void:
+	set_setting("video/vsync", enabled)
+
+func get_max_fps() -> int:
+	return get_setting("video/max_fps", 60)
+
+func set_max_fps(fps: int) -> void:
+	set_setting("video/max_fps", fps)
