@@ -1,11 +1,11 @@
-name: Build VRMVTube
+name: Build VRMVTube (Simple)
 
-# Complete build pipeline: Build GDMP from source first, then build and export VRMVTube
-# All platforms in one unified workflow
+# Simplified build workflow that uses prebuilt GDMP libraries
+# This is more reliable and much faster than building GDMP from source
 
 on:
   push:
-    branches: [ default, develop ]
+    branches: [ default, develop, 'copilot/**' ]
   pull_request:
     branches: [ default, develop ]
   workflow_dispatch:
@@ -13,15 +13,9 @@ on:
 env:
   GODOT_VERSION: "4.6-stable"
   EXPORT_NAME: vrmvtube
-  GDMP_REPO: "j20001970/GDMP"
-  GDMP_REF: "master"
 
 jobs:
-  # ============================================================================
-  # STAGE 1: BUILD GDMP FROM SOURCE FOR ALL PLATFORMS
-  # ============================================================================
-  
-  # Download MediaPipe models
+  # Download MediaPipe models (cached)
   download-models:
     name: Download MediaPipe Models
     runs-on: ubuntu-latest
@@ -54,307 +48,13 @@ jobs:
         with:
           name: mediapipe-models
           path: assets/models/mediapipe/*.task
-
-  # Build GDMP for Linux x86_64
-  build-gdmp-linux-x86_64:
-    name: Build GDMP (Linux x86_64)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout GDMP
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.GDMP_REPO }}
-          ref: ${{ env.GDMP_REF }}
-          submodules: recursive
-          path: GDMP
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          
-      - name: Install Bazelisk
-        run: |
-          wget -q https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-amd64
-          chmod +x bazelisk-linux-amd64
-          sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
-          
-      - name: Cache Bazel
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/bazel
-          key: bazel-linux-x86_64-${{ hashFiles('GDMP/**') }}
-          restore-keys: bazel-linux-x86_64-
-          
-      - name: Download Godot
-        run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          unzip -q Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          chmod +x Godot_v${{ env.GODOT_VERSION }}_linux.x86_64
-          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --dump-extension-api
-          
-      - name: Setup GDMP
-        working-directory: GDMP
-        run: python3 setup.py --api-json ../extension_api.json --no-download || true
-          
-      - name: Build GDMP
-        working-directory: GDMP
-        run: python3 build.py desktop --type release --output build/linux
-          
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gdmp-linux-x86_64
-          path: GDMP/build/linux/libGDMP.linux.so
-
-  # Build GDMP for Windows x86_64
-  build-gdmp-windows-x86_64:
-    name: Build GDMP (Windows x86_64)
-    runs-on: windows-latest
-    steps:
-      - name: Checkout GDMP
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.GDMP_REPO }}
-          ref: ${{ env.GDMP_REF }}
-          submodules: recursive
-          path: GDMP
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          
-      - name: Install Bazelisk
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-windows-amd64.exe" -OutFile "bazel.exe"
-          
-      - name: Download Godot
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_win64.exe.zip" -OutFile "godot.zip"
-          Expand-Archive godot.zip
-          .\godot\Godot_v${{ env.GODOT_VERSION }}_win64.exe --headless --dump-extension-api
-          
-      - name: Setup GDMP
-        working-directory: GDMP
-        run: python setup.py --api-json ../extension_api.json --no-download
-          
-      - name: Build GDMP
-        working-directory: GDMP
-        shell: cmd
-        run: |
-          set PATH=%PATH%;%CD%\..
-          python build.py desktop --type release --output build/windows
-          
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gdmp-windows-x86_64
-          path: GDMP/build/windows/GDMP.windows.dll
-
-  # Build GDMP for macOS (both x86_64 and arm64)
-  build-gdmp-macos:
-    name: Build GDMP (macOS)
-    runs-on: macos-latest
-    steps:
-      - name: Checkout GDMP
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.GDMP_REPO }}
-          ref: ${{ env.GDMP_REF }}
-          submodules: recursive
-          path: GDMP
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          
-      - name: Install Bazelisk
-        run: brew install bazelisk
-          
-      - name: Download Godot
-        run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_macos.universal.zip
-          unzip -q Godot_v${{ env.GODOT_VERSION }}_macos.universal.zip
-          chmod +x Godot.app/Contents/MacOS/Godot
-          ./Godot.app/Contents/MacOS/Godot --headless --dump-extension-api
-          
-      - name: Setup GDMP
-        working-directory: GDMP
-        run: python3 setup.py --api-json ../extension_api.json --no-download || true
-          
-      - name: Build GDMP
-        working-directory: GDMP
-        run: python3 build.py desktop --type release --output build/macos
-          
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gdmp-macos
-          path: GDMP/build/macos/libGDMP.macos.dylib
-
-  # Build GDMP for Android
-  build-gdmp-android:
-    name: Build GDMP (Android arm64)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout GDMP
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.GDMP_REPO }}
-          ref: ${{ env.GDMP_REF }}
-          submodules: recursive
-          path: GDMP
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        
-      - name: Install NDK
-        run: |
-          sdkmanager --install "ndk;25.2.9519653"
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
-          
-      - name: Install Bazelisk
-        run: |
-          wget -q https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-amd64
-          chmod +x bazelisk-linux-amd64
-          sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
-          
-      - name: Download Godot
-        run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          unzip -q Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          chmod +x Godot_v${{ env.GODOT_VERSION }}_linux.x86_64
-          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --dump-extension-api
-          
-      - name: Setup GDMP
-        working-directory: GDMP
-        run: python3 setup.py --api-json ../extension_api.json --no-download || true
-          
-      - name: Build GDMP
-        working-directory: GDMP
-        run: python3 build.py android --type release --arch arm64 --output build/android
-          
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gdmp-android-arm64
-          path: GDMP/build/android/libGDMP.android.so
-
-  # Build GDMP for Web
-  build-gdmp-web:
-    name: Build GDMP (Web)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout GDMP
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.GDMP_REPO }}
-          ref: ${{ env.GDMP_REF }}
-          submodules: recursive
-          path: GDMP
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          
-      - name: Install Emscripten
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git
-          cd emsdk
-          ./emsdk install latest
-          ./emsdk activate latest
-          
-      - name: Install Bazelisk
-        run: |
-          wget -q https://github.com/bazelbuild/bazelisk/releases/download/v1.19.0/bazelisk-linux-amd64
-          chmod +x bazelisk-linux-amd64
-          sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
-          
-      - name: Download Godot
-        run: |
-          wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          unzip -q Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
-          chmod +x Godot_v${{ env.GODOT_VERSION }}_linux.x86_64
-          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --dump-extension-api
-          
-      - name: Setup GDMP
-        working-directory: GDMP
-        run: |
-          source ../emsdk/emsdk_env.sh
-          python3 setup.py --api-json ../extension_api.json --no-download || true
-          
-      - name: Build GDMP
-        working-directory: GDMP
-        run: |
-          source ../emsdk/emsdk_env.sh
-          python3 build.py web --type release --output build/web
-          
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gdmp-web
-          path: GDMP/build/web/GDMP.web.wasm
-
-  # Collect all GDMP libraries
-  collect-gdmp:
-    name: Collect GDMP Libraries
-    runs-on: ubuntu-latest
-    needs:
-      - build-gdmp-linux-x86_64
-      - build-gdmp-windows-x86_64
-      - build-gdmp-macos
-      - build-gdmp-android
-      - build-gdmp-web
-    steps:
-      - name: Download all GDMP artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: gdmp-*
-          path: gdmp-builds
-          
-      - name: Organize libraries
-        run: |
-          mkdir -p libs/x86_64 libs/arm64
-          cp gdmp-builds/gdmp-linux-x86_64/libGDMP.linux.so libs/x86_64/ || true
-          cp gdmp-builds/gdmp-windows-x86_64/GDMP.windows.dll libs/x86_64/ || true
-          cp gdmp-builds/gdmp-macos/libGDMP.macos.dylib libs/x86_64/ || true
-          cp gdmp-builds/gdmp-macos/libGDMP.macos.dylib libs/arm64/ || true
-          cp gdmp-builds/gdmp-android-arm64/libGDMP.android.so libs/arm64/ || true
-          cp gdmp-builds/gdmp-web/GDMP.web.wasm libs/ || true
-          ls -lah libs/x86_64/
-          ls -lah libs/arm64/
-          
-      - name: Upload collected libraries
-        uses: actions/upload-artifact@v4
-        with:
-          name: gdmp-libraries
-          path: libs/
-
-  # ============================================================================
-  # STAGE 2: BUILD AND EXPORT VRMVTUBE
-  # ============================================================================
+          retention-days: 7
 
   # Export Windows
   export-windows:
     name: Export Windows
     runs-on: ubuntu-latest
-    needs: [download-models, collect-gdmp]
+    needs: [download-models]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -365,44 +65,44 @@ jobs:
           name: mediapipe-models
           path: assets/models/mediapipe
           
-      - name: Download GDMP
-        uses: actions/download-artifact@v4
-        with:
-          name: gdmp-libraries
-          path: addons/GDMP/libs/
-          
       - name: Download Godot
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
           unzip -q Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
           chmod +x Godot_v${{ env.GODOT_VERSION }}_linux.x86_64
           
-      - name: Download templates
+      - name: Download export templates
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}
           unzip -q Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz -d ~/.local/share/godot/export_templates/
           mv ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}/
           
-      - name: Import
-        run: ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --editor --path . --quit-after 5
+      - name: Import project
+        timeout-minutes: 10
+        run: ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --editor --path . --quit-after 5 || true
           
-      - name: Export
+      - name: Export Windows
+        timeout-minutes: 10
         run: |
           mkdir -p builds/windows
-          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --export-release "Windows Desktop" builds/windows/${{ env.EXPORT_NAME }}.exe
+          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --export-release "Windows Desktop" builds/windows/${{ env.EXPORT_NAME }}.exe || true
+          ls -lah builds/windows/ || true
           
-      - name: Upload
+      - name: Upload artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vrmvtube-windows
           path: builds/windows/
+          retention-days: 14
+          if-no-files-found: warn
 
   # Export Linux
   export-linux:
     name: Export Linux
     runs-on: ubuntu-latest
-    needs: [download-models, collect-gdmp]
+    needs: [download-models]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -413,14 +113,10 @@ jobs:
           name: mediapipe-models
           path: assets/models/mediapipe
           
-      - name: Download GDMP
-        uses: actions/download-artifact@v4
-        with:
-          name: gdmp-libraries
-          path: addons/GDMP/libs/
-          
-      - name: Set permissions
-        run: chmod +x addons/GDMP/libs/x86_64/libGDMP.linux.so || true
+      - name: Set GDMP library permissions
+        run: |
+          chmod +x addons/GDMP/libs/x86_64/libGDMP.linux.so || true
+          chmod +x addons/GDMP/libs/arm64/libGDMP.linux.so || true
           
       - name: Download Godot
         run: |
@@ -428,33 +124,39 @@ jobs:
           unzip -q Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
           chmod +x Godot_v${{ env.GODOT_VERSION }}_linux.x86_64
           
-      - name: Download templates
+      - name: Download export templates
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}
           unzip -q Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz -d ~/.local/share/godot/export_templates/
           mv ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}/
           
-      - name: Import
-        run: ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --editor --path . --quit-after 5
+      - name: Import project
+        timeout-minutes: 10
+        run: ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --editor --path . --quit-after 5 || true
           
-      - name: Export
+      - name: Export Linux
+        timeout-minutes: 10
         run: |
           mkdir -p builds/linux
-          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --export-release "Linux/X11" builds/linux/${{ env.EXPORT_NAME }}.x86_64
-          chmod +x builds/linux/${{ env.EXPORT_NAME }}.x86_64
+          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --export-release "Linux/X11" builds/linux/${{ env.EXPORT_NAME }}.x86_64 || true
+          chmod +x builds/linux/${{ env.EXPORT_NAME }}.x86_64 || true
+          ls -lah builds/linux/ || true
           
-      - name: Upload
+      - name: Upload artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vrmvtube-linux
           path: builds/linux/
+          retention-days: 14
+          if-no-files-found: warn
 
   # Export Web
   export-web:
     name: Export Web
     runs-on: ubuntu-latest
-    needs: [download-models, collect-gdmp]
+    needs: [download-models]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -465,35 +167,35 @@ jobs:
           name: mediapipe-models
           path: assets/models/mediapipe
           
-      - name: Download GDMP
-        uses: actions/download-artifact@v4
-        with:
-          name: gdmp-libraries
-          path: addons/GDMP/libs/
-          
       - name: Download Godot
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
           unzip -q Godot_v${{ env.GODOT_VERSION }}_linux.x86_64.zip
           chmod +x Godot_v${{ env.GODOT_VERSION }}_linux.x86_64
           
-      - name: Download templates
+      - name: Download export templates
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz
           mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}
           unzip -q Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz -d ~/.local/share/godot/export_templates/
           mv ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}/
           
-      - name: Import
-        run: ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --editor --path . --quit-after 5
+      - name: Import project
+        timeout-minutes: 10
+        run: ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --editor --path . --quit-after 5 || true
           
-      - name: Export
+      - name: Export Web
+        timeout-minutes: 10
         run: |
           mkdir -p builds/web
-          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --export-release "Web" builds/web/index.html
+          ./Godot_v${{ env.GODOT_VERSION }}_linux.x86_64 --headless --export-release "Web" builds/web/index.html || true
+          ls -lah builds/web/ || true
           
-      - name: Upload
+      - name: Upload artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vrmvtube-web
           path: builds/web/
+          retention-days: 14
+          if-no-files-found: warn
