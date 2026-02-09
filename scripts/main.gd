@@ -1,971 +1,472 @@
 extends Node3D
 
 ## Main scene controller for VRMVTube
-## 
-## This script handles loading VRM models and basic scene setup.
-## Based on V-Sekai's implementation and inspired by VRigUnity.
 ##
+## Simple VTubing app combining:
+## - godot-vrm: VRM model loading and rendering
+## - GDMP: MediaPipe face tracking
+##
+## Inspired by VRigUnity by Kariaro
 ## Created by: GitHub Copilot
-## Credits:
-## - VRM loading powered by godot-vrm (MIT License, V-Sekai)
-## - Inspired by VRigUnity by Kariaro
 
 const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
 
-var current_vrm_instance: Node = null
-var sidebar_collapsed := false
-var _updating_sliders_from_transform := false  # Prevent infinite loops
-
-@onready var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
-@onready var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
+# Core components
 @onready var gdmp_tracking: Node = $GDMPTracking
 @onready var face_rigging: Node = $FaceRigging
-@onready var model_container: Node3D = $ModelContainer
-@onready var webcam_texture_rect: TextureRect = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/WebcamTextureRect
-@onready var webcam_status_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/StatusLabel
-@onready var webcam_preview_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel
-@onready var webcam_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var webcam_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer
-@onready var buttons_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel
-@onready var model_controls_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel
-@onready var bottom_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel
-@onready var position_x_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXSlider
-@onready var position_x_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXValue
-@onready var position_y_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYSlider
-@onready var position_y_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYValue
-@onready var position_z_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZSlider
-@onready var position_z_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZValue
-@onready var rotation_x_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXSlider
-@onready var rotation_x_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXValue
-@onready var rotation_y_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYSlider
-@onready var rotation_y_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYValue
-@onready var rotation_z_slider: HSlider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZSlider
-@onready var rotation_z_value: LineEdit = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZValue
-@onready var settings_menu: Window = $SettingsMenu
-@onready var world_environment: WorldEnvironment = $WorldEnvironment
-@onready var right_panel: VBoxContainer = $UI/Control/RightPanel
-@onready var sidebar_collapse_button: Button = $UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer/SidebarCollapseButton
-@onready var sidebar_collapse_tab: Button = $UI/Control/SidebarCollapseTab
-@onready var metadata_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel
-@onready var metadata_label: RichTextLabel = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
-@onready var metadata_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var metadata_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
-@onready var title_panel: PanelContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel
-@onready var title_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var title_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/ContentContainer
-@onready var buttons_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var buttons_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer
-@onready var model_controls_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var model_controls_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer
-@onready var bottom_collapse_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
-@onready var bottom_content: VBoxContainer = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer
 @onready var camera_controller: Camera3D = $Camera3D
-@onready var camera_mode_button: Button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/CameraModeButton
+@onready var model_container: Node3D = $ModelContainer
+@onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var ui_controller: Node = $UIController
+@onready var settings_menu: Window = $SettingsMenu
 
-func _input(event: InputEvent) -> void:
-	# Keyboard hotkeys
-	if event is InputEventKey and event.pressed and not event.echo:
-		# C for configuration (settings)
-		if event.keycode == KEY_C:
-			_on_settings_button_pressed()
-			get_viewport().set_input_as_handled()
-		# L for loading VRM
-		elif event.keycode == KEY_L:
-			_on_load_model_button_pressed()
-			get_viewport().set_input_as_handled()
+# UI node references - passed to UI controller
+@onready
+var info_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/InfoLabel
+@onready
+var platform_info: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer/PlatformInfo
+@onready
+var webcam_status_label: Label = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer/StatusLabel
+@onready
+var metadata_label: RichTextLabel = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer/ScrollContainer/MetadataLabel
+
+# State
+var current_vrm_instance: Node = null
+
 
 func _ready() -> void:
-	print("VRMVTube started")
+	print("═══════════════════════════════════════")
+	print("    VRMVTube - Simple VTubing App")
+	print("═══════════════════════════════════════")
 	print("Platform: ", OS.get_name())
-	
-	# Update platform info in UI
-	var platform_name := OS.get_name()
-	var vcam_support := ""
-	
-	# Check virtual camera support
-	if platform_name in ["Windows", "Linux", "X11"]:
-		print("Virtual camera is supported on this platform")
-		vcam_support = " (Virtual Camera: Supported)"
-	else:
-		print("Virtual camera is NOT supported on this platform")
-		vcam_support = " (Virtual Camera: Not Supported)"
-	
-	if platform_info:
-		platform_info.text = "Platform: " + platform_name + vcam_support
-	else:
-		push_error("Platform info label not found!")
-	
-	# Connect GDMP face tracking - the only tracking system!
+
+	# Set up UI controller
+	_setup_ui_controller()
+
+	# Set up camera controller
+	if camera_controller:
+		camera_controller.model_container = model_container
+		camera_controller.mode_changed.connect(_on_camera_mode_changed)
+		camera_controller.model_transform_changed.connect(_on_model_transform_changed)
+
+	# Set up GDMP tracking
 	if gdmp_tracking:
-		gdmp_tracking.tracking_data_received.connect(_on_face_tracking_updated)
+		gdmp_tracking.tracking_data_received.connect(_on_tracking_data_received)
 		gdmp_tracking.camera_started.connect(_on_camera_started)
 		gdmp_tracking.camera_failed.connect(_on_camera_failed)
-		print("Main: Connected to GDMP native tracking")
-		
-		# Wait a frame for GDMP to initialize
+
+		# Wait for GDMP to initialize
 		await get_tree().process_frame
-		
-		# Update platform info with GDMP status
-		if gdmp_tracking.is_gdmp_available():
-			print("Main: ✅ GDMP is available and active!")
-			if platform_info:
-				var tracking_status = ""
-				if platform_name in ["Android", "iOS", "Web", "HTML5"]:
-					tracking_status = "\n📹 Face Tracking: GDMP Native"
-				else:
-					tracking_status = "\n📹 Face Tracking: Simulated (GDMP camera N/A)"
-				platform_info.text = "Platform: " + platform_name + vcam_support + tracking_status
-		else:
-			print("Main: ⚠️ GDMP not available - using simulated tracking")
-			print("Main: Check console for GDMP initialization errors")
-			if platform_info:
-				platform_info.text = "Platform: " + platform_name + vcam_support + "\n📹 Face Tracking: Simulated (GDMP N/A)"
-	else:
-		push_error("GDMPTracking node not found!")
-	
-	# Connect model control sliders
-	if position_x_slider:
-		position_x_slider.value_changed.connect(_on_position_x_changed)
-	if position_x_value:
-		position_x_value.text_submitted.connect(_on_position_x_input)
-	if position_y_slider:
-		position_y_slider.value_changed.connect(_on_position_y_changed)
-	if position_y_value:
-		position_y_value.text_submitted.connect(_on_position_y_input)
-	if position_z_slider:
-		position_z_slider.value_changed.connect(_on_position_z_changed)
-	if position_z_value:
-		position_z_value.text_submitted.connect(_on_position_z_input)
-	if rotation_x_slider:
-		rotation_x_slider.value_changed.connect(_on_rotation_x_changed)
-	if rotation_x_value:
-		rotation_x_value.text_submitted.connect(_on_rotation_x_input)
-	if rotation_y_slider:
-		rotation_y_slider.value_changed.connect(_on_rotation_y_changed)
-	if rotation_y_value:
-		rotation_y_value.text_submitted.connect(_on_rotation_y_input)
-	if rotation_z_slider:
-		rotation_z_slider.value_changed.connect(_on_rotation_z_changed)
-	if rotation_z_value:
-		rotation_z_value.text_submitted.connect(_on_rotation_z_input)
-	
-	# Connect collapse buttons
-	if webcam_collapse_button:
-		webcam_collapse_button.pressed.connect(_on_webcam_collapse_pressed)
-	if sidebar_collapse_button:
-		sidebar_collapse_button.pressed.connect(_on_sidebar_collapse_pressed)
-	if sidebar_collapse_tab:
-		sidebar_collapse_tab.pressed.connect(_on_sidebar_expand_pressed)
-	if metadata_collapse_button:
-		metadata_collapse_button.pressed.connect(_on_metadata_collapse_pressed)
-	
-	# Connect camera mode signal and set model container reference
-	if camera_controller:
-		camera_controller.mode_changed.connect(_on_camera_mode_changed)
-		camera_controller.model_container = model_container
-		camera_controller.model_transform_changed.connect(_on_model_transform_changed)
-		print("Camera controller set up with model container")
-	if camera_mode_button:
-		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
-	
-	# Update webcam status based on platform and GDMP availability
-	if webcam_status_label:
-		if platform_name in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
-			webcam_status_label.text = "⚠️ Webcam Preview\nNot Available on Desktop\n\nGodot CameraServer\nonly works on:\n• Android\n• iOS\n• Web\n\nFace tracking still works\nusing simulation mode"
-		elif platform_name in ["Android", "iOS", "Web", "HTML5"]:
-			# Check GDMP status for mobile/web - will update later when camera initializes
-			if gdmp_tracking and gdmp_tracking.is_gdmp_available():
-				webcam_status_label.text = "📹 Initializing Camera...\n\nPlease grant camera\npermission when prompted.\n\nMediaPipe face tracking\nwill start automatically."
-			else:
-				webcam_status_label.text = "⚠️ GDMP Not Available\n\nUsing simulated tracking.\n\nCheck console logs for\nGDMP status details."
-	
-	# Load saved settings and apply
-	_load_and_apply_settings()
-	
-	# Load last used model or default VRM model
-	var model_to_load := _get_last_model_path()
-	print("Checking for VRM model at: ", model_to_load)
-	
-	# Android-specific: Check if file exists and log platform info
-	if platform_name == "Android":
-		print("Android platform detected - VRM file check")
-		print("  - File exists: ", FileAccess.file_exists(model_to_load))
-		print("  - User data dir: ", OS.get_user_data_dir())
-	
-	if FileAccess.file_exists(model_to_load):
-		print("VRM model found! Loading...")
-		call_deferred("_load_vrm_model", model_to_load)
-	else:
-		print("WARNING: No VRM model found at: ", model_to_load)
-		if platform_name == "Android":
-			print("Android: The VRM file may not have been included in the APK export.")
-			print("Android: Check export_presets.cfg include_filter setting.")
-		print("Place a VRM model as 'default.vrm' in the models/ directory for auto-loading")
-		# Set info label to show instructions
-		if info_label:
-			info_label.text = "No model loaded.\nUse 'Load VRM Model' button or press L\nDrag=rotate | R=mode | Move: WSAD=XY QE=Z | Rotate: WSAD=XY QE=Z"
 
-func _load_and_apply_settings() -> void:
-	"""Load settings from file and apply graphics settings"""
+		# Update UI with GDMP status
+		var platform_name := OS.get_name()
+		var vcam_supported := platform_name in ["Windows", "Linux", "X11"]
+		var gdmp_available: bool = gdmp_tracking.is_gdmp_available()
+
+		ui_controller.update_platform_info(platform_name, vcam_supported, gdmp_available)
+
+		if not gdmp_available:
+			push_warning("GDMP not available - using simulated tracking")
+
+	# Load settings and model
+	_load_settings()
+	_load_initial_model()
+
+	print("═══════════════════════════════════════")
+	print("Ready! Press L to load VRM, C for settings, R to toggle camera mode")
+
+
+func _input(event: InputEvent) -> void:
+	"""Handle keyboard shortcuts"""
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_L:
+				_on_load_model_button_pressed()
+				get_viewport().set_input_as_handled()
+			KEY_C:
+				_on_settings_button_pressed()
+				get_viewport().set_input_as_handled()
+
+
+func _setup_ui_controller() -> void:
+	"""Initialize UI controller with node references"""
+	if not ui_controller:
+		return
+
+	# Set UI node references
+	ui_controller.info_label = info_label
+	ui_controller.platform_info = platform_info
+	ui_controller.webcam_status_label = webcam_status_label
+	ui_controller.metadata_label = metadata_label
+
+	# Set slider references
+	ui_controller.position_x_slider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXSlider
+	ui_controller.position_x_value = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionXContainer/PositionXValue
+	ui_controller.position_y_slider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYSlider
+	ui_controller.position_y_value = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionYContainer/PositionYValue
+	ui_controller.position_z_slider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZSlider
+	ui_controller.position_z_value = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/PositionZContainer/PositionZValue
+	ui_controller.rotation_x_slider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXSlider
+	ui_controller.rotation_x_value = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationXContainer/RotationXValue
+	ui_controller.rotation_y_slider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYSlider
+	ui_controller.rotation_y_value = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationYContainer/RotationYValue
+	ui_controller.rotation_z_slider = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZSlider
+	ui_controller.rotation_z_value = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/RotationZContainer/RotationZValue
+
+	# Set panel references
+	ui_controller.webcam_content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/ContentContainer
+	ui_controller.webcam_collapse_button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/WebcamPreviewPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	ui_controller.metadata_content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/ContentContainer
+	ui_controller.metadata_collapse_button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/MetadataPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	ui_controller.right_panel = $UI/Control/RightPanel
+	ui_controller.sidebar_collapse_button = $UI/Control/RightPanel/SidebarHeader/MarginContainer/HBoxContainer/SidebarCollapseButton
+	ui_controller.sidebar_collapse_tab = $UI/Control/SidebarCollapseTab
+	ui_controller.camera_mode_button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/CameraModeButton
+
+	# Connect UI signals
+	ui_controller.connect_ui_signals()
+	ui_controller.model_position_changed.connect(_on_model_position_changed)
+	ui_controller.model_rotation_changed.connect(_on_model_rotation_changed)
+
+	# Connect button signals
+	var load_button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/LoadModelButton
+	if load_button:
+		load_button.pressed.connect(_on_load_model_button_pressed)
+
+	var reset_button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer/ResetPoseButton
+	if reset_button:
+		reset_button.pressed.connect(_on_reset_pose_button_pressed)
+
+	var settings_button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer/SettingsButton
+	if settings_button:
+		settings_button.pressed.connect(_on_settings_button_pressed)
+
+	if ui_controller.camera_mode_button:
+		ui_controller.camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
+
+	print("UI Controller initialized")
+
+
+func _load_settings() -> void:
+	"""Load and apply saved settings"""
 	var config := ConfigFile.new()
 	var err := config.load("user://vrmvtube_settings.cfg")
-	
-	if err == OK:
-		# Apply graphics settings
-		if config.has_section("graphics"):
-			var resolution_scale = config.get_value("graphics", "resolution_scale", 1.0)
-			get_viewport().scaling_3d_scale = resolution_scale
-			
-			var msaa = config.get_value("graphics", "msaa", 0)
-			get_viewport().msaa_3d = msaa
-			
-			var vsync_enabled = config.get_value("graphics", "vsync", true)
-			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync_enabled else DisplayServer.VSYNC_DISABLED)
-			
-			print("Applied graphics settings: resolution_scale=", resolution_scale, " msaa=", msaa, " vsync=", vsync_enabled)
-		
-		# Apply UI settings
-		if config.has_section("ui"):
-			var webcam_hud_visible = config.get_value("ui", "webcam_hud_visible", true)
-			if webcam_content:
-				webcam_content.visible = webcam_hud_visible
-				if webcam_collapse_button:
-					webcam_collapse_button.text = "▲" if not webcam_hud_visible else "▼"
-			print("Applied UI settings: webcam_hud_visible=", webcam_hud_visible)
-		
-		# Tracking settings - GDMP and VMC work automatically, no Python needed
-		if config.has_section("tracking"):
-			var use_gdmp = config.get_value("tracking", "use_gdmp", true)
-			var use_vmc = config.get_value("tracking", "use_vmc", true)
-			print("Applied tracking settings: gdmp=", use_gdmp, " vmc=", use_vmc)
 
-func _get_last_model_path() -> String:
-	"""Get the last loaded model path from settings, or default"""
-	var config := ConfigFile.new()
-	var err := config.load("user://vrmvtube_settings.cfg")
-	
-	if err == OK and config.has_section("model"):
-		var last_path = config.get_value("model", "path", DEFAULT_VRM_PATH)
-		# Check if the last path exists, otherwise fall back to default
-		if FileAccess.file_exists(last_path):
-			return last_path
-	
-	return DEFAULT_VRM_PATH
+	if err != OK:
+		print("No saved settings found, using defaults")
+		return
 
-func _load_model_transform() -> void:
-	"""Load and apply saved model transform"""
-	var config := ConfigFile.new()
-	var err := config.load("user://vrmvtube_settings.cfg")
-	
-	if err == OK and config.has_section("model") and camera_controller:
-		var pos = Vector3(
+	# Apply graphics settings
+	if config.has_section("graphics"):
+		var resolution_scale: float = config.get_value("graphics", "resolution_scale", 1.0)
+		var msaa: int = config.get_value("graphics", "msaa", 0)
+		var vsync: bool = config.get_value("graphics", "vsync", true)
+
+		get_viewport().scaling_3d_scale = resolution_scale
+		get_viewport().msaa_3d = msaa
+		DisplayServer.window_set_vsync_mode(
+			DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED
+		)
+
+		print(
+			"Graphics settings applied: resolution=",
+			resolution_scale,
+			" msaa=",
+			msaa,
+			" vsync=",
+			vsync
+		)
+
+	# Load model transform
+	if config.has_section("model") and camera_controller:
+		var pos := Vector3(
 			config.get_value("model", "position_x", 0.0),
 			config.get_value("model", "position_y", -0.5),
 			config.get_value("model", "position_z", 0.0)
 		)
-		var rot = Vector3(
+		var rot := Vector3(
 			config.get_value("model", "rotation_x", 0.0),
 			config.get_value("model", "rotation_y", 0.0),
 			config.get_value("model", "rotation_z", 0.0)
 		)
-		# Scale is always 1.0, ignore saved value
-		
+
 		camera_controller.set_model_transform(pos, rot, 1.0)
-		print("Loaded model transform: pos=", pos, " rot=", rot, " scale=1.0")
-		
-		# Update sliders to match loaded values
-		if position_x_slider:
-			position_x_slider.value = pos.x
-		if position_y_slider:
-			position_y_slider.value = pos.y
-		if position_z_slider:
-			position_z_slider.value = pos.z
-		if rotation_x_slider:
-			rotation_x_slider.value = rad_to_deg(rot.x)
-		if rotation_y_slider:
-			rotation_y_slider.value = rad_to_deg(rot.y)
-		if rotation_z_slider:
-			rotation_z_slider.value = rad_to_deg(rot.z)
-	elif camera_controller:
-		# Use defaults if no saved transform
-		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.0)
-		print("Using default model transform")
+		ui_controller.update_model_sliders(pos, rot)
+		print("Model transform loaded: pos=", pos, " rot=", rot)
 
-func _save_last_model(path: String) -> void:
-	"""Save the last loaded model path and transform"""
+
+func _load_initial_model() -> void:
+	"""Load the default or last used VRM model"""
 	var config := ConfigFile.new()
-	config.load("user://vrmvtube_settings.cfg")  # Load existing settings
-	config.set_value("model", "path", path)
-	
-	# Save current model transform if camera controller has it
-	if camera_controller:
-		var transform_data = camera_controller.get_model_transform()
-		config.set_value("model", "position_x", transform_data.position.x)
-		config.set_value("model", "position_y", transform_data.position.y)
-		config.set_value("model", "position_z", transform_data.position.z)
-		config.set_value("model", "rotation_x", transform_data.rotation.x)
-		config.set_value("model", "rotation_y", transform_data.rotation.y)
-		config.set_value("model", "rotation_z", transform_data.rotation.z)
-		# Don't save scale - it's always 1.0
-	
-	config.save("user://vrmvtube_settings.cfg")
-	print("Saved last model path and transform")
+	var model_path := DEFAULT_VRM_PATH
 
-func _on_model_transform_changed(position: Vector3, rotation: Vector3, scale_factor: float) -> void:
-	"""Auto-save model transform when it changes AND update sliders"""
-	# Update sliders to reflect current model transform
-	_updating_sliders_from_transform = true
-	
-	if position_x_slider:
-		position_x_slider.value = position.x
-	if position_x_value:
-		position_x_value.text = "%.2f" % position.x
-	
-	if position_y_slider:
-		position_y_slider.value = position.y
-	if position_y_value:
-		position_y_value.text = "%.2f" % position.y
-	
-	if position_z_slider:
-		position_z_slider.value = position.z
-	if position_z_value:
-		position_z_value.text = "%.2f" % position.z
-	
-	if rotation_x_slider:
-		rotation_x_slider.value = rad_to_deg(rotation.x)
-	if rotation_x_value:
-		rotation_x_value.text = str(int(rad_to_deg(rotation.x))) + "°"
-	
-	if rotation_y_slider:
-		rotation_y_slider.value = rad_to_deg(rotation.y)
-	if rotation_y_value:
-		rotation_y_value.text = str(int(rad_to_deg(rotation.y))) + "°"
-	
-	if rotation_z_slider:
-		rotation_z_slider.value = rad_to_deg(rotation.z)
-	if rotation_z_value:
-		rotation_z_value.text = str(int(rad_to_deg(rotation.z))) + "°"
-	
-	_updating_sliders_from_transform = false
-	
-	# Auto-save
-	_save_last_model(_get_last_model_path())
+	if config.load("user://vrmvtube_settings.cfg") == OK and config.has_section("model"):
+		var saved_path: String = config.get_value("model", "path", DEFAULT_VRM_PATH)
+		if FileAccess.file_exists(saved_path):
+			model_path = saved_path
 
-func _on_camera_mode_changed(is_move_mode: bool) -> void:
-	"""Update UI when camera mode changes"""
-	if camera_mode_button:
-		camera_mode_button.text = "Mode: MOVE (R)" if is_move_mode else "Mode: ROTATE (R)"
-	
-	# Update info label with current mode
-	var mode_text = "MOVE" if is_move_mode else "ROTATE"
-	print("Control mode changed to: ", mode_text)
+	if FileAccess.file_exists(model_path):
+		print("Loading VRM model: ", model_path)
+		call_deferred("_load_vrm_model", model_path)
+	else:
+		push_warning("No VRM model found at: ", model_path)
+		if info_label:
+			info_label.text = "No model loaded. Press L to load a VRM model."
 
-func _on_camera_mode_button_pressed() -> void:
-	"""Toggle camera mode when button is pressed"""
-	if camera_controller:
-		camera_controller.toggle_mode()
-
-func _on_camera_started() -> void:
-	"""Called when camera successfully starts"""
-	print("Main: Camera started successfully!")
-	if webcam_status_label:
-		webcam_status_label.text = "✅ Camera Active!\n\nMediaPipe face tracking\nrunning with webcam.\n\nYour expressions are\ntracked in real-time."
-
-func _on_camera_failed(reason: String) -> void:
-	"""Called when camera fails to start"""
-	push_error("Main: Camera failed: ", reason)
-	if webcam_status_label:
-		webcam_status_label.text = "❌ Camera Failed\n\nReason: " + reason + "\n\nUsing simulated tracking.\n\nCheck camera permissions\nin Android settings."
-
-func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
-	"""Handle face tracking data updates from GDMP"""
-	# Pass tracking data to face rigging system
-	if face_rigging:
-		face_rigging.apply_tracking_data(tracking_data)
-	
-	# Update HUD with tracking data visualization
-	if webcam_status_label:
-		var quality: float = tracking_data.get("tracking_quality", 0.0)
-		var blink_l: float = tracking_data.get("blink_left", 0.0)
-		var blink_r: float = tracking_data.get("blink_right", 0.0)
-		var mouth: float = tracking_data.get("mouth_open", 0.0)
-		var source: String = tracking_data.get("source", "unknown")
-		
-		var status_text := ""
-		if gdmp_tracking and gdmp_tracking.is_gdmp_available():
-			status_text = "✅ GDMP Native"
-		else:
-			status_text = "🎭 Simulated"
-		
-		status_text += "\nQuality: %.0f%%" % (quality * 100.0)
-		status_text += "\nBlink L/R: %.2f / %.2f" % [blink_l, blink_r]
-		status_text += "\nMouth: %.2f" % mouth
-		
-		webcam_status_label.text = status_text
-
-func _on_load_model_button_pressed() -> void:
-	"""Show file dialog to select VRM model"""
-	var file_dialog = $FileDialog
-	
-	# Android scoped storage - use external app data directory
-	if OS.get_name() == "Android":
-		# Get external storage using Android API
-		var app_data_path = OS.get_system_dir(OS.SYSTEM_DIR_DOWNLOADS)
-		
-		# Check if we got a valid external storage path
-		if app_data_path.is_empty() or app_data_path.begins_with("/data/data/"):
-			# Try getting the external storage directory and construct app path
-			var external_storage = OS.get_environment("EXTERNAL_STORAGE")
-			if not external_storage.is_empty():
-				app_data_path = external_storage + "/Android/data/com.vrmvtube.app/files"
-			else:
-				# Last resort: use user data dir (may not be user-accessible)
-				app_data_path = OS.get_user_data_dir()
-		
-		file_dialog.current_dir = app_data_path
-		file_dialog.current_path = app_data_path
-		print("Android: File picker set to: ", app_data_path)
-	
-	file_dialog.popup_centered()
-
-func _on_file_selected(path: String) -> void:
-	"""Load the selected VRM model"""
-	_load_vrm_model(path)
 
 func _load_vrm_model(path: String) -> void:
-	"""Internal function to load a VRM model from path"""
-	print("Loading VRM model from: ", path)
-	info_label.text = "Loading VRM model..."
-	
-	if not FileAccess.file_exists(path):
-		var error_msg := "VRM file not found: " + path
-		push_error(error_msg)
-		info_label.text = "Error: " + error_msg
-		return
-	
-	# Remove previous model if exists - IMMEDIATE removal
-	if current_vrm_instance != null:
-		print("Removing previous VRM model...")
-		# Remove from scene tree immediately
-		model_container.remove_child(current_vrm_instance)
-		# Free the node
+	"""Load a VRM model using godot-vrm"""
+	print("═══ Loading VRM Model ═══")
+	print("Path: ", path)
+
+	# Remove existing model
+	if current_vrm_instance:
 		current_vrm_instance.queue_free()
 		current_vrm_instance = null
-		# Wait for cleanup to complete
-		await get_tree().process_frame
-	
-	# Load VRM model - handle both res:// and external paths
-	var loaded_scene: Node = null
-	
-	if path.begins_with("res://"):
-		# Internal resource - use standard load
-		var packed_scene = load(path)
-		if packed_scene != null:
-			loaded_scene = packed_scene.instantiate()
-	else:
-		# External file - use runtime GLTF/VRM loading
-		loaded_scene = _load_vrm_runtime(path)
-	
-	if loaded_scene != null:
-		current_vrm_instance = loaded_scene
-		model_container.add_child(current_vrm_instance)
-		
-		# DON'T set position/scale here - let camera controller handle it
-		# This prevents overriding saved transforms
-		if current_vrm_instance is Node3D:
-			# Reset to origin - camera controller will apply saved transform
-			current_vrm_instance.position = Vector3.ZERO
-			current_vrm_instance.rotation = Vector3.ZERO
-			current_vrm_instance.scale = Vector3.ONE
-		
-		# Load and apply saved model transform
-		_load_model_transform()
-		
-		# IMPORTANT: Ensure materials and textures are preserved
-		# Wait for the scene tree to fully process the node
-		await get_tree().process_frame
-		await get_tree().process_frame  # Extra frame wait for material loading
-		
-		# Check materials but DON'T duplicate - just verify
-		print("Checking VRM materials...")
-		_update_vrm_materials(current_vrm_instance)
-		
-		# Wait one more frame after material check
-		await get_tree().process_frame
-		
-		# Connect model to face rigging
-		if face_rigging:
-			face_rigging.set_vrm_model(current_vrm_instance)
-		
-		# Extract and display metadata
-		_update_metadata_display(current_vrm_instance)
-		
-		print("VRM model loaded successfully")
-		info_label.text = "VRM model loaded: " + path.get_file() + "\nDrag=rotate | R=mode | Move: WSAD=XY QE/scroll=Z | Rotate: WSAD=XY QE/scroll=Z"
-		
-		# Save last loaded model
-		_save_last_model(path)
-		
-		# Show model controls and metadata
-		if model_controls_panel:
-			model_controls_panel.visible = true
-		if metadata_panel:
-			metadata_panel.visible = true
-	else:
-		var error_msg := "Failed to load VRM model"
-		push_error(error_msg)
-		info_label.text = "Error: " + error_msg
 
-func _on_reset_pose_button_pressed() -> void:
-	"""Reset model to default position, rotation, and scale"""
-	if camera_controller:
-		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.0)
-		
-		# Reset all sliders to match default values
-		if position_x_slider:
-			position_x_slider.value = 0.0
-		if position_y_slider:
-			position_y_slider.value = -0.5
-		if position_z_slider:
-			position_z_slider.value = 0.0
-		if rotation_x_slider:
-			rotation_x_slider.value = 0.0
-		if rotation_y_slider:
-			rotation_y_slider.value = 0.0
-		if rotation_z_slider:
-			rotation_z_slider.value = 0.0
+	# Load VRM using godot-vrm
+	var vrm_instance := _load_vrm_runtime(path)
+	if not vrm_instance:
+		push_error("Failed to load VRM model")
+		if info_label:
+			info_label.text = "Failed to load VRM model"
+		return
 
-func _on_position_x_changed(value: float) -> void:
-	"""Update model X position via camera controller"""
-	if _updating_sliders_from_transform:
-		return  # Prevent feedback loop
-	if camera_controller:
-		var transform_data = camera_controller.get_model_transform()
-		transform_data.position.x = value
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
-	if position_x_value:
-		position_x_value.text = "%.2f" % value
+	# Add to scene
+	model_container.add_child(vrm_instance)
+	current_vrm_instance = vrm_instance
 
-func _on_position_y_changed(value: float) -> void:
-	"""Update model Y position via camera controller"""
-	if _updating_sliders_from_transform:
-		return  # Prevent feedback loop
-	if camera_controller:
-		var transform_data = camera_controller.get_model_transform()
-		transform_data.position.y = value
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
-	if position_y_value:
-		position_y_value.text = "%.2f" % value
+	# Connect to face rigging
+	if face_rigging:
+		face_rigging.set_vrm_model(vrm_instance)
 
-func _on_position_z_changed(value: float) -> void:
-	"""Update model Z position via camera controller"""
-	if _updating_sliders_from_transform:
-		return  # Prevent feedback loop
-	if camera_controller:
-		var transform_data = camera_controller.get_model_transform()
-		transform_data.position.z = value
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
-	if position_z_value:
-		position_z_value.text = "%.2f" % value
+	# Update materials for better rendering
+	_update_vrm_materials(vrm_instance)
 
-func _on_rotation_x_changed(value: float) -> void:
-	"""Update model X rotation via camera controller"""
-	if _updating_sliders_from_transform:
-		return  # Prevent feedback loop
-	if camera_controller:
-		var transform_data = camera_controller.get_model_transform()
-		transform_data.rotation.x = deg_to_rad(value)
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
-	if rotation_x_value:
-		rotation_x_value.text = str(int(value)) + "°"
+	# Update UI
+	var vrm_meta = vrm_instance.get("vrm_meta")
+	if vrm_meta and ui_controller:
+		ui_controller.update_vrm_metadata(vrm_meta)
 
-func _on_rotation_y_changed(value: float) -> void:
-	"""Update model Y rotation via camera controller"""
-	if _updating_sliders_from_transform:
-		return  # Prevent feedback loop
-	if camera_controller:
-		var transform_data = camera_controller.get_model_transform()
-		transform_data.rotation.y = deg_to_rad(value)
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
-	if rotation_y_value:
-		rotation_y_value.text = str(int(value)) + "°"
+	if info_label:
+		info_label.text = "VRM model loaded!"
 
-func _on_rotation_z_changed(value: float) -> void:
-	"""Update model Z rotation via camera controller"""
-	if _updating_sliders_from_transform:
-		return  # Prevent feedback loop
-	if camera_controller:
-		var transform_data = camera_controller.get_model_transform()
-		transform_data.rotation.z = deg_to_rad(value)
-		camera_controller.set_model_transform(transform_data.position, transform_data.rotation, 1.0)
-	if rotation_z_value:
-		rotation_z_value.text = str(int(value)) + "°"
+	# Save as last loaded model
+	var config := ConfigFile.new()
+	config.load("user://vrmvtube_settings.cfg")
+	config.set_value("model", "path", path)
+	config.save("user://vrmvtube_settings.cfg")
 
-# LineEdit input handlers
-func _on_position_x_input(text: String) -> void:
-	"""Handle direct input for X position"""
-	var value = text.to_float()
-	if position_x_slider:
-		position_x_slider.value = clamp(value, position_x_slider.min_value, position_x_slider.max_value)
+	print("✅ VRM model loaded successfully")
 
-func _on_position_y_input(text: String) -> void:
-	"""Handle direct input for Y position"""
-	var value = text.to_float()
-	if position_y_slider:
-		position_y_slider.value = clamp(value, position_y_slider.min_value, position_y_slider.max_value)
 
-func _on_position_z_input(text: String) -> void:
-	"""Handle direct input for Z position"""
-	var value = text.to_float()
-	if position_z_slider:
-		position_z_slider.value = clamp(value, position_z_slider.min_value, position_z_slider.max_value)
+func _load_vrm_runtime(path: String) -> Node:
+	"""Load VRM file at runtime using godot-vrm"""
+	# Use godot-vrm's import_vrm script
+	var vrm_loader = load("res://addons/vrm/import_vrm.gd").new()
 
-func _on_rotation_x_input(text: String) -> void:
-	"""Handle direct input for X rotation"""
-	var value = text.replace("°", "").to_float()
-	if rotation_x_slider:
-		rotation_x_slider.value = clamp(value, rotation_x_slider.min_value, rotation_x_slider.max_value)
+	# Read VRM file
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		push_error("Failed to open VRM file: ", path)
+		return null
 
-func _on_rotation_y_input(text: String) -> void:
-	"""Handle direct input for Y rotation"""
-	var value = text.replace("°", "").to_float()
-	if rotation_y_slider:
-		rotation_y_slider.value = clamp(value, rotation_y_slider.min_value, rotation_y_slider.max_value)
+	var content := file.get_buffer(file.get_length())
+	file.close()
 
-func _on_rotation_z_input(text: String) -> void:
-	"""Handle direct input for Z rotation"""
-	var value = text.replace("°", "").to_float()
-	if rotation_z_slider:
-		rotation_z_slider.value = clamp(value, rotation_z_slider.min_value, rotation_z_slider.max_value)
+	# Import VRM
+	var state := GLTFState.new()
+	var vrm_extension: GLTFDocumentExtension = load("res://addons/vrm/vrm_extension.gd").new()
+	state.add_used_extension("VRM", true)
+	state.register_gltf_document_extension(vrm_extension, true)
+
+	var gltf := GLTFDocument.new()
+	var err := gltf.append_from_buffer(content, "", state)
+
+	if err != OK:
+		push_error("Failed to parse VRM file: ", err)
+		return null
+
+	var scene := gltf.generate_scene(state)
+	if not scene:
+		push_error("Failed to generate VRM scene")
+		return null
+
+	return scene
+
 
 func _update_vrm_materials(node: Node) -> void:
-	"""Recursively update materials on VRM model - DO NOT duplicate to prevent white flash"""
+	"""Ensure VRM materials render correctly"""
 	if node is MeshInstance3D:
-		var mesh_instance := node as MeshInstance3D
-		if mesh_instance.mesh:
-			print("Checking materials for mesh: ", node.name)
-			# DON'T duplicate materials - this causes the white flash!
-			# Just ensure the materials are properly visible and enhanced
-			for i in range(mesh_instance.mesh.get_surface_count()):
-				var material := mesh_instance.mesh.surface_get_material(i)
-				if material:
-					# Only modify transparency/visibility if needed, without duplicating
-					if material is StandardMaterial3D:
-						var std_mat := material as StandardMaterial3D
-						# Only fix if actually transparent
-						if std_mat.albedo_color.a < 0.99:
-							std_mat.albedo_color.a = 1.0
-							print("  - Fixed transparency on surface ", i)
-					elif material is ShaderMaterial:
-						# For MToon shader, enhance rendering quality
-						var shader_mat := material as ShaderMaterial
-						
-						# Check if this is an MToon shader
-						if shader_mat.shader and shader_mat.shader.resource_path.contains("mtoon"):
-							# Enhance MToon shader parameters for better detail visibility
-							# These are non-destructive enhancements
-							
-							# Increase rim light for better edge definition
-							if shader_mat.get_shader_parameter("Rim_Lighting_Mix") != null:
-								var current_rim = shader_mat.get_shader_parameter("Rim_Lighting_Mix")
-								if current_rim < 0.3:
-									shader_mat.set_shader_parameter("Rim_Lighting_Mix", 0.3)
-							
-							# Ensure shade color isn't too dark (improves detail in shadows)
-							if shader_mat.get_shader_parameter("Shade_Color") != null:
-								var shade_color = shader_mat.get_shader_parameter("Shade_Color")
-								if shade_color is Color:
-									# Brighten shade color if it's too dark
-									var brightness = (shade_color.r + shade_color.g + shade_color.b) / 3.0
-									if brightness < 0.3 and brightness > 0.001:  # Avoid division by zero
-										var factor = 0.3 / brightness
-										shader_mat.set_shader_parameter("Shade_Color", Color(
-											shade_color.r * factor,
-											shade_color.g * factor,
-											shade_color.b * factor,
-											shade_color.a
-										))
-							
-							print("  - Enhanced MToon shader on surface ", i)
-						else:
-							print("  - Shader material on surface ", i, " - keeping as-is")
-					
-					print("  - Surface ", i, " material: ", material.get_class())
-	
-	# Recursively process children
+		var mesh := node as MeshInstance3D
+		for i in range(mesh.get_surface_override_material_count()):
+			var mat := mesh.get_surface_override_material(i)
+			if mat:
+				# Materials should already be set up by godot-vrm
+				pass
+
 	for child in node.get_children():
 		_update_vrm_materials(child)
 
-func _load_vrm_runtime(path: String) -> Node:
-	"""Load VRM file at runtime using GLTFDocument (for external files)"""
-	print("Runtime VRM loading from: ", path)
-	
-	# Create GLTF document and state
-	var gltf := GLTFDocument.new()
-	var state := GLTFState.new()
-	
-	# Register VRM extension for proper VRM support
-	const vrm_extension_script = preload("res://addons/vrm/vrm_extension.gd")
-	var vrm_extension: GLTFDocumentExtension = vrm_extension_script.new()
-	gltf.register_gltf_document_extension(vrm_extension, true)
-	
-	# Configure state for VRM loading
-	state.handle_binary_image = GLTFState.HANDLE_BINARY_EMBED_AS_UNCOMPRESSED
-	
-	# Load the VRM file
-	var error := gltf.append_from_file(path, state, 0)
-	if error != OK:
-		push_error("Failed to parse VRM file: " + str(error))
-		gltf.unregister_gltf_document_extension(vrm_extension)
-		return null
-	
-	# Generate the scene
-	var generated_scene := gltf.generate_scene(state)
-	gltf.unregister_gltf_document_extension(vrm_extension)
-	
-	if generated_scene == null:
-		push_error("Failed to generate scene from VRM file")
-		return null
-	
-	print("VRM runtime loading successful")
-	return generated_scene
+
+# Event handlers
+func _on_tracking_data_received(tracking_data: Dictionary) -> void:
+	"""Handle face tracking data from GDMP"""
+	if face_rigging:
+		face_rigging.apply_tracking_data(tracking_data)
+
+	if ui_controller and gdmp_tracking:
+		ui_controller.update_tracking_display(tracking_data, gdmp_tracking.is_gdmp_available())
+
+
+func _on_camera_started() -> void:
+	"""Camera successfully started"""
+	print("Camera started successfully!")
+	if ui_controller:
+		ui_controller.update_webcam_status("active", true, gdmp_tracking.is_gdmp_available())
+
+
+func _on_camera_failed(reason: String) -> void:
+	"""Camera failed to start"""
+	push_error("Camera failed: ", reason)
+	if ui_controller:
+		ui_controller.update_webcam_status("failed")
+
+
+func _on_camera_mode_changed(is_move_mode: bool) -> void:
+	"""Camera mode toggled"""
+	if ui_controller:
+		ui_controller.update_camera_mode_button(is_move_mode)
+
+
+func _on_model_transform_changed(pos: Vector3, rot: Vector3, scale_factor: float) -> void:
+	"""Model transform changed by camera controller"""
+	if ui_controller:
+		ui_controller.update_model_sliders(pos, rot)
+
+	# Save transform
+	var config := ConfigFile.new()
+	config.load("user://vrmvtube_settings.cfg")
+	config.set_value("model", "position_x", pos.x)
+	config.set_value("model", "position_y", pos.y)
+	config.set_value("model", "position_z", pos.z)
+	config.set_value("model", "rotation_x", rot.x)
+	config.set_value("model", "rotation_y", rot.y)
+	config.set_value("model", "rotation_z", rot.z)
+	config.save("user://vrmvtube_settings.cfg")
+
+
+func _on_model_position_changed(pos: Vector3) -> void:
+	"""UI position sliders changed"""
+	if not camera_controller:
+		return
+
+	var current_transform: Dictionary = camera_controller.get_model_transform()
+	camera_controller.set_model_transform(pos, current_transform.rotation, current_transform.scale)
+
+
+func _on_model_rotation_changed(rot: Vector3) -> void:
+	"""UI rotation sliders changed"""
+	if not camera_controller:
+		return
+
+	var current_transform: Dictionary = camera_controller.get_model_transform()
+	camera_controller.set_model_transform(current_transform.position, rot, current_transform.scale)
+
+
+func _on_load_model_button_pressed() -> void:
+	"""Open file dialog to load VRM model"""
+	var file_dialog := FileDialog.new()
+	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	file_dialog.filters = PackedStringArray(["*.vrm ; VRM Model Files"])
+	file_dialog.file_selected.connect(_on_file_selected)
+	add_child(file_dialog)
+	file_dialog.popup_centered(Vector2i(800, 600))
+
+
+func _on_file_selected(path: String) -> void:
+	"""File selected from dialog"""
+	_load_vrm_model(path)
+
+
+func _on_reset_pose_button_pressed() -> void:
+	"""Reset model to default position and rotation"""
+	if camera_controller:
+		camera_controller.set_model_transform(Vector3(0, -0.5, 0), Vector3.ZERO, 1.0)
+		print("Model pose reset")
+
 
 func _on_settings_button_pressed() -> void:
 	"""Open settings menu"""
 	if settings_menu:
-		settings_menu.show_settings()
+		settings_menu.popup_centered()
+
+
+func _on_camera_mode_button_pressed() -> void:
+	"""Toggle camera control mode"""
+	if camera_controller:
+		camera_controller.toggle_mode()
+
 
 func _on_settings_applied(settings: Dictionary) -> void:
-	"""Apply settings from settings menu"""
-	print("Settings applied: ", settings)
-	
-	# Apply model settings
-	if settings.has("model") and settings.model.has("path"):
-		var model_path: String = settings.model.path
-		if model_path != "" and model_path != DEFAULT_VRM_PATH:
-			if current_vrm_instance == null or model_path != current_vrm_instance.get("vrm_path"):
-				_load_vrm_model(model_path)
-	
-	# Apply background settings
-	if settings.has("background"):
-		_apply_background_settings(settings.background)
-	
-	# Apply graphics settings
-	if settings.has("graphics"):
-		_apply_graphics_settings(settings.graphics)
-	
-	# Camera settings are handled by webcam_tracker
+	"""Settings were applied in settings menu"""
+	# Settings are saved automatically by settings_menu
+	# Just reload them
+	_load_settings()
 
-func _apply_graphics_settings(graphics_settings: Dictionary) -> void:
-	"""Apply graphics quality settings"""
-	if graphics_settings.has("resolution_scale"):
-		get_viewport().scaling_3d_scale = graphics_settings.resolution_scale
-		print("Applied resolution scale: ", graphics_settings.resolution_scale)
-	
-	if graphics_settings.has("msaa"):
-		get_viewport().msaa_3d = graphics_settings.msaa
-		print("Applied MSAA: ", graphics_settings.msaa)
-	
-	if graphics_settings.has("vsync"):
-		var mode = DisplayServer.VSYNC_ENABLED if graphics_settings.vsync else DisplayServer.VSYNC_DISABLED
-		DisplayServer.window_set_vsync_mode(mode)
-		print("Applied VSync: ", graphics_settings.vsync)
 
-func _apply_background_settings(bg_settings: Dictionary) -> void:
-	"""Apply background color/type settings"""
-	if not world_environment or not world_environment.environment:
-		return
-	
-	var env := world_environment.environment
-	
-	match bg_settings.get("type", "solid"):
-		"solid":
-			env.background_mode = Environment.BG_COLOR
-			if bg_settings.has("color"):
-				env.background_color = bg_settings.color
-		"gradient":
-			# Godot doesn't have built-in gradient background
-			# Use solid color for now (could implement custom sky shader)
-			env.background_mode = Environment.BG_COLOR
-			if bg_settings.has("gradient_top"):
-				env.background_color = bg_settings.gradient_top
-		"image":
-			if bg_settings.has("image_path") and bg_settings.image_path != "":
-				# Would need to load image and set as sky
-				# For now, keep current background
-				pass
+# Panel collapse/expand handlers
+func _on_title_collapse_pressed() -> void:
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/TitlePanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
+
 
 func _on_webcam_collapse_pressed() -> void:
-	"""Toggle webcam preview panel collapse"""
-	if webcam_content:
-		webcam_content.visible = not webcam_content.visible
-		if webcam_collapse_button:
-			webcam_collapse_button.text = "▲" if not webcam_content.visible else "▼"
-		
-		# Save the state to settings
-		_save_webcam_hud_state(webcam_content.visible)
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_webcam_collapse_pressed()
 
-func _save_webcam_hud_state(visible: bool) -> void:
-	"""Save webcam HUD visibility state to settings"""
-	var config := ConfigFile.new()
-	# Load existing settings - ignore error as file may not exist yet
-	# ConfigFile.set_value() and save() will work regardless
-	config.load("user://vrmvtube_settings.cfg")
-	config.set_value("ui", "webcam_hud_visible", visible)
-	var err := config.save("user://vrmvtube_settings.cfg")
-	if err == OK:
-		print("Saved webcam HUD state: ", visible)
-	else:
-		push_error("Failed to save webcam HUD state")
-
-func _on_sidebar_collapse_pressed() -> void:
-	"""Collapse the entire sidebar"""
-	sidebar_collapsed = true
-	if right_panel:
-		right_panel.visible = false
-	if sidebar_collapse_tab:
-		sidebar_collapse_tab.visible = true
-	print("Sidebar collapsed")
-
-func _on_sidebar_expand_pressed() -> void:
-	"""Expand the sidebar"""
-	sidebar_collapsed = false
-	if right_panel:
-		right_panel.visible = true
-	if sidebar_collapse_tab:
-		sidebar_collapse_tab.visible = false
-	print("Sidebar expanded")
-
-func _on_metadata_collapse_pressed() -> void:
-	"""Toggle metadata panel collapse"""
-	if metadata_content:
-		metadata_content.visible = not metadata_content.visible
-		if metadata_collapse_button:
-			metadata_collapse_button.text = "▲" if not metadata_content.visible else "▼"
-
-func _on_title_collapse_pressed() -> void:
-	"""Toggle title panel collapse"""
-	if title_content:
-		title_content.visible = not title_content.visible
-		if title_collapse_button:
-			title_collapse_button.text = "▲" if not title_content.visible else "▼"
 
 func _on_buttons_collapse_pressed() -> void:
-	"""Toggle buttons panel collapse"""
-	if buttons_content:
-		buttons_content.visible = not buttons_content.visible
-		if buttons_collapse_button:
-			buttons_collapse_button.text = "▲" if not buttons_content.visible else "▼"
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ButtonsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
+
 
 func _on_model_controls_collapse_pressed() -> void:
-	"""Toggle model controls panel collapse"""
-	if model_controls_content:
-		model_controls_content.visible = not model_controls_content.visible
-		if model_controls_collapse_button:
-			model_controls_collapse_button.text = "▲" if not model_controls_content.visible else "▼"
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/ModelControlsPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
+
+
+func _on_metadata_collapse_pressed() -> void:
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_metadata_collapse_pressed()
+
 
 func _on_bottom_collapse_pressed() -> void:
-	"""Toggle bottom panel collapse"""
-	if bottom_content:
-		bottom_content.visible = not bottom_content.visible
-		if bottom_collapse_button:
-			bottom_collapse_button.text = "▲" if not bottom_content.visible else "▼"
+	var content = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/ContentContainer
+	var button = $UI/Control/RightPanel/ScrollContainer/PanelsContainer/BottomPanel/MarginContainer/VBoxContainer/HeaderContainer/CollapseButton
+	if content and button:
+		content.visible = not content.visible
+		button.text = "▼" if content.visible else "▲"
 
-func _update_metadata_display(vrm_node: Node) -> void:
-	"""Extract and display VRM metadata"""
-	if not metadata_label:
-		return
-	
-	# Find VRM metadata node
-	var vrm_meta = null
-	for child in vrm_node.get_children():
-		if child.has_meta("vrm_meta"):
-			vrm_meta = child.get_meta("vrm_meta")
-			break
-		# Also check if the child itself has vrm_meta property
-		if "vrm_meta" in child:
-			vrm_meta = child.vrm_meta
-			break
-	
-	# Try to find in the root node as well
-	if vrm_meta == null and vrm_node.has_meta("vrm_meta"):
-		vrm_meta = vrm_node.get_meta("vrm_meta")
-	if vrm_meta == null and "vrm_meta" in vrm_node:
-		vrm_meta = vrm_node.vrm_meta
-	
-	# Build metadata display
-	var metadata_text := ""
-	
-	if vrm_meta:
-		# Debug logging to see actual metadata structure
-		print("VRM metadata found. Type: ", vrm_meta.get_class())
-		print("VRM spec_version: ", vrm_meta.get("spec_version", "unknown"))
-		
-		metadata_text += "[b]VRM Metadata[/b]\n\n"
-		
-		# Basic info - handle both VRM 0.x and 1.0
-		# VRM 1.0 uses "name" in the JSON, but vrm_meta.gd maps it to "title"
-		var title_value = vrm_meta.get("title", "")
-		if title_value == "" or title_value == null:
-			# Fallback: try alternate fields
-			title_value = vrm_meta.get("name", "")
-		if title_value != "" and title_value != null:
-			metadata_text += "[b]Title:[/b] " + str(title_value) + "\n"
-			
-		if vrm_meta.get("version"):
-			metadata_text += "[b]Version:[/b] " + str(vrm_meta.version) + "\n"
-			
-		# Authors - VRM 1.0 uses PackedStringArray
-		if vrm_meta.get("authors"):
-			var authors = vrm_meta.authors
-			if authors is PackedStringArray and authors.size() > 0:
-				metadata_text += "[b]Author(s):[/b] " + ", ".join(authors) + "\n"
-			elif authors is String and authors != "":
-				metadata_text += "[b]Author:[/b] " + str(authors) + "\n"
-		elif vrm_meta.get("author"):
-			metadata_text += "[b]Author:[/b] " + str(vrm_meta.author) + "\n"
-		
-		# Contact and reference
-		if vrm_meta.get("contact_information"):
-			metadata_text += "[b]Contact:[/b] " + str(vrm_meta.contact_information) + "\n"
-		if vrm_meta.get("references") and vrm_meta.references.size() > 0:
-			metadata_text += "[b]References:[/b] " + ", ".join(vrm_meta.references) + "\n"
-		
-		metadata_text += "\n[b]Permissions:[/b]\n"
-		
-		# Usage permissions
-		if vrm_meta.get("allowed_user_name") and vrm_meta.allowed_user_name != " ":
-			metadata_text += "• User: " + str(vrm_meta.allowed_user_name) + "\n"
-		if vrm_meta.get("commercial_usage_type") and vrm_meta.commercial_usage_type != " ":
-			metadata_text += "• Commercial: " + str(vrm_meta.commercial_usage_type) + "\n"
-		if vrm_meta.get("violent_usage") and vrm_meta.violent_usage != " ":
-			metadata_text += "• Violent Content: " + str(vrm_meta.violent_usage) + "\n"
-		if vrm_meta.get("sexual_usage") and vrm_meta.sexual_usage != " ":
-			metadata_text += "• Sexual Content: " + str(vrm_meta.sexual_usage) + "\n"
-		if vrm_meta.get("credit_notation") and vrm_meta.credit_notation != " ":
-			metadata_text += "• Credit: " + str(vrm_meta.credit_notation) + "\n"
-		if vrm_meta.get("modification") and vrm_meta.modification != " ":
-			metadata_text += "• Modification: " + str(vrm_meta.modification) + "\n"
-		if vrm_meta.get("allow_redistribution") and vrm_meta.allow_redistribution != " ":
-			metadata_text += "• Redistribution: " + str(vrm_meta.allow_redistribution) + "\n"
-		
-		# License info
-		metadata_text += "\n[b]License:[/b]\n"
-		if vrm_meta.get("license_name"):
-			metadata_text += "• " + str(vrm_meta.license_name) + "\n"
-		if vrm_meta.get("license_url"):
-			metadata_text += "• URL: " + str(vrm_meta.license_url) + "\n"
-		if vrm_meta.get("other_license_url"):
-			metadata_text += "• Other: " + str(vrm_meta.other_license_url) + "\n"
-		
-		# Technical info
-		metadata_text += "\n[b]Technical Info:[/b]\n"
-		if vrm_meta.get("spec_version"):
-			metadata_text += "• VRM Spec: " + str(vrm_meta.spec_version) + "\n"
-		if vrm_meta.get("exporter_version"):
-			metadata_text += "• Exporter: " + str(vrm_meta.exporter_version) + "\n"
-	else:
-		metadata_text = "[b]Model Metadata[/b]\n\nNo VRM metadata found in this model.\n\nThis may be because:\n• Model is not a standard VRM file\n• Metadata was not included by the creator\n• Model was exported without metadata"
-	
-	metadata_label.text = metadata_text
-	print("Metadata display updated")
+
+func _on_sidebar_collapse_pressed() -> void:
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_sidebar_collapse_pressed()
+
+
+func _on_sidebar_expand_pressed() -> void:
+	# Delegate to UI controller
+	if ui_controller:
+		ui_controller._on_sidebar_expand_pressed()
