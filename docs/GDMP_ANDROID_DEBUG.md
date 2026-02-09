@@ -107,7 +107,7 @@ In `export_presets.cfg` for Android:
 name="Android"
 export_filter="all_resources"  # Include all resources
 include_filter=""  # Don't need specific includes
-exclude_filter="third_party/*"  # Exclude source, not addons
+exclude_filter="third_party/*"  # Optional if you keep local sources
 architectures/arm64-v8a=true  # 64-bit ARM
 architectures/x86_64=true  # Emulator support
 ```

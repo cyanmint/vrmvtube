@@ -2,12 +2,11 @@
 
 ## Overview
 
-VRMVTube now has **GDMP source code fully vendored** in this repository. GDMP provides native MediaPipe integration for Godot 4.x.
+VRMVTube uses **GDMP prebuilt binaries** from the official releases. The repository keeps only the addon configuration files, while CI (and local developers) download the platform binaries and models as needed.
 
 **Key Features:**
-- ✅ **Fully Self-Contained**: Source code included in `third_party/GDMP/`
-- ✅ **CI Builds Binaries**: GitHub Actions automatically builds GDMP for all platforms
-- ✅ **No Manual Downloads**: Everything automated in CI
+- ✅ **Prebuilt Binaries**: Downloaded from GDMP releases (CI handles this)
+- ✅ **No Source Checkout**: No vendored GDMP source required
 - ✅ **Native Performance**: Compiled C++ MediaPipe integration
 - ✅ **Cross-Platform**: Windows, Linux, macOS, Android, iOS, Web
 
@@ -15,48 +14,20 @@ VRMVTube now has **GDMP source code fully vendored** in this repository. GDMP pr
 
 ### Local Development
 
-GDMP binaries are **NOT** committed to the repo. Instead, CI downloads them during builds.
+GDMP binaries are **NOT** committed to the repo. Instead, CI (and local developers) download them during builds.
 
-For local development, you have two options:
-
-#### Option 1: Let CI Download GDMP (Recommended)
-
-The CI workflow automatically downloads GDMP v0.6 binaries and MediaPipe models during build:
+For local development, download the prebuilt GDMP release and MediaPipe model:
 
 ```bash
-# CI does this automatically:
+# Download the unified GDMP release archive
 wget https://github.com/j20001970/GDMP/releases/download/v0.6/GDMP-v0.6.zip
 unzip GDMP-v0.6.zip  # Extracts to addons/GDMP/
-wget https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
-mv face_landmarker.task addons/GDMP/models/
+
+# Download MediaPipe face landmarker model
+mkdir -p addons/GDMP/models
+wget -O addons/GDMP/models/face_landmarker.task \
+  https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
 ```
-
-#### Option 2: Build GDMP from Source (Advanced)
-
-If you want to build GDMP locally:
-
-```bash
-cd third_party/GDMP
-
-# Initialize MediaPipe submodule (GDMP has its own submodules)
-git submodule update --init --recursive
-
-# Install Bazelisk (build tool)
-# See: https://github.com/bazelbuild/bazelisk
-
-# Build for your platform
-python build.py desktop --type release --arch x86_64
-
-# Copy built addon to project
-cp -r addons/GDMP ../../addons/
-```
-
-**Note:** Building GDMP from source requires:
-- Bazel/Bazelisk
-- C++ compiler toolchain
-- Python 3
-- Several GB of disk space
-- 30-60 minutes build time
 
 ## For End Users
 
@@ -75,16 +46,12 @@ Just run the app - face tracking works immediately!
 
 ```
 vrmvtube/
-├── third_party/
-│   └── GDMP/              # ← GDMP source code (vendored)
-│       ├── GDMP/          # Source files
-│       ├── build.py       # Build script
-│       ├── README.md      # GDMP documentation
-│       └── ...
 ├── addons/
-│   ├── GDMP/              # ← Built binaries (CI only, not in repo)
+│   ├── GDMP/              # ← Addon config (binaries downloaded)
+│   │   ├── GDMP.gdextension
+│   │   ├── plugin.cfg
 │   │   ├── libs/          # Platform-specific .dll/.so/.dylib
-│   │   └── models/        # MediaPipe models (downloaded by CI)
+│   │   └── models/        # MediaPipe models
 │   ├── vrm/               # VRM import/export
 │   └── Godot-MToon-Shader/
 ├── scripts/
@@ -97,7 +64,7 @@ vrmvtube/
 
 The GitHub Actions workflow (`.github/workflows/build.yml`) automatically:
 
-1. **Checks out the repo** (includes vendored GDMP source)
+1. **Checks out the repo**
 2. **Downloads GDMP binaries** from GitHub releases
 3. **Downloads MediaPipe models** from Google Cloud Storage
 4. **Builds all platforms** with GDMP included
@@ -107,43 +74,25 @@ The GitHub Actions workflow (`.github/workflows/build.yml`) automatically:
 
 - **Large files**: GDMP binaries are ~300MB (all platforms)
 - **Git bloat**: Binary files bloat git history
-- **License clarity**: Source code shows exact GDMP version
 - **Reproducible builds**: CI always gets clean binaries
-
-## Why Vendor Source Code?
-
-1. **Transparency**: Exact GDMP version visible in repo
-2. **Stability**: Not affected by upstream changes
-3. **License compliance**: GDMP source shows Apache 2.0 license
-4. **Customization**: Can modify GDMP if needed
-5. **Offline builds**: Can build without internet (once deps cached)
 
 ## Updating GDMP
 
 To update to a new GDMP version:
 
 ```bash
-# Remove old source
-rm -rf third_party/GDMP
-
-# Clone new version
-git clone --depth 1 --branch vX.X https://github.com/j20001970/GDMP.git third_party/GDMP
-
-# Remove .git to vendor it
-rm -rf third_party/GDMP/.git
-
-# Update CI to use new version
+# Update CI to use the new version
 # Edit .github/workflows/build.yml:
 #   GDMP_VERSION: vX.X
 
-# Commit
-git add third_party/GDMP .github/workflows/build.yml
-git commit -m "Update GDMP to vX.X"
+# Download the matching release locally if needed
+wget https://github.com/j20001970/GDMP/releases/download/vX.X/GDMP-vX.X.zip
+unzip GDMP-vX.X.zip
 ```
 
 ## License
 
-- **GDMP**: Apache 2.0 (source in `third_party/GDMP/`)
+- **GDMP**: Apache 2.0 (prebuilt binaries)
 - **MediaPipe**: Apache 2.0
 - **VRMVTube**: CC0 (Public Domain)
 
@@ -207,32 +156,28 @@ vrmvtube/
 │       ├── GDMP.gdextension
 │       ├── plugin.cfg
 │       ├── plugin.gd
-│       ├── bin/
-│       │   ├── windows/
-│       │   │   └── libGDMP.windows.template_release.x86_64.dll
-│       │   ├── linux/
-│       │   │   └── libGDMP.linux.template_release.x86_64.so
-│       │   ├── macos/
-│       │   │   └── libGDMP.macos.template_release.universal.dylib
-│       │   └── android/
-│       │       └── libGDMP.android.template_release.arm64-v8a.so
+│       ├── libs/
+│       │   ├── x86_64/
+│       │   │   ├── GDMP.windows.dll
+│       │   │   └── libGDMP.linux.so
+│       │   ├── arm64/
+│       │   │   └── libGDMP.android.so
+│       │   └── ...
 │       └── models/
 │           └── face_landmarker.task
 ├── scripts/
 │   └── gdmp_tracking.gd  # VRMVTube's GDMP wrapper
-└── third_party/
-    └── GDMP/  # Git submodule (source code)
 ```
 
 ## Models
 
-GDMP requires MediaPipe model files. These are included with GDMP releases:
+GDMP requires MediaPipe model files. Download them alongside the GDMP binaries:
 
 - `face_landmarker.task` - Face mesh model (~26MB)
 - `hand_landmarker.task` - Hand tracking model (~14MB)  
 - `pose_landmarker.task` - Pose detection model (~28MB)
 
-Models are automatically included in exports.
+CI downloads the model automatically during builds, and exports include it.
 
 ## CI/CD Integration
 
@@ -255,7 +200,7 @@ See `.github/workflows/build.yml` for details.
 
 ### "GDExtension failed to load"
 - Check you downloaded the correct platform binaries
-- Ensure DLLs/SOs are in `addons/GDMP/bin/`
+- Ensure DLLs/SOs are in `addons/GDMP/libs/`
 
 ### Performance issues
 - GDMP is highly optimized, should run smoothly

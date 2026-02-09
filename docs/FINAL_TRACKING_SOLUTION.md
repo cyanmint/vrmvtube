@@ -82,16 +82,12 @@ scripts/
 
 ### Dependencies
 ```
-third_party/
-└── GDMP/                 - Git submodule (source)
-
-addons/                   - Not in repo, user installs
-└── GDMP/                 - User downloads binaries
-    ├── bin/
-    │   ├── windows/      - Windows DLL
-    │   ├── linux/        - Linux SO
-    │   ├── macos/        - macOS dylib
-    │   └── android/      - Android SO
+addons/                   - Addon config in repo, binaries downloaded
+└── GDMP/                 - User/CI downloads binaries
+    ├── libs/
+    │   ├── x86_64/       - Windows/Linux libraries
+    │   ├── arm64/        - Android libraries
+    │   └── ...           - Other platform binaries
     └── models/
         └── face_landmarker.task  - MediaPipe model
 ```

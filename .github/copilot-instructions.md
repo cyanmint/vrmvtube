@@ -36,7 +36,6 @@ vrmvtube/
 ├── scripts/            # GDScript files (.gd)
 ├── assets/             # Images, fonts, UI assets
 ├── models/             # Example VRM models (if any)
-├── third_party/        # Git submodules for dependencies
 └── .github/
     └── workflows/      # CI/CD workflows
 ```
@@ -51,8 +50,8 @@ vrmvtube/
 5. Update the roadmap in README.md
 
 ### Dependencies
-- **godot-vrm**: Added as git submodule in `third_party/godot-vrm`
-- Copy needed addons from submodule to `addons/` directory
+- **godot-vrm** and **MToon Shader** are vendored under `addons/`
+- When updating, copy updated addons from upstream sources into `addons/`
 - Always credit dependencies in README.md with proper license information
 
 ### Platform-Specific Code
@@ -118,20 +117,10 @@ Before committing changes:
 3. Handle errors gracefully (models may be invalid)
 4. Support both VRM 0.x and 1.0 formats
 
-### Updating godot-vrm Submodule
-```bash
-cd third_party/godot-vrm
-git pull origin master
-cd ../..
-git add third_party/godot-vrm
-git commit -m "Update godot-vrm submodule"
-```
-
-Then copy updated addons:
-```bash
-cp -r third_party/godot-vrm/addons/vrm addons/
-cp -r third_party/godot-vrm/addons/Godot-MToon-Shader addons/
-```
+### Updating godot-vrm Addons
+1. Pull the latest `godot-vrm` repository (outside this repo).
+2. Copy `addons/vrm` and `addons/Godot-MToon-Shader` into this project’s `addons/` folder.
+3. Preserve upstream license files and update README credits if needed.
 
 ## Performance Guidelines
 

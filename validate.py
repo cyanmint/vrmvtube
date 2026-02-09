@@ -97,7 +97,7 @@ def validate_project():
     # Check scripts
     scripts = [
         "scripts/main.gd",
-        "scripts/webcam_tracker.gd",
+        "scripts/gdmp_tracking.gd",
         "scripts/face_rigging.gd",
         "scripts/camera_controller.gd"
     ]
