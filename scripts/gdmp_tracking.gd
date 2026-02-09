@@ -67,6 +67,12 @@ func _ready() -> void:
 		# Use simulation as emergency fallback, but log as error
 		_start_simulated_tracking()
 		push_error("Using simulation fallback - NOT suitable for production use")
+		
+		if use_camera:
+			var platform = OS.get_name()
+			if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
+				print("GDMPTracking: Starting CameraServer preview on desktop")
+				await _initialize_camera()
 
 func _check_gdmp_availability() -> void:
 	"""Check if GDMP plugin is available"""

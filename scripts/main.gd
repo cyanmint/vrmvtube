@@ -171,7 +171,7 @@ func _ready() -> void:
 	# Update webcam status based on platform and GDMP availability
 	if webcam_status_label:
 		if platform_name in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
-			webcam_status_label.text = "⚠️ Webcam Preview\nNot Available on Desktop\n\nGodot CameraServer\nonly works on:\n• Android\n• iOS\n• Web\n\nFace tracking still works\nusing simulation mode"
+			webcam_status_label.text = "📹 Initializing Camera...\n\nDesktop preview uses\nGodot CameraServer.\n\nFace tracking uses\nsimulated data."
 		elif platform_name in ["Android", "iOS", "Web", "HTML5"]:
 			# Check GDMP status for mobile/web - will update later when camera initializes
 			if gdmp_tracking and gdmp_tracking.is_gdmp_available():
@@ -389,13 +389,24 @@ func _on_camera_started() -> void:
 	"""Called when camera successfully starts"""
 	print("Main: Camera started successfully!")
 	if webcam_status_label:
-		webcam_status_label.text = "✅ Camera Active!\n\nMediaPipe face tracking\nrunning with webcam.\n\nYour expressions are\ntracked in real-time."
+		if gdmp_tracking and gdmp_tracking.is_gdmp_available():
+			webcam_status_label.text = "✅ Camera Active!\n\nMediaPipe face tracking\nrunning with webcam.\n\nYour expressions are\ntracked in real-time."
+		else:
+			webcam_status_label.text = "✅ Camera Active!\n\nWebcam preview is live.\n\nFace tracking uses\nsimulated data."
+	if webcam_texture_rect and gdmp_tracking and gdmp_tracking.has_method("get_camera_texture"):
+		var camera_texture = gdmp_tracking.get_camera_texture()
+		if camera_texture:
+			webcam_texture_rect.texture = camera_texture
+			webcam_texture_rect.visible = true
 
 func _on_camera_failed(reason: String) -> void:
 	"""Called when camera fails to start"""
 	push_error("Main: Camera failed: ", reason)
 	if webcam_status_label:
-		webcam_status_label.text = "❌ Camera Failed\n\nReason: " + reason + "\n\nUsing simulated tracking.\n\nCheck camera permissions\nin Android settings."
+		webcam_status_label.text = "❌ Camera Failed\n\nReason: " + reason + "\n\nUsing simulated tracking.\n\nCheck camera permissions\nand device access."
+	if webcam_texture_rect:
+		webcam_texture_rect.texture = null
+		webcam_texture_rect.visible = false
 
 func _on_face_tracking_updated(tracking_data: Dictionary) -> void:
 	"""Handle face tracking data updates from GDMP"""
