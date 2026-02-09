@@ -83,9 +83,9 @@ func _check_gdmp_availability() -> void:
 	]
 	
 	var all_available = true
-	for class_name in classes_to_check:
-		var exists = ClassDB.class_exists(class_name)
-		print("GDMPTracking:   - ", class_name, ": ", "✅" if exists else "❌")
+	for gdmp_class_name in classes_to_check:
+		var exists = ClassDB.class_exists(gdmp_class_name)
+		print("GDMPTracking:   - ", gdmp_class_name, ": ", "✅" if exists else "❌")
 		if not exists:
 			all_available = false
 	
@@ -194,11 +194,10 @@ func _initialize_gdmp() -> void:
 		print("GDMPTracking: Initializing camera with timeout protection...")
 		
 		# Initialize camera with timeout protection (max 15 seconds total)
-		var camera_init_task = _initialize_camera()
 		var timeout_timer = get_tree().create_timer(15.0)
 		
 		# Race between camera initialization and timeout
-		var result = await race_with_timeout(camera_init_task, timeout_timer)
+		var result = await race_with_timeout(Callable(self, "_initialize_camera"), timeout_timer)
 		
 		if result == "timeout":
 			push_error("GDMPTracking: ⚠️ Camera initialization timed out after 15 seconds")
@@ -210,7 +209,10 @@ func _initialize_gdmp() -> void:
 	print("GDMPTracking: ✅ Native tracking active")
 
 func _initialize_camera() -> void:
-	"""Initialize camera for tracking"""
+	"""
+	Initialize camera for tracking; call with await.
+	Attempts GDMP helper or CameraServer setup and completes when initialization finishes.
+	"""
 	var platform = OS.get_name()
 	
 	# For Android/iOS, prefer GDMP camera helper but fallback to CameraServer
@@ -454,10 +456,12 @@ func _start_simulated_tracking() -> void:
 	tracking_active = true
 	print("GDMPTracking: Using enhanced simulated tracking")
 
-func race_with_timeout(task, timeout_timer):
-	"""Race a coroutine against a timeout timer
+func race_with_timeout(task_callable: Callable, timeout_timer: SceneTreeTimer) -> String:
+	"""Race a callable async task against a timeout timer.
 	
-	Returns "timeout" if timeout occurs first, "completed" if task finishes first
+	The task_callable should be a function that can be awaited.
+	The timeout_timer should be a SceneTreeTimer from get_tree().create_timer().
+	Returns "timeout" if timeout occurs first, "completed" if task finishes first.
 	"""
 	# Create a signal to track completion
 	var completed = false
@@ -465,7 +469,7 @@ func race_with_timeout(task, timeout_timer):
 	
 	# Start both tasks
 	var task_signal = func():
-		await task
+		await task_callable.call()
 		completed = true
 	
 	var timeout_signal = func():
