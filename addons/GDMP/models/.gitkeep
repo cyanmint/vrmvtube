@@ -1,3 +1,0 @@
-# This directory will contain the MediaPipe face_landmarker.task model file
-# The model is downloaded during CI/CD builds from:
-# https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task

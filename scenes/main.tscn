@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://d2w8nkphxc7qy"]
+[gd_scene load_steps=7 format=3 uid="uid://d2w8nkphxc7qy"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_1"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="2_1"]
 [ext_resource type="Script" path="res://scripts/face_rigging.gd" id="3_1"]
 [ext_resource type="PackedScene" uid="uid://cgk7nq8yn7yux" path="res://scenes/settings_menu.tscn" id="4_1"]
 [ext_resource type="Script" path="res://scripts/gdmp_tracking.gd" id="5_1"]
+[ext_resource type="Script" path="res://scripts/ui_controller.gd" id="7_1"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -530,6 +531,9 @@ script = ExtResource("5_1")
 
 [node name="FaceRigging" type="Node" parent="."]
 script = ExtResource("3_1")
+
+[node name="UIController" type="Node" parent="."]
+script = ExtResource("7_1")
 
 [node name="SettingsMenu" parent="." instance=ExtResource("4_1")]
 

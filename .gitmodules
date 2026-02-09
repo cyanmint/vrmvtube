@@ -1,0 +1,7 @@
+[submodule "third_party/godot-vrm"]
+	path = third_party/godot-vrm
+	url = https://github.com/V-Sekai/godot-vrm.git
+	branch = only-addon
+[submodule "third_party/GDMP"]
+	path = third_party/GDMP
+	url = https://github.com/j20001970/GDMP.git
