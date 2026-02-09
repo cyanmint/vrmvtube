@@ -68,6 +68,12 @@ func _ready() -> void:
 		# Use simulation as emergency fallback, but log as error
 		_start_simulated_tracking()
 		push_error("Using simulation fallback - NOT suitable for production use")
+		
+		if use_camera:
+			var platform = OS.get_name()
+			if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
+				print("GDMPTracking: Starting CameraServer preview on desktop")
+				await _initialize_camera()
 
 
 func _check_gdmp_availability() -> void:
@@ -202,7 +208,10 @@ func _initialize_gdmp() -> void:
 
 
 func _initialize_camera() -> void:
-	"""Initialize camera for tracking"""
+	"""
+	Initialize camera for tracking; call with await.
+	Attempts GDMP helper or CameraServer setup and completes when initialization finishes.
+	"""
 	var platform = OS.get_name()
 
 	# For Android/iOS, prefer GDMP camera helper but fallback to CameraServer
@@ -464,7 +473,9 @@ func _start_simulated_tracking() -> void:
 func race_with_timeout(task, timeout_timer):
 	"""Race a coroutine against a timeout timer
 	
-	Returns "timeout" if timeout occurs first, "completed" if task finishes first
+	The task_callable should be a function that can be awaited.
+	The timeout_timer should be a SceneTreeTimer from get_tree().create_timer().
+	Returns "timeout" if timeout occurs first, "completed" if task finishes first.
 	"""
 	# Create a signal to track completion
 	var completed = false
@@ -472,7 +483,7 @@ func race_with_timeout(task, timeout_timer):
 
 	# Start both tasks
 	var task_signal = func():
-		await task
+		await task_callable.call()
 		completed = true
 
 	var timeout_signal = func():

@@ -138,15 +138,13 @@ vrmvtube/
 │   └── GDMP/
 │       ├── GDMP.gdextension
 │       ├── plugin.cfg
-│       ├── bin/
-│       │   ├── windows/
-│       │   │   └── libGDMP.windows.*.dll
-│       │   ├── linux/
-│       │   │   └── libGDMP.linux.*.so
-│       │   ├── macos/
-│       │   │   └── libGDMP.macos.*.dylib
-│       │   └── android/
-│       │       └── libGDMP.android.*.so
+│       ├── libs/
+│       │   ├── x86_64/
+│       │   │   ├── GDMP.windows.dll
+│       │   │   └── libGDMP.linux.so
+│       │   ├── arm64/
+│       │   │   └── libGDMP.android.so
+│       │   └── ... (other platforms)
 │       └── models/
 │           ├── face_landmarker.task (~26MB)
 │           ├── hand_landmarker.task (~14MB)
@@ -155,8 +153,6 @@ vrmvtube/
 │   ├── gdmp_tracking.gd     # GDMP wrapper
 │   ├── vmc_receiver.gd      # VMC protocol
 │   └── vmc_sender.gd        # VMC protocol
-└── third_party/
-    └── GDMP/                # Source code (submodule)
 ```
 
 ## Configuration
@@ -183,7 +179,7 @@ camera_index = 0         # Camera to use (default: 0)
 ### "GDExtension failed to load"
 **Solutions:**
 - Verify you downloaded the correct platform binaries
-- Check that DLL/SO files are in `addons/GDMP/bin/YOUR-PLATFORM/`
+- Check that DLL/SO files are in `addons/GDMP/libs/`
 - Restart Godot after enabling plugin
 
 ### Poor tracking quality
