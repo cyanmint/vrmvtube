@@ -151,13 +151,13 @@ func _ready() -> void:
 	
 	# Connect collapse buttons
 	if webcam_collapse_button:
-		webcam_collapse_button.pressed.connect(_on_webcam_collapse_pressed)
+		_safe_connect(webcam_collapse_button.pressed, _on_webcam_collapse_pressed)
 	if sidebar_collapse_button:
-		sidebar_collapse_button.pressed.connect(_on_sidebar_collapse_pressed)
+		_safe_connect(sidebar_collapse_button.pressed, _on_sidebar_collapse_pressed)
 	if sidebar_collapse_tab:
-		sidebar_collapse_tab.pressed.connect(_on_sidebar_expand_pressed)
+		_safe_connect(sidebar_collapse_tab.pressed, _on_sidebar_expand_pressed)
 	if metadata_collapse_button:
-		metadata_collapse_button.pressed.connect(_on_metadata_collapse_pressed)
+		_safe_connect(metadata_collapse_button.pressed, _on_metadata_collapse_pressed)
 	
 	# Connect camera mode signal and set model container reference
 	if camera_controller:
@@ -166,7 +166,7 @@ func _ready() -> void:
 		camera_controller.model_transform_changed.connect(_on_model_transform_changed)
 		print("Camera controller set up with model container")
 	if camera_mode_button:
-		camera_mode_button.pressed.connect(_on_camera_mode_button_pressed)
+		_safe_connect(camera_mode_button.pressed, _on_camera_mode_button_pressed)
 	
 	# Update webcam status based on platform and GDMP availability
 	if webcam_status_label:
@@ -204,6 +204,26 @@ func _ready() -> void:
 		# Set info label to show instructions
 		if info_label:
 			info_label.text = "No model loaded.\nUse 'Load VRM Model' button or press L\nDrag=rotate | R=mode | Move: WSAD=XY QE=Z | Rotate: WSAD=XY QE=Z"
+
+func _exit_tree() -> void:
+	if webcam_collapse_button:
+		_safe_disconnect(webcam_collapse_button.pressed, _on_webcam_collapse_pressed)
+	if sidebar_collapse_button:
+		_safe_disconnect(sidebar_collapse_button.pressed, _on_sidebar_collapse_pressed)
+	if sidebar_collapse_tab:
+		_safe_disconnect(sidebar_collapse_tab.pressed, _on_sidebar_expand_pressed)
+	if metadata_collapse_button:
+		_safe_disconnect(metadata_collapse_button.pressed, _on_metadata_collapse_pressed)
+	if camera_mode_button:
+		_safe_disconnect(camera_mode_button.pressed, _on_camera_mode_button_pressed)
+
+func _safe_connect(signal: Signal, handler: Callable) -> void:
+	if not signal.is_connected(handler):
+		signal.connect(handler)
+
+func _safe_disconnect(signal: Signal, handler: Callable) -> void:
+	if signal.is_connected(handler):
+		signal.disconnect(handler)
 
 func _load_and_apply_settings() -> void:
 	"""Load settings from file and apply graphics settings"""
@@ -456,12 +476,19 @@ func _load_vrm_model(path: String) -> void:
 	
 	# Load VRM model - handle both res:// and external paths
 	var loaded_scene: Node = null
+	var is_vrm := path.get_extension().to_lower() == "vrm"
 	
-	if path.begins_with("res://"):
-		# Internal resource - use standard load
+	if is_vrm:
+		# VRM files require runtime GLTF loading even for res:// paths
+		# (VRM files are not supported by Godot's default ResourceLoader)
+		loaded_scene = _load_vrm_runtime(path)
+	elif path.begins_with("res://"):
+		# Internal non-VRM resource - use standard load
 		var packed_scene = load(path)
 		if packed_scene != null:
 			loaded_scene = packed_scene.instantiate()
+		else:
+			push_error("Failed to load non-VRM resource from path: " + path)
 	else:
 		# External file - use runtime GLTF/VRM loading
 		loaded_scene = _load_vrm_runtime(path)
@@ -697,7 +724,9 @@ func _update_vrm_materials(node: Node) -> void:
 		_update_vrm_materials(child)
 
 func _load_vrm_runtime(path: String) -> Node:
-	"""Load VRM file at runtime using GLTFDocument (for external files)"""
+	"""Load VRM file at runtime using GLTFDocument (supports res:// and absolute paths).
+	VRM files require runtime GLTF loading as they are not supported by Godot's default ResourceLoader.
+	"""
 	print("Runtime VRM loading from: ", path)
 	
 	# Create GLTF document and state
