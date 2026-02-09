@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  GODOT_VERSION: 4.6-stable
+  GODOT_VERSION: 4.5-stable
   EXPORT_NAME: VRMVTube
   GDMP_VERSION: v0.6
 
@@ -64,8 +64,8 @@ jobs:
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz
           unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/4.6.stable
-          mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
+          mkdir -p ~/.local/share/godot/export_templates/4.5.stable
+          mv templates/* ~/.local/share/godot/export_templates/4.5.stable/
         working-directory: /tmp
       
       - name: Install OpenGL Dependencies
@@ -136,8 +136,8 @@ jobs:
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz
           unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/4.6.stable
-          mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
+          mkdir -p ~/.local/share/godot/export_templates/4.5.stable
+          mv templates/* ~/.local/share/godot/export_templates/4.5.stable/
         working-directory: /tmp
       
       - name: Import Resources
@@ -203,8 +203,8 @@ jobs:
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz
           unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/4.6.stable
-          mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
+          mkdir -p ~/.local/share/godot/export_templates/4.5.stable
+          mv templates/* ~/.local/share/godot/export_templates/4.5.stable/
         working-directory: /tmp
       
       - name: Import Resources
@@ -270,8 +270,8 @@ jobs:
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz
           unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/4.6.stable
-          mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
+          mkdir -p ~/.local/share/godot/export_templates/4.5.stable
+          mv templates/* ~/.local/share/godot/export_templates/4.5.stable/
         working-directory: /tmp
       
       - name: Import Resources
@@ -344,8 +344,8 @@ jobs:
         run: |
           wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz
           unzip -q Godot_v${GODOT_VERSION}_export_templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/4.6.stable
-          mv templates/* ~/.local/share/godot/export_templates/4.6.stable/
+          mkdir -p ~/.local/share/godot/export_templates/4.5.stable
+          mv templates/* ~/.local/share/godot/export_templates/4.5.stable/
         working-directory: /tmp
       
       - name: Setup Android SDK
@@ -388,7 +388,7 @@ jobs:
           echo "Installing Android build template..."
           mkdir -p android
           cd android
-          unzip -o -q ~/.local/share/godot/export_templates/4.6.stable/android_source.zip
+          unzip -o -q ~/.local/share/godot/export_templates/4.5.stable/android_source.zip
           echo "✓ Android build template installed"
           ls -la | head -10
       
