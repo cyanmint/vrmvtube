@@ -330,9 +330,85 @@ func _on_apply_pressed() -> void:
 
 
 func _on_browse_model_pressed() -> void:
-	"""Open file dialog to select VRM model"""
-	if model_file_dialog:
-		model_file_dialog.popup_centered()
+	"""Open file picker to select VRM model - works on all platforms"""
+	var platform := OS.get_name()
+
+	if platform in ["Web", "HTML5"]:
+		_open_web_model_picker()
+	else:
+		# Desktop and Android: use native file dialog (Godot 4.4+)
+		if OS.get_name() == "Android":
+			OS.request_permissions()
+			await get_tree().create_timer(0.5).timeout
+
+		if model_file_dialog:
+			model_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+			model_file_dialog.use_native_dialog = true
+			model_file_dialog.popup_centered()
+
+
+func _open_web_model_picker() -> void:
+	"""Open file picker on Web using JavaScript for model selection"""
+	if not ClassDB.class_exists("JavaScriptBridge"):
+		push_error("JavaScriptBridge not available on this platform")
+		return
+
+	JavaScriptBridge.eval("""
+		(function() {
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = '.vrm';
+			input.style.display = 'none';
+			document.body.appendChild(input);
+			input.onchange = function(e) {
+				var file = e.target.files[0];
+				if (file) {
+					var reader = new FileReader();
+					reader.onload = function(evt) {
+						var data = new Uint8Array(evt.target.result);
+						try {
+							FS.writeFile('/userfs/' + file.name, data);
+							window._vrmSettingsFileName = file.name;
+							window._vrmSettingsFileReady = true;
+						} catch(err) {
+							console.error('Failed to write VRM file:', err);
+						}
+					};
+					reader.readAsArrayBuffer(file);
+				}
+				document.body.removeChild(input);
+			};
+			window._vrmSettingsFileReady = false;
+			window._vrmSettingsFileName = '';
+			input.click();
+		})();
+	""", true)
+
+	# Poll for file data
+	_poll_web_model_file()
+
+
+func _poll_web_model_file() -> void:
+	"""Poll for web file picker result in settings"""
+	var max_wait := 60.0
+	var elapsed := 0.0
+
+	while elapsed < max_wait:
+		await get_tree().create_timer(0.2).timeout
+		elapsed += 0.2
+
+		var ready = JavaScriptBridge.eval("window._vrmSettingsFileReady || false", true)
+		if ready:
+			var file_name = JavaScriptBridge.eval("window._vrmSettingsFileName", true)
+			if file_name and file_name != "":
+				var load_path := "user://" + str(file_name)
+				print("Settings: Web file picker - VRM received: ", load_path)
+				JavaScriptBridge.eval(
+					"window._vrmSettingsFileReady = false; window._vrmSettingsFileName = '';",
+					true
+				)
+				_on_model_file_selected(load_path)
+			return
 
 
 func _on_model_file_selected(path: String) -> void:
@@ -493,7 +569,7 @@ func _update_camera_preview() -> void:
 	# Try CameraServer feeds directly (works on Android, desktop)
 	if not camera_texture:
 		var camera_server = CameraServer
-		# Use feeds array (modern Godot 4.6 API)
+		# Use feeds array (modern Godot 4.4+ API)
 		var feeds = camera_server.feeds
 		if feeds.size() > 0:
 			var selected_index = current_settings.camera.selected_index
@@ -506,7 +582,7 @@ func _update_camera_preview() -> void:
 						feed.set_active(true)
 						print("Settings: Activated camera feed: ", feed.get_name())
 
-					# Get texture directly from feed (Godot 4.6+)
+					# Get texture directly from feed (Godot 4.4+)
 					camera_texture = feed.get_texture()
 					if camera_texture:
 						print("Settings: Got texture from feed directly")

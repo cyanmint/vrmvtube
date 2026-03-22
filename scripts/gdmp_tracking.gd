@@ -5,6 +5,10 @@ extends Node
 ## Uses GDMP (Godot MediaPipe) GDExtension for native face tracking
 ## Works on all platforms: Windows, Linux, macOS, Android, iOS, Web
 ##
+## On Android/Web: Uses MediaPipeCameraHelper for direct camera capture.
+## On Desktop (Windows/Linux/macOS): Uses CameraServer to capture webcam
+## frames and feeds them to GDMP face landmarker for real tracking.
+##
 ## GDMP is bundled with VRMVTube - no external downloads required!
 ## MediaPipe provides professional-grade face tracking with 468 landmarks.
 ##
@@ -41,6 +45,9 @@ var time_elapsed: float = 0.0
 var last_blink_time: float = 0.0
 var blink_interval: float = 3.0
 
+# Desktop camera tracking (CameraServer → GDMP pipeline)
+var desktop_frame_skip: int = 0
+
 
 func _ready() -> void:
 	print("GDMPTracking: Initializing GDMP native face tracking")
@@ -68,7 +75,7 @@ func _ready() -> void:
 		# Use simulation as emergency fallback, but log as error
 		_start_simulated_tracking()
 		push_error("Using simulation fallback - NOT suitable for production use")
-		
+
 		if use_camera:
 			var platform = OS.get_name()
 			if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
@@ -393,7 +400,8 @@ func _initialize_camera() -> void:
 
 	# Desktop platforms - CameraServer IS supported in Godot 4.4+
 	# CameraServer works on: Windows, Linux, macOS (as of Godot 4.4+)
-	# It does NOT work on: Web (requires JavaScript bridge)
+	# On desktop, we use CameraServer to capture frames and feed them to GDMP
+	# for real face tracking (not just preview)
 	if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
 		print("GDMPTracking: Using CameraServer for ", platform)
 
@@ -518,8 +526,11 @@ func _process(delta: float) -> void:
 
 func _process_gdmp_tracking() -> void:
 	"""Process real GDMP face tracking"""
-	# GDMP uses async callbacks, so we don't process images here directly
-	# Instead, we use the last received result from the callback
+	# On mobile/web, GDMP camera helper provides frames via callbacks automatically
+	# On desktop, we need to capture frames from CameraServer and feed to GDMP
+	if not camera_helper and camera_feed and face_landmarker:
+		_process_desktop_camera_frame()
+
 	if latest_face_result:
 		var tracking_data = _convert_gdmp_to_tracking_data(latest_face_result)
 		tracking_data_received.emit(tracking_data)
@@ -529,6 +540,44 @@ func _process_simulated_tracking() -> void:
 	"""Enhanced simulated tracking"""
 	var tracking_data := _generate_enhanced_tracking()
 	tracking_data_received.emit(tracking_data)
+
+
+func _process_desktop_camera_frame() -> void:
+	"""Capture frame from CameraServer and feed to GDMP on desktop.
+
+	On desktop platforms, GDMP's MediaPipeCameraHelper is not used.
+	Instead, we capture frames from CameraServer and create MediaPipeImage
+	objects to feed to the face landmarker for real tracking.
+	"""
+	# Process every 2nd frame for performance (~15fps at 30fps)
+	desktop_frame_skip += 1
+	if desktop_frame_skip % 2 != 0:
+		return
+
+	if not camera_texture or not face_landmarker:
+		return
+
+	# Get image from camera texture (requires GPU readback)
+	var image: Image = camera_texture.get_image()
+	if not image or image.is_empty():
+		return
+
+	# Create MediaPipeImage from Godot Image and send to face landmarker
+	var mp_image = ClassDB.instantiate("MediaPipeImage")
+	if mp_image:
+		mp_image.set_image(image)
+		var timestamp_ms: int = Time.get_ticks_msec()
+		face_landmarker.detect_async(mp_image, timestamp_ms, Rect2(), 0)
+
+		frame_count += 1
+		var current_time: float = Time.get_ticks_msec() / 1000.0
+		if current_time - last_frame_log_time >= 2.0:
+			print(
+				"GDMPTracking: 📹 Desktop GDMP tracking - ",
+				frame_count,
+				" frames processed"
+			)
+			last_frame_log_time = current_time
 
 
 func _generate_enhanced_tracking() -> Dictionary:

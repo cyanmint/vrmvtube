@@ -3,7 +3,7 @@
 A cross-platform VTubing application using VRM avatars, built with Godot Engine.
 
 ![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)
-![Godot 4.3](https://img.shields.io/badge/Godot-4.3-blue.svg)
+![Godot 4.4](https://img.shields.io/badge/Godot-4.4-blue.svg)
 
 ## Overview
 
@@ -25,21 +25,22 @@ VRMVTube includes **native GDMP (Godot MediaPipe) integration** for real-time fa
 
 ### Tracking Modes
 
-1. **GDMP Native Tracking (Android/Web)**: Real webcam-based face tracking using MediaPipe
+1. **GDMP Native Tracking (All Platforms)**: Real webcam-based face tracking using MediaPipe
    - ✅ **Fully integrated** - no external setup required!
    - Uses MediaPipe's 468-point face mesh and 52 ARKit-compatible blendshapes
    - Automatically requests camera permissions on mobile
-   - Works seamlessly on Android and Web platforms
+   - On Android/Web: Uses GDMP's native camera helper for direct capture
+   - On Desktop (Windows/macOS/Linux): Uses CameraServer to capture frames and feeds them to GDMP
 
 2. **Simulated Tracking (Fallback)**: Built-in animated tracking for demonstration
-   - Used automatically on desktop platforms (Windows/macOS/Linux)
-   - Also used when GDMP is unavailable or camera permission is denied
+   - Used automatically when GDMP is unavailable or camera permission is denied
+   - Also used when no webcam is connected
 
 ### Platform-Specific Tracking
 
 - **Android**: Native GDMP camera with real face tracking ✅
 - **Web**: Native GDMP camera with real face tracking ✅
-- **Desktop (Windows/macOS/Linux)**: Simulated tracking (GDMP camera not supported in Godot yet)
+- **Desktop (Windows/macOS/Linux)**: CameraServer webcam → GDMP face tracking ✅ (Godot 4.4+)
 
 For advanced desktop face tracking setup, see [tools/README.md](tools/README.md) and [docs/MOTION_CAPTURE.md](docs/MOTION_CAPTURE.md)
 
@@ -47,20 +48,22 @@ For advanced desktop face tracking setup, see [tools/README.md](tools/README.md)
 
 | Platform | Status | Virtual Camera | Face Tracking |
 |----------|--------|----------------|---------------|
-| Windows  | ✅ Supported | ✅ Yes | Simulated |
-| Linux    | ✅ Supported | ✅ Yes | Simulated |
-| macOS    | ✅ Supported | ❌ No | Simulated |
+| Windows  | ✅ Supported | ✅ Yes | ✅ GDMP Native |
+| Linux    | ✅ Supported | ✅ Yes | ✅ GDMP Native |
+| macOS    | ✅ Supported | ❌ No | ✅ GDMP Native |
 | Android  | ✅ Supported | ❌ No | ✅ GDMP Native |
 | Web      | ✅ Supported | ❌ No | ✅ GDMP Native |
 
 **Notes:** 
 - Virtual camera functionality is only available on Windows and Linux due to platform limitations.
-- GDMP native face tracking works on Android and Web with automatic camera access.
-- Desktop platforms use simulated tracking (GDMP camera support coming soon).
+- GDMP native face tracking works on all platforms via webcam.
+- Desktop platforms use CameraServer to capture webcam frames for GDMP (Godot 4.4+).
+- Android uses GDMP's native camera helper for direct capture.
+- Web uses GDMP's native camera helper for direct capture.
 
 ## Requirements
 
-- Godot 4.3 or newer
+- Godot 4.4 or newer
 - Webcam (for motion tracking)
 - VRM model file (.vrm)
 
@@ -81,7 +84,7 @@ For advanced desktop face tracking setup, see [tools/README.md](tools/README.md)
    cp /path/to/your/model.vrm models/default.vrm
    ```
 
-3. Open the project in Godot 4.3+
+3. Open the project in Godot 4.4+
 
 4. Enable the required plugins in Project Settings → Plugins:
    - MToon
@@ -97,10 +100,8 @@ Download the latest release for your platform from the [Releases](../../releases
 
 1. Launch VRMVTube
 2. The app will automatically load the example VRM model (example/cyanmint.vrm)
-3. **On Android/Web: Grant camera permission when prompted** - enables real face tracking with GDMP!
-4. Your avatar will animate in real-time:
-   - **Android/Web**: Real face tracking using your webcam via MediaPipe
-   - **Desktop**: Simulated facial expressions (camera support coming soon)
+3. **Grant camera permission when prompted** - enables real face tracking with GDMP on all platforms!
+4. Your avatar will animate in real-time using MediaPipe face tracking
 5. Use camera controls:
    - **Drag** to rotate camera
    - **Shift+Drag** to pan camera
@@ -109,7 +110,10 @@ Download the latest release for your platform from the [Releases](../../releases
    - **Position Y slider**: Adjust model height
    - **Scale slider**: Resize the model
    - **Reset Pose button**: Return to default position/scale
-7. Load your own VRM model using the "Load VRM Model" button
+7. Load your own VRM model using the "Load VRM Model" button:
+   - **Desktop**: Opens native file dialog to browse your filesystem
+   - **Android**: Opens Android system file picker to select from device storage
+   - **Web**: Opens browser file input to upload a VRM file
 8. (Windows/Linux only) Enable virtual camera to use your avatar in other applications (feature in development)
 
 **Quick Testing:**
@@ -119,10 +123,11 @@ Download the latest release for your platform from the [Releases](../../releases
 - Run `python3 validate.py` to check project structure before testing
 
 **Known Issues:**
-- **Desktop Webcam:** GDMP native camera is not yet supported on desktop platforms in this Godot version. Desktop uses simulated tracking. For webcam-based tracking on desktop, use external tools (see docs/MOTION_CAPTURE.md).
-- **Android/Web Webcam Preview:** While face tracking works perfectly with GDMP on Android/Web, the webcam preview in the UI is not yet implemented (only the face tracking data is captured).
+- **Desktop Webcam:** Desktop GDMP face tracking requires a connected webcam and CameraServer support (Godot 4.4+). If no camera is detected, simulated tracking is used as fallback.
+- **Web VRM Loading:** On web, VRM files are loaded via the browser's file input and written to the virtual filesystem. Large VRM files may take a moment to process.
 - **VRM Textures:** Ensure both VRM and MToon Shader plugins are enabled in Project Settings → Plugins. The app now includes enhanced lighting for better detail visibility.
 - **Android Architecture Support:** The APK supports **arm64-v8a** (64-bit ARM devices) and **x86_64** (emulators). 32-bit architectures (armeabi-v7a, x86) are **not supported** due to GDMP MediaPipe library limitations. Most modern Android devices use 64-bit ARM.
+- **Android Storage:** On Android, VRM files selected from external storage are copied to the app's internal storage for reliable access.
 
 ### Getting VRM Models
 
