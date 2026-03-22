@@ -582,7 +582,7 @@ func _update_camera_preview() -> void:
 					if not cached_camera_texture:
 						cached_camera_texture = CameraTexture.new()
 						cached_camera_texture.camera_feed_id = feed.get_id()
-						cached_camera_texture.camera_active = true
+						cached_camera_texture.camera_is_active = true
 						print(
 							"Settings: Created CameraTexture with feed ID: ",
 							feed.get_id()

@@ -348,7 +348,7 @@ func _initialize_camera() -> void:
 
 			camera_texture = CameraTexture.new()
 			camera_texture.camera_feed_id = camera_feed.get_id()
-			camera_texture.camera_active = true
+			camera_texture.camera_is_active = true
 			print("GDMPTracking: Camera texture created for feed")
 
 			print("GDMPTracking: ✅ CameraServer camera started successfully!")
@@ -379,7 +379,7 @@ func _start_simulated_tracking() -> void:
 func race_with_timeout(task, timeout_timer):
 	"""Race a coroutine against a timeout timer
 	
-	The task_callable should be a function that can be awaited.
+	The task should be a function that can be awaited.
 	The timeout_timer should be a SceneTreeTimer from get_tree().create_timer().
 	Returns "timeout" if timeout occurs first, "completed" if task finishes first.
 	"""
