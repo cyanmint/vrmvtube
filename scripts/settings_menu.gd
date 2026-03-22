@@ -225,18 +225,14 @@ func _populate_cameras() -> void:
 
 	camera_option.clear()
 
-	# Enable camera monitoring first
-	var camera_server := CameraServer
-	camera_server.set_monitoring_feeds(true)
-
 	# Wait a frame for feeds to be detected
 	await get_tree().process_frame
 
-	var feed_count := camera_server.get_feed_count()
+	var feed_count := CameraServer.get_feed_count()
 
 	if feed_count > 0:
 		for i in range(feed_count):
-			var feed := camera_server.get_feed(i)
+			var feed := CameraServer.get_feed(i)
 			if feed:
 				camera_option.add_item(feed.get_name(), i)
 		camera_option.selected = current_settings.camera.selected_index
@@ -561,51 +557,43 @@ func _update_camera_preview() -> void:
 	if not camera_preview or not preview_placeholder:
 		return
 
-	var camera_texture: Texture2D = null
+	var cam_texture: Texture2D = null
 	var platform = OS.get_name()
 
 	# Try to get camera texture from GDMP tracking first
 	if gdmp_tracking and gdmp_tracking.has_method("get_camera_texture"):
-		camera_texture = gdmp_tracking.get_camera_texture()
+		cam_texture = gdmp_tracking.get_camera_texture()
 
 	# Try CameraServer feeds directly (works on Android, desktop)
-	if not camera_texture:
-		var camera_server = CameraServer
-		# Use feeds array (modern Godot 4.4+ API)
-		var feeds = camera_server.feeds
-		if feeds.size() > 0:
-			var selected_index = current_settings.camera.selected_index
+	if not cam_texture:
+		var feed_count := CameraServer.get_feed_count()
+		if feed_count > 0:
+			var selected_index: int = current_settings.camera.selected_index
 			# Bounds check
-			if selected_index >= 0 and selected_index < feeds.size():
-				var feed = feeds[selected_index]
+			if selected_index >= 0 and selected_index < feed_count:
+				var feed := CameraServer.get_feed(selected_index)
 				if feed:
 					# Activate feed if not active
 					if not feed.is_active():
 						feed.set_active(true)
 						print("Settings: Activated camera feed: ", feed.get_name())
 
-					# Get texture directly from feed (Godot 4.4+)
-					camera_texture = feed.get_texture()
-					if camera_texture:
-						print("Settings: Got texture from feed directly")
-					else:
-						# Fallback: create CameraTexture manually
-						if not cached_camera_texture:
-							cached_camera_texture = CameraTexture.new()
-							cached_camera_texture.camera_feed_id = feed.get_id()
-							cached_camera_texture.camera_is_active = true
-							print(
-								"Settings: Created CameraTexture manually with feed ID: ",
-								feed.get_id()
-							)
-						camera_texture = cached_camera_texture
+					# Create CameraTexture for this feed
+					if not cached_camera_texture:
+						cached_camera_texture = CameraTexture.new()
+						cached_camera_texture.camera_feed_id = feed.get_id()
+						cached_camera_texture.camera_active = true
+						print(
+							"Settings: Created CameraTexture with feed ID: ",
+							feed.get_id()
+						)
+					cam_texture = cached_camera_texture
 
 	# Update preview display
-	if camera_texture:
-		camera_preview.texture = camera_texture
+	if cam_texture:
+		camera_preview.texture = cam_texture
 		camera_preview.visible = true
 		preview_placeholder.visible = false
-		print("Settings: Camera preview showing texture")
 	else:
 		camera_preview.texture = null
 		camera_preview.visible = false

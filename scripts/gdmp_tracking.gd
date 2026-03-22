@@ -345,22 +345,17 @@ func _initialize_camera() -> void:
 		if platform == "Android" and not use_gdmp:
 			print("GDMPTracking: Using CameraServer fallback for Android")
 
-			# Enable camera monitoring
-			var camera_server = CameraServer
-			camera_server.set_monitoring_feeds(true)
-			print("GDMPTracking: Camera monitoring enabled")
-
 			# Wait for feeds to be detected
 			await get_tree().process_frame
 			await get_tree().process_frame
 
 			# Get available camera feeds
-			var feeds = camera_server.feeds
-			print("GDMPTracking: Detected ", feeds.size(), " camera feed(s)")
+			var feed_count := CameraServer.get_feed_count()
+			print("GDMPTracking: Detected ", feed_count, " camera feed(s)")
 
-			if feeds.size() > 0:
+			if feed_count > 0:
 				# Get the first camera feed (usually front camera on phones)
-				camera_feed = feeds[0]
+				camera_feed = CameraServer.get_feed(0)
 
 				if camera_feed:
 					print("GDMPTracking: Using camera: ", camera_feed.get_name())
@@ -369,16 +364,11 @@ func _initialize_camera() -> void:
 					camera_feed.set_active(true)
 					print("GDMPTracking: Camera feed activated")
 
-					# Get texture directly from feed
-					camera_texture = camera_feed.get_texture()
-					if camera_texture:
-						print("GDMPTracking: Camera texture obtained from feed")
-					else:
-						# Fallback: create CameraTexture manually
-						camera_texture = CameraTexture.new()
-						camera_texture.camera_feed_id = camera_feed.get_id()
-						camera_texture.camera_is_active = true
-						print("GDMPTracking: Camera texture created manually")
+					# Create CameraTexture for this feed
+					camera_texture = CameraTexture.new()
+					camera_texture.camera_feed_id = camera_feed.get_id()
+					camera_texture.camera_active = true
+					print("GDMPTracking: Camera texture created for feed")
 
 					print("GDMPTracking: ✅ CameraServer camera started on Android!")
 					camera_started.emit()
@@ -406,24 +396,19 @@ func _initialize_camera() -> void:
 	if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
 		print("GDMPTracking: Using CameraServer for ", platform)
 
-		# Enable camera monitoring
-		var camera_server = CameraServer
-		camera_server.set_monitoring_feeds(true)
-		print("GDMPTracking: Camera monitoring enabled")
-
 		# Wait for feeds to be detected
 		await get_tree().process_frame
 		await get_tree().process_frame
 
 		# Get available camera feeds
-		var feeds = camera_server.feeds
-		print("GDMPTracking: Detected ", feeds.size(), " camera feed(s)")
+		var feed_count := CameraServer.get_feed_count()
+		print("GDMPTracking: Detected ", feed_count, " camera feed(s)")
 
-		if feeds.size() > 0:
+		if feed_count > 0:
 			# Get the first camera feed (usually the default webcam)
 			# Use camera_index if valid, otherwise use 0
-			var feed_index = camera_index if camera_index < feeds.size() else 0
-			camera_feed = feeds[feed_index]
+			var feed_index: int = camera_index if camera_index < feed_count else 0
+			camera_feed = CameraServer.get_feed(feed_index)
 
 			if camera_feed:
 				print("GDMPTracking: Using camera: ", camera_feed.get_name())
@@ -432,16 +417,11 @@ func _initialize_camera() -> void:
 				camera_feed.set_active(true)
 				print("GDMPTracking: Camera feed activated")
 
-				# Get texture directly from feed (newer API)
-				camera_texture = camera_feed.get_texture()
-				if camera_texture:
-					print("GDMPTracking: Camera texture obtained from feed")
-				else:
-					# Fallback: create CameraTexture manually
-					camera_texture = CameraTexture.new()
-					camera_texture.camera_feed_id = camera_feed.get_id()
-					camera_texture.camera_is_active = true
-					print("GDMPTracking: Camera texture created manually")
+				# Create CameraTexture for this feed
+				camera_texture = CameraTexture.new()
+				camera_texture.camera_feed_id = camera_feed.get_id()
+				camera_texture.camera_active = true
+				print("GDMPTracking: Camera texture created for feed")
 
 				print("GDMPTracking: ✅ CameraServer camera started successfully!")
 				camera_started.emit()
@@ -492,7 +472,7 @@ func race_with_timeout(task, timeout_timer):
 
 	# Start both tasks
 	var task_signal = func():
-		await task_callable.call()
+		await task.call()
 		completed = true
 
 	var timeout_signal = func():
