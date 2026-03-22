@@ -30,6 +30,8 @@ signal settings_saved(settings: Dictionary)
 
 var original_settings := {}
 const CONFIG_PATH := "user://vrmvtube_settings.cfg"
+const PERMISSION_REQUEST_DELAY := 0.5
+const FILE_PICKER_TIMEOUT := 60.0
 
 # Reference to GDMP tracking for camera preview
 var gdmp_tracking: Node = null
@@ -339,7 +341,7 @@ func _on_browse_model_pressed() -> void:
 		# Desktop and Android: use native file dialog (Godot 4.4+)
 		if OS.get_name() == "Android":
 			OS.request_permissions()
-			await get_tree().create_timer(0.5).timeout
+			await get_tree().create_timer(PERMISSION_REQUEST_DELAY).timeout
 
 		if model_file_dialog:
 			model_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
@@ -390,7 +392,7 @@ func _open_web_model_picker() -> void:
 
 func _poll_web_model_file() -> void:
 	"""Poll for web file picker result in settings"""
-	var max_wait := 60.0
+	var max_wait := FILE_PICKER_TIMEOUT
 	var elapsed := 0.0
 
 	while elapsed < max_wait:

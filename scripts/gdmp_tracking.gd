@@ -46,6 +46,7 @@ var last_blink_time: float = 0.0
 var blink_interval: float = 3.0
 
 # Desktop camera tracking (CameraServer → GDMP pipeline)
+const DESKTOP_FRAME_SKIP_RATE := 2
 var desktop_frame_skip: int = 0
 
 
@@ -549,9 +550,9 @@ func _process_desktop_camera_frame() -> void:
 	Instead, we capture frames from CameraServer and create MediaPipeImage
 	objects to feed to the face landmarker for real tracking.
 	"""
-	# Process every 2nd frame for performance (~15fps at 30fps)
+	# Process every Nth frame for performance (~15fps at 30fps)
 	desktop_frame_skip += 1
-	if desktop_frame_skip % 2 != 0:
+	if desktop_frame_skip % DESKTOP_FRAME_SKIP_RATE != 0:
 		return
 
 	if not camera_texture or not face_landmarker:

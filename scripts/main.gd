@@ -10,6 +10,8 @@ extends Node3D
 ## Created by: GitHub Copilot
 
 const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
+const PERMISSION_REQUEST_DELAY := 0.5
+const FILE_PICKER_TIMEOUT := 60.0
 
 # Core components
 @onready var gdmp_tracking: Node = $GDMPTracking
@@ -390,7 +392,7 @@ func _open_native_file_dialog() -> void:
 	# On Android, request storage permissions before opening dialog
 	if OS.get_name() == "Android":
 		OS.request_permissions()
-		await get_tree().create_timer(0.5).timeout
+		await get_tree().create_timer(PERMISSION_REQUEST_DELAY).timeout
 
 	var file_dialog := FileDialog.new()
 	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
@@ -453,7 +455,7 @@ func _open_web_file_picker() -> void:
 
 func _poll_web_file_data() -> void:
 	"""Poll for web file picker result and load the VRM model"""
-	var max_wait := 60.0
+	var max_wait := FILE_PICKER_TIMEOUT
 	var elapsed := 0.0
 
 	if info_label:
