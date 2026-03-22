@@ -162,8 +162,8 @@ layout_mode = 2
 
 [node name="InfoLabel" type="Label" parent="MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer"]
 layout_mode = 2
-text = "Note: Desktop webcam access is limited in Godot 4.x
-Simulated tracking is used on Windows/Mac/Linux platforms."
+text = "Note: Webcam access uses CameraServer on desktop (Godot 4.4+).
+GDMP face tracking is available on all platforms when a webcam is connected."
 autowrap_mode = 3
 
 [node name="HSeparator3" type="HSeparator" parent="MarginContainer/VBoxContainer/TabContainer/Camera/VBoxContainer"]

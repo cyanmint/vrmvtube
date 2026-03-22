@@ -10,6 +10,8 @@ extends Node3D
 ## Created by: GitHub Copilot
 
 const DEFAULT_VRM_PATH := "res://example/cyanmint.vrm"
+const PERMISSION_REQUEST_DELAY := 0.5
+const FILE_PICKER_TIMEOUT := 60.0
 
 # Core components
 @onready var gdmp_tracking: Node = $GDMPTracking
@@ -262,8 +264,6 @@ func _load_vrm_model(path: String) -> void:
 
 func _load_vrm_runtime(path: String) -> Node:
 	"""Load VRM file at runtime using godot-vrm"""
-	# Use godot-vrm's import_vrm script
-	var vrm_loader = load("res://addons/vrm/import_vrm.gd").new()
 
 	# Read VRM file
 	var file := FileAccess.open(path, FileAccess.READ)
@@ -274,20 +274,25 @@ func _load_vrm_runtime(path: String) -> Node:
 	var content := file.get_buffer(file.get_length())
 	file.close()
 
-	# Import VRM
-	var state := GLTFState.new()
-	var vrm_extension: GLTFDocumentExtension = load("res://addons/vrm/vrm_extension.gd").new()
-	state.add_used_extension("VRM", true)
-	state.register_gltf_document_extension(vrm_extension, true)
-
+	# Import VRM using godot-vrm extension
 	var gltf := GLTFDocument.new()
+	var vrm_extension: GLTFDocumentExtension = load("res://addons/vrm/vrm_extension.gd").new()
+	gltf.register_gltf_document_extension(vrm_extension, true)
+
+	var state := GLTFState.new()
+	# HANDLE_BINARY_EMBED_AS_BASISU can crash on some files; use uncompressed
+	state.handle_binary_image = GLTFState.HANDLE_BINARY_EMBED_AS_UNCOMPRESSED
+
 	var err := gltf.append_from_buffer(content, "", state)
 
 	if err != OK:
 		push_error("Failed to parse VRM file: ", err)
+		gltf.unregister_gltf_document_extension(vrm_extension)
 		return null
 
 	var scene := gltf.generate_scene(state)
+	gltf.unregister_gltf_document_extension(vrm_extension)
+
 	if not scene:
 		push_error("Failed to generate VRM scene")
 		return null
@@ -375,18 +380,140 @@ func _on_model_rotation_changed(rot: Vector3) -> void:
 
 
 func _on_load_model_button_pressed() -> void:
-	"""Open file dialog to load VRM model"""
+	"""Open file picker to load VRM model - works on all platforms"""
+	var platform := OS.get_name()
+
+	if platform in ["Web", "HTML5"]:
+		_open_web_file_picker()
+	else:
+		# Desktop and Android: use FileDialog with native dialog support (Godot 4.4+)
+		_open_native_file_dialog()
+
+
+func _open_native_file_dialog() -> void:
+	"""Open native file dialog (Desktop and Android in Godot 4.4+)"""
+	# On Android, request storage permissions before opening dialog
+	if OS.get_name() == "Android":
+		OS.request_permissions()
+		await get_tree().create_timer(PERMISSION_REQUEST_DELAY).timeout
+
 	var file_dialog := FileDialog.new()
 	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.use_native_dialog = true
 	file_dialog.filters = PackedStringArray(["*.vrm ; VRM Model Files"])
 	file_dialog.file_selected.connect(_on_file_selected)
 	add_child(file_dialog)
 	file_dialog.popup_centered(Vector2i(800, 600))
 
 
+func _open_web_file_picker() -> void:
+	"""Open file picker on Web using JavaScript HTML5 file input.
+
+	Creates an HTML file input element via JavaScriptBridge, reads the selected
+	file as an ArrayBuffer, and writes it to the Emscripten virtual filesystem
+	so Godot can access it from user://.
+	"""
+	if not ClassDB.class_exists("JavaScriptBridge"):
+		push_error("JavaScriptBridge not available - cannot open file picker on Web")
+		if info_label:
+			info_label.text = "File picker not available on this platform"
+		return
+
+	JavaScriptBridge.eval("""
+		(function() {
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = '.vrm';
+			input.style.display = 'none';
+			document.body.appendChild(input);
+			input.onchange = function(e) {
+				var file = e.target.files[0];
+				if (file) {
+					var reader = new FileReader();
+					reader.onload = function(evt) {
+						var data = new Uint8Array(evt.target.result);
+						try {
+							FS.writeFile('/userfs/' + file.name, data);
+							window._vrmFileName = file.name;
+							window._vrmFileReady = true;
+						} catch(err) {
+							console.error('Failed to write VRM file:', err);
+							window._vrmFileReady = false;
+						}
+					};
+					reader.readAsArrayBuffer(file);
+				}
+				document.body.removeChild(input);
+			};
+			window._vrmFileReady = false;
+			window._vrmFileName = '';
+			input.click();
+		})();
+	""", true)
+
+	# Poll for file data from JavaScript
+	_poll_web_file_data()
+
+
+func _poll_web_file_data() -> void:
+	"""Poll for web file picker result and load the VRM model"""
+	var max_wait := FILE_PICKER_TIMEOUT
+	var elapsed := 0.0
+
+	if info_label:
+		info_label.text = "Waiting for file selection..."
+
+	while elapsed < max_wait:
+		await get_tree().create_timer(0.2).timeout
+		elapsed += 0.2
+
+		var ready = JavaScriptBridge.eval("window._vrmFileReady || false", true)
+		if ready:
+			var file_name = JavaScriptBridge.eval("window._vrmFileName", true)
+			if file_name and file_name != "":
+				var load_path := "user://" + str(file_name)
+				print("Web file picker: VRM file received: ", load_path)
+				# Clear JavaScript state
+				JavaScriptBridge.eval(
+					"window._vrmFileReady = false; window._vrmFileName = '';",
+					true
+				)
+				_on_file_selected(load_path)
+			return
+
+	if info_label:
+		info_label.text = "File selection timed out. Press L to try again."
+
+
 func _on_file_selected(path: String) -> void:
-	"""File selected from dialog"""
-	_load_vrm_model(path)
+	"""File selected from dialog.
+
+	On Android, copies external storage files to user:// for reliable access.
+	On Web, files are already in user:// from the JavaScript file picker.
+	"""
+	var load_path := path
+	var platform := OS.get_name()
+
+	# On Android, copy external files to user:// for reliable access
+	if platform == "Android" and not path.begins_with("res://") and not path.begins_with("user://"):
+		var dest_path := "user://" + path.get_file()
+		var src_file := FileAccess.open(path, FileAccess.READ)
+		if src_file:
+			var data := src_file.get_buffer(src_file.get_length())
+			src_file.close()
+			var dst_file := FileAccess.open(dest_path, FileAccess.WRITE)
+			if dst_file:
+				dst_file.store_buffer(data)
+				dst_file.close()
+				load_path = dest_path
+				print("Copied VRM to user://: ", dest_path)
+			else:
+				push_warning("Failed to write to user://: ", dest_path, ", loading from original path")
+		else:
+			push_warning("Failed to read external file: ", path, ", trying direct load")
+
+	_load_vrm_model(load_path)
 
 
 func _on_reset_pose_button_pressed() -> void:

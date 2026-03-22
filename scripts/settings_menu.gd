@@ -30,6 +30,8 @@ signal settings_saved(settings: Dictionary)
 
 var original_settings := {}
 const CONFIG_PATH := "user://vrmvtube_settings.cfg"
+const PERMISSION_REQUEST_DELAY := 0.5
+const FILE_PICKER_TIMEOUT := 60.0
 
 # Reference to GDMP tracking for camera preview
 var gdmp_tracking: Node = null
@@ -223,18 +225,14 @@ func _populate_cameras() -> void:
 
 	camera_option.clear()
 
-	# Enable camera monitoring first
-	var camera_server := CameraServer
-	camera_server.set_monitoring_feeds(true)
-
 	# Wait a frame for feeds to be detected
 	await get_tree().process_frame
 
-	var feed_count := camera_server.get_feed_count()
+	var feed_count := CameraServer.get_feed_count()
 
 	if feed_count > 0:
 		for i in range(feed_count):
-			var feed := camera_server.get_feed(i)
+			var feed := CameraServer.get_feed(i)
 			if feed:
 				camera_option.add_item(feed.get_name(), i)
 		camera_option.selected = current_settings.camera.selected_index
@@ -330,9 +328,85 @@ func _on_apply_pressed() -> void:
 
 
 func _on_browse_model_pressed() -> void:
-	"""Open file dialog to select VRM model"""
-	if model_file_dialog:
-		model_file_dialog.popup_centered()
+	"""Open file picker to select VRM model - works on all platforms"""
+	var platform := OS.get_name()
+
+	if platform in ["Web", "HTML5"]:
+		_open_web_model_picker()
+	else:
+		# Desktop and Android: use native file dialog (Godot 4.4+)
+		if OS.get_name() == "Android":
+			OS.request_permissions()
+			await get_tree().create_timer(PERMISSION_REQUEST_DELAY).timeout
+
+		if model_file_dialog:
+			model_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+			model_file_dialog.use_native_dialog = true
+			model_file_dialog.popup_centered()
+
+
+func _open_web_model_picker() -> void:
+	"""Open file picker on Web using JavaScript for model selection"""
+	if not ClassDB.class_exists("JavaScriptBridge"):
+		push_error("JavaScriptBridge not available on this platform")
+		return
+
+	JavaScriptBridge.eval("""
+		(function() {
+			var input = document.createElement('input');
+			input.type = 'file';
+			input.accept = '.vrm';
+			input.style.display = 'none';
+			document.body.appendChild(input);
+			input.onchange = function(e) {
+				var file = e.target.files[0];
+				if (file) {
+					var reader = new FileReader();
+					reader.onload = function(evt) {
+						var data = new Uint8Array(evt.target.result);
+						try {
+							FS.writeFile('/userfs/' + file.name, data);
+							window._vrmSettingsFileName = file.name;
+							window._vrmSettingsFileReady = true;
+						} catch(err) {
+							console.error('Failed to write VRM file:', err);
+						}
+					};
+					reader.readAsArrayBuffer(file);
+				}
+				document.body.removeChild(input);
+			};
+			window._vrmSettingsFileReady = false;
+			window._vrmSettingsFileName = '';
+			input.click();
+		})();
+	""", true)
+
+	# Poll for file data
+	_poll_web_model_file()
+
+
+func _poll_web_model_file() -> void:
+	"""Poll for web file picker result in settings"""
+	var max_wait := FILE_PICKER_TIMEOUT
+	var elapsed := 0.0
+
+	while elapsed < max_wait:
+		await get_tree().create_timer(0.2).timeout
+		elapsed += 0.2
+
+		var ready = JavaScriptBridge.eval("window._vrmSettingsFileReady || false", true)
+		if ready:
+			var file_name = JavaScriptBridge.eval("window._vrmSettingsFileName", true)
+			if file_name and file_name != "":
+				var load_path := "user://" + str(file_name)
+				print("Settings: Web file picker - VRM received: ", load_path)
+				JavaScriptBridge.eval(
+					"window._vrmSettingsFileReady = false; window._vrmSettingsFileName = '';",
+					true
+				)
+				_on_model_file_selected(load_path)
+			return
 
 
 func _on_model_file_selected(path: String) -> void:
@@ -483,51 +557,43 @@ func _update_camera_preview() -> void:
 	if not camera_preview or not preview_placeholder:
 		return
 
-	var camera_texture: Texture2D = null
+	var cam_texture: Texture2D = null
 	var platform = OS.get_name()
 
 	# Try to get camera texture from GDMP tracking first
 	if gdmp_tracking and gdmp_tracking.has_method("get_camera_texture"):
-		camera_texture = gdmp_tracking.get_camera_texture()
+		cam_texture = gdmp_tracking.get_camera_texture()
 
 	# Try CameraServer feeds directly (works on Android, desktop)
-	if not camera_texture:
-		var camera_server = CameraServer
-		# Use feeds array (modern Godot 4.6 API)
-		var feeds = camera_server.feeds
-		if feeds.size() > 0:
-			var selected_index = current_settings.camera.selected_index
+	if not cam_texture:
+		var feed_count := CameraServer.get_feed_count()
+		if feed_count > 0:
+			var selected_index: int = current_settings.camera.selected_index
 			# Bounds check
-			if selected_index >= 0 and selected_index < feeds.size():
-				var feed = feeds[selected_index]
+			if selected_index >= 0 and selected_index < feed_count:
+				var feed := CameraServer.get_feed(selected_index)
 				if feed:
 					# Activate feed if not active
 					if not feed.is_active():
 						feed.set_active(true)
 						print("Settings: Activated camera feed: ", feed.get_name())
 
-					# Get texture directly from feed (Godot 4.6+)
-					camera_texture = feed.get_texture()
-					if camera_texture:
-						print("Settings: Got texture from feed directly")
-					else:
-						# Fallback: create CameraTexture manually
-						if not cached_camera_texture:
-							cached_camera_texture = CameraTexture.new()
-							cached_camera_texture.camera_feed_id = feed.get_id()
-							cached_camera_texture.camera_is_active = true
-							print(
-								"Settings: Created CameraTexture manually with feed ID: ",
-								feed.get_id()
-							)
-						camera_texture = cached_camera_texture
+					# Create CameraTexture for this feed
+					if not cached_camera_texture:
+						cached_camera_texture = CameraTexture.new()
+						cached_camera_texture.camera_feed_id = feed.get_id()
+						cached_camera_texture.camera_is_active = true
+						print(
+							"Settings: Created CameraTexture with feed ID: ",
+							feed.get_id()
+						)
+					cam_texture = cached_camera_texture
 
 	# Update preview display
-	if camera_texture:
-		camera_preview.texture = camera_texture
+	if cam_texture:
+		camera_preview.texture = cam_texture
 		camera_preview.visible = true
 		preview_placeholder.visible = false
-		print("Settings: Camera preview showing texture")
 	else:
 		camera_preview.texture = null
 		camera_preview.visible = false
