@@ -506,9 +506,9 @@ func _on_file_selected(path: String) -> void:
 				load_path = dest_path
 				print("Copied VRM to user://: ", dest_path)
 			else:
-				push_warning("Failed to write to user://, loading from original path")
+				push_warning("Failed to write to user://: ", dest_path, ", loading from original path")
 		else:
-			push_warning("Failed to read external file, trying direct load")
+			push_warning("Failed to read external file: ", path, ", trying direct load")
 
 	_load_vrm_model(load_path)
 
