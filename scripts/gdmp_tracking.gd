@@ -218,231 +218,148 @@ func _initialize_gdmp() -> void:
 func _initialize_camera() -> void:
 	"""
 	Initialize camera for tracking; call with await.
-	Attempts GDMP helper or CameraServer setup and completes when initialization finishes.
+	Attempts GDMP camera helper on ALL platforms first (uses OpenCV on desktop),
+	then falls back to CameraServer if GDMP helper is unavailable.
 	"""
 	var platform = OS.get_name()
 
-	# For Android/iOS, prefer GDMP camera helper but fallback to CameraServer
-	# For Web, try GDMP camera helper (won't work with CameraServer)
-	if platform in ["Android", "iOS", "Web", "HTML5"]:
-		# Try GDMP first for better MediaPipe integration
-		var use_gdmp = platform in ["Android", "iOS", "Web", "HTML5"]
+	# Try GDMP camera helper first on ALL platforms
+	# GDMP v0.6 uses OpenCV for camera capture on desktop, Camera2 on Android
+	if gdmp_available and ClassDB.class_exists("MediaPipeCameraHelper"):
+		print("GDMPTracking: Attempting GDMP camera helper for ", platform)
 
-		if use_gdmp:
-			print("GDMPTracking: Attempting GDMP camera helper for ", platform)
+		camera_helper = ClassDB.instantiate("MediaPipeCameraHelper")
+		if camera_helper:
+			print("GDMPTracking: Using GDMP camera helper for ", platform)
 
-			camera_helper = ClassDB.instantiate("MediaPipeCameraHelper")
-			if camera_helper:
-				print("GDMPTracking: Using GDMP camera helper for ", platform)
+			# Connect camera frame signal to process each frame
+			camera_helper.new_frame.connect(_on_camera_frame)
 
-				# Connect camera frame signal to process each frame
-				camera_helper.new_frame.connect(_on_camera_frame)
+			# Check camera permission (mobile platforms only)
+			if platform in ["Android", "iOS"]:
+				print("GDMPTracking: Checking camera permission status...")
 
-				# Check camera permission (mobile platforms)
-				if platform in ["Android", "iOS"]:
-					print("GDMPTracking: Checking camera permission status...")
+				var has_permission = camera_helper.permission_granted()
+				print("GDMPTracking: Initial permission status: ", has_permission)
 
-					# Check if we already have permission
-					var has_permission = camera_helper.permission_granted()
-					print("GDMPTracking: Initial permission status: ", has_permission)
+				if not has_permission:
+					print("GDMPTracking: ⚠️ Camera permission not granted, requesting now...")
 
-					if not has_permission:
-						print("GDMPTracking: ⚠️ Camera permission not granted, requesting now...")
+					if camera_helper.has_signal("permission_result"):
+						camera_helper.permission_result.connect(_on_permission_result)
 
-						# Connect to permission result signal if available
-						if camera_helper.has_signal("permission_result"):
-							camera_helper.permission_result.connect(_on_permission_result)
+					camera_helper.request_permission()
+					print("GDMPTracking: Permission request sent to system")
 
-						# Request permission
-						camera_helper.request_permission()
-						print("GDMPTracking: Permission request sent to system")
+					var permission_granted = false
+					var timeout = 10.0
+					var elapsed = 0.0
+					var check_interval = 0.2
 
-						# Wait for permission with timeout (max 10 seconds for user to respond)
-						var permission_granted = false
-						var timeout = 10.0
-						var elapsed = 0.0
-						var check_interval = 0.2  # Check every 200ms
+					print("GDMPTracking: Waiting for user to grant camera permission...")
 
-						print("GDMPTracking: Waiting for user to grant camera permission...")
+					while elapsed < timeout:
+						await get_tree().create_timer(check_interval).timeout
+						elapsed += check_interval
 
-						while elapsed < timeout:
-							await get_tree().create_timer(check_interval).timeout
-							elapsed += check_interval
+						if camera_helper.permission_granted():
+							permission_granted = true
+							print("GDMPTracking: ✅ Camera permission GRANTED by user!")
+							break
 
-							# Check if permission was granted
-							if camera_helper.permission_granted():
-								permission_granted = true
-								print("GDMPTracking: ✅ Camera permission GRANTED by user!")
-								break
+						if int(elapsed) != int(elapsed - check_interval):
+							print(
+								"GDMPTracking: Still waiting for permission... (",
+								int(timeout - elapsed),
+								"s remaining)"
+							)
 
-							# Show progress every second
-							if int(elapsed) != int(elapsed - check_interval):
-								print(
-									"GDMPTracking: Still waiting for permission... (",
-									int(timeout - elapsed),
-									"s remaining)"
-								)
-
-						if not permission_granted:
-							push_error("GDMPTracking: ❌ Camera permission DENIED or timed out!")
-							push_error("GDMPTracking: Falling back to CameraServer on Android...")
-							# Try CameraServer fallback on Android
-							if platform == "Android":
-								use_gdmp = false
-							else:
-								push_error(
-									"GDMPTracking: Please enable camera permission in settings"
-								)
-								push_error("GDMPTracking: Falling back to simulated tracking")
-								camera_failed.emit("Permission denied or timed out")
-								return
-					else:
-						print("GDMPTracking: ✅ Camera permission already granted")
-
-				# Continue with GDMP if still using it
-				if use_gdmp and camera_helper:
-					# Set GPU resources if available (required on Android)
-					if gpu_resources:
-						print("GDMPTracking: Attaching GPU resources to camera...")
-						camera_helper.set_gpu_resources(gpu_resources)
-						print("GDMPTracking: ✅ GPU resources attached to camera")
-					else:
-						push_warning("GDMPTracking: No GPU resources available for camera")
-
-					# Mirror camera (front-facing camera)
-					camera_helper.set_mirrored(true)
-					print("GDMPTracking: Camera mirroring enabled (front-facing mode)")
-
-					# Start camera: index 0 = front camera, 640x480 resolution
-					var camera_index_facing = 0  # FACING_FRONT
-					var camera_resolution = Vector2(640, 480)
-
-					print(
-						"GDMPTracking: Starting camera (index: ",
-						camera_index_facing,
-						", resolution: ",
-						camera_resolution,
-						")..."
-					)
-
-					# Start the camera
-					camera_helper.start(camera_index_facing, camera_resolution)
-
-					# Give camera a moment to initialize
-					await get_tree().create_timer(0.5).timeout
-
-					print("GDMPTracking: ✅ GDMP camera started successfully!")
-					print("GDMPTracking: Camera is now capturing frames for face tracking")
-					camera_started.emit()
-					return
-			else:
-				push_warning("GDMPTracking: Failed to create MediaPipeCameraHelper")
-				if platform == "Android":
-					push_warning("GDMPTracking: Falling back to CameraServer on Android")
-					use_gdmp = false
-
-		# CameraServer fallback for Android
-		if platform == "Android" and not use_gdmp:
-			print("GDMPTracking: Using CameraServer fallback for Android")
-
-			# Wait for feeds to be detected
-			await get_tree().process_frame
-			await get_tree().process_frame
-
-			# Get available camera feeds
-			var feed_count := CameraServer.get_feed_count()
-			print("GDMPTracking: Detected ", feed_count, " camera feed(s)")
-
-			if feed_count > 0:
-				# Get the first camera feed (usually front camera on phones)
-				camera_feed = CameraServer.get_feed(0)
-
-				if camera_feed:
-					print("GDMPTracking: Using camera: ", camera_feed.get_name())
-
-					# Activate the feed
-					camera_feed.set_active(true)
-					print("GDMPTracking: Camera feed activated")
-
-					# Create CameraTexture for this feed
-					camera_texture = CameraTexture.new()
-					camera_texture.camera_feed_id = camera_feed.get_id()
-					camera_texture.camera_active = true
-					print("GDMPTracking: Camera texture created for feed")
-
-					print("GDMPTracking: ✅ CameraServer camera started on Android!")
-					camera_started.emit()
+					if not permission_granted:
+						push_error("GDMPTracking: ❌ Camera permission DENIED or timed out!")
+						camera_helper = null
+						# Fall through to CameraServer fallback below
 				else:
-					push_error("GDMPTracking: Failed to get camera feed")
-					camera_failed.emit("Camera feed not available")
-			else:
-				push_error("GDMPTracking: No camera feeds detected on Android")
-				camera_failed.emit("No cameras detected")
+					print("GDMPTracking: ✅ Camera permission already granted")
 
-			return
+			# Start GDMP camera helper if still valid
+			if camera_helper:
+				# Set GPU resources if available (required on Android)
+				if gpu_resources:
+					print("GDMPTracking: Attaching GPU resources to camera...")
+					camera_helper.set_gpu_resources(gpu_resources)
+					print("GDMPTracking: ✅ GPU resources attached to camera")
 
-		# Web platform without GDMP
-		if platform in ["Web", "HTML5"]:
-			push_warning("GDMPTracking: Web platform - GDMP not available")
-			push_warning("GDMPTracking: CameraServer is not supported on Web")
-			push_warning("GDMPTracking: Falling back to simulated tracking")
-			camera_failed.emit("Web platform not supported")
-			return
+				# Mirror camera (front-facing camera)
+				camera_helper.set_mirrored(true)
+				print("GDMPTracking: Camera mirroring enabled (front-facing mode)")
 
-	# Desktop platforms - CameraServer IS supported in Godot 4.4+
-	# CameraServer works on: Windows, Linux, macOS (as of Godot 4.4+)
-	# On desktop, we use CameraServer to capture frames and feed them to GDMP
-	# for real face tracking (not just preview)
-	if platform in ["Windows", "macOS", "Linux", "X11", "FreeBSD", "NetBSD", "OpenBSD", "BSD"]:
-		print("GDMPTracking: Using CameraServer for ", platform)
+				# Start camera: index 0 = front camera, 640x480 resolution
+				var camera_index_facing = 0  # FACING_FRONT
+				var camera_resolution = Vector2(640, 480)
 
-		# Wait for feeds to be detected
-		await get_tree().process_frame
-		await get_tree().process_frame
+				print(
+					"GDMPTracking: Starting camera (index: ",
+					camera_index_facing,
+					", resolution: ",
+					camera_resolution,
+					")..."
+				)
 
-		# Get available camera feeds
-		var feed_count := CameraServer.get_feed_count()
-		print("GDMPTracking: Detected ", feed_count, " camera feed(s)")
+				camera_helper.start(camera_index_facing, camera_resolution)
 
-		if feed_count > 0:
-			# Get the first camera feed (usually the default webcam)
-			# Use camera_index if valid, otherwise use 0
-			var feed_index: int = camera_index if camera_index < feed_count else 0
-			camera_feed = CameraServer.get_feed(feed_index)
+				# Give camera a moment to initialize
+				await get_tree().create_timer(0.5).timeout
 
-			if camera_feed:
-				print("GDMPTracking: Using camera: ", camera_feed.get_name())
-
-				# Activate the feed
-				camera_feed.set_active(true)
-				print("GDMPTracking: Camera feed activated")
-
-				# Create CameraTexture for this feed
-				camera_texture = CameraTexture.new()
-				camera_texture.camera_feed_id = camera_feed.get_id()
-				camera_texture.camera_active = true
-				print("GDMPTracking: Camera texture created for feed")
-
-				print("GDMPTracking: ✅ CameraServer camera started successfully!")
+				print("GDMPTracking: ✅ GDMP camera started successfully!")
+				print("GDMPTracking: Camera is now capturing frames for face tracking")
 				camera_started.emit()
-			else:
-				push_warning("GDMPTracking: Failed to get camera feed at index ", feed_index)
-				camera_failed.emit("Camera feed not available")
+				return
 		else:
-			push_warning("GDMPTracking: No camera feeds detected on desktop")
-			push_warning("GDMPTracking: Make sure a webcam is connected and accessible")
-			camera_failed.emit("No cameras detected")
+			push_warning("GDMPTracking: Failed to create MediaPipeCameraHelper")
 
-		return
-
-	# Web platform - CameraServer NOT supported
+	# CameraServer fallback for platforms where GDMP camera helper failed or is unavailable
+	# CameraServer works on: Linux, macOS (Godot 4.3+), Android (Godot 4.4+)
+	# Note: Windows CameraServer requires Godot 4.5+ or CameraServerExtension plugin
 	if platform in ["Web", "HTML5"]:
-		push_warning("GDMPTracking: Web platform detected")
-		push_warning("GDMPTracking: CameraServer is not supported on Web")
-		push_warning("GDMPTracking: Web camera requires JavaScript bridge implementation")
+		push_warning("GDMPTracking: Web platform - CameraServer is not supported")
 		push_warning("GDMPTracking: Falling back to simulated tracking")
 		camera_failed.emit("Web platform not supported by CameraServer")
 		return
+
+	print("GDMPTracking: Using CameraServer fallback for ", platform)
+
+	# Wait for feeds to be detected
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	# Get available camera feeds
+	var feed_count := CameraServer.get_feed_count()
+	print("GDMPTracking: Detected ", feed_count, " camera feed(s)")
+
+	if feed_count > 0:
+		var feed_index: int = camera_index if camera_index < feed_count else 0
+		camera_feed = CameraServer.get_feed(feed_index)
+
+		if camera_feed:
+			print("GDMPTracking: Using camera: ", camera_feed.get_name())
+
+			camera_feed.set_active(true)
+			print("GDMPTracking: Camera feed activated")
+
+			camera_texture = CameraTexture.new()
+			camera_texture.camera_feed_id = camera_feed.get_id()
+			camera_texture.camera_active = true
+			print("GDMPTracking: Camera texture created for feed")
+
+			print("GDMPTracking: ✅ CameraServer camera started successfully!")
+			camera_started.emit()
+		else:
+			push_warning("GDMPTracking: Failed to get camera feed at index ", feed_index)
+			camera_failed.emit("Camera feed not available")
+	else:
+		push_warning("GDMPTracking: No camera feeds detected")
+		push_warning("GDMPTracking: Make sure a webcam is connected and accessible")
+		camera_failed.emit("No cameras detected")
 
 
 func _on_permission_result(granted: bool) -> void:

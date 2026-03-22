@@ -264,8 +264,6 @@ func _load_vrm_model(path: String) -> void:
 
 func _load_vrm_runtime(path: String) -> Node:
 	"""Load VRM file at runtime using godot-vrm"""
-	# Use godot-vrm's import_vrm script
-	var vrm_loader = load("res://addons/vrm/import_vrm.gd").new()
 
 	# Read VRM file
 	var file := FileAccess.open(path, FileAccess.READ)
@@ -276,20 +274,25 @@ func _load_vrm_runtime(path: String) -> Node:
 	var content := file.get_buffer(file.get_length())
 	file.close()
 
-	# Import VRM
-	var state := GLTFState.new()
-	var vrm_extension: GLTFDocumentExtension = load("res://addons/vrm/vrm_extension.gd").new()
-	state.add_used_extension("VRM", true)
-	state.register_gltf_document_extension(vrm_extension, true)
-
+	# Import VRM using godot-vrm extension
 	var gltf := GLTFDocument.new()
+	var vrm_extension: GLTFDocumentExtension = load("res://addons/vrm/vrm_extension.gd").new()
+	gltf.register_gltf_document_extension(vrm_extension, true)
+
+	var state := GLTFState.new()
+	# HANDLE_BINARY_EMBED_AS_BASISU can crash on some files; use uncompressed
+	state.handle_binary_image = GLTFState.HANDLE_BINARY_EMBED_AS_UNCOMPRESSED
+
 	var err := gltf.append_from_buffer(content, "", state)
 
 	if err != OK:
 		push_error("Failed to parse VRM file: ", err)
+		gltf.unregister_gltf_document_extension(vrm_extension)
 		return null
 
 	var scene := gltf.generate_scene(state)
+	gltf.unregister_gltf_document_extension(vrm_extension)
+
 	if not scene:
 		push_error("Failed to generate VRM scene")
 		return null
